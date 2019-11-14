@@ -47,9 +47,8 @@ TARGET_LINK_LIBRARIES(
 	NPWEdge
 
 	glog
-#	paho-mqtt3c
-#	paho-mqttpp3
-#	paho-mqtt3as
+	paho-mqttpp3
+	paho-mqtt3as
 	pthread
 )
 
