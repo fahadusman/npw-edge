@@ -7,11 +7,18 @@
 
 #ifndef INCLUDE_COMMUNICATOR_H_
 #define INCLUDE_COMMUNICATOR_H_
+#include "CommDataBuffer.h"
+#include <map>
 
 class communicator{
+protected:
+	std::map<uint64_t, CommDataBuffer* > transmitQueue;
 public:
-	virtual void sendData();
-	virtual ~communicator();
+	communicator(){}
+	virtual void sendMessage(const char * message, const unsigned int length) = 0;
+	virtual ~communicator(){}
+	virtual void connect() = 0;
+	virtual void disconnect() = 0;
 };
 
 
