@@ -7,6 +7,7 @@
 
 
 #include "PressureSensor.h"
+#include "simulatedValues.h"
 
 #include <iostream>
 #include <new>
@@ -53,20 +54,22 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 //		newNpwBuffer[i] = sensorReadingCircularBuffer[startIndex+i]->value;
 		newNpwBufferPtr->insertAt(i, sensorReadingCircularBuffer[startIndex+i]->value);
 
-//		std::cout << (sensorReadingCircularBuffer[startIndex+i]->value) << "\t";
-//		if (i%10 == 0){
-//			std::cout << std::endl;
-//		}
 	}
 
 	return newNpwBufferPtr;
 }
 
-double PressureSensor::readSensorValue(){
-	static readingType v =  0.025;
-	std::this_thread::sleep_for(std::chrono::milliseconds(4));
-	return v+=0.0000001; //TODO: This is for testing only, remove this later
+double PressureSensor::readSensorValueDummy(){
+//	static readingType v =  0.025;
+//	std::this_thread::sleep_for(std::chrono::milliseconds(4));
+//	return v+=0.0000001; //TODO: This is for testing only, remove this later
 
+	static int i = 0;
+	static int totalValues = sizeof (simulatedValues)/sizeof(int);
+	return (double(simulatedValues[i++ % totalValues]))/100000;
+}
+
+double PressureSensor::readSensorValue(){
     sPort.writeBuffer(kKellerPropReadCommand, sizeof kKellerPropReadCommand);
     unsigned char response[10];
     int bytesRead = sPort.readBuffer(response, sizeof response);
@@ -134,7 +137,7 @@ PressureSensor::PressureSensor(std::string portName)
 	secondAverageStart 	= 250; 	//second average starts at t-5
 	secondAverageEnd 	= 1250; // second average ends at t-25
 
-	npwDetectionthreshold = 0.0038;
+	npwDetectionthreshold = kDefNpwThreshold; //threshold
 	currentNpwState = noDropDetected;
 	totalNPWsDetected = 0;
 
@@ -194,7 +197,8 @@ void PressureSensor::npwThread(){
 				npwBufferCreationTime = currentTimePoint + std::chrono::milliseconds(t1Ms+t2Ms);
 			}
 		}
-		currentValue = readSensorValue();
+//		currentValue = readSensorValue();
+		currentValue = readSensorValueDummy();
 		LOG_EVERY_N(INFO, 50) << "currentValue: " << currentValue;
 		currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTimePoint.time_since_epoch()).count();
 		sensorReadingPtr = new SensorReading<double> (currentValue, currentTime);
@@ -248,7 +252,7 @@ void PressureSensor::stopNpwThread(){
 void PressureSensor::fillCircularBufferWithDummyValues(){
 	LOG(WARNING) << "initializing circular buffer with dummy values";
 
-	readingType v = 0.021;
+	readingType v = 61.482;
 	SensorReading<double> * sensorReadingPtr = NULL;
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint =
 			std::chrono::high_resolution_clock::now() - std::chrono::seconds(25);

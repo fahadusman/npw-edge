@@ -23,6 +23,7 @@ const unsigned char kKellerPropReadCommand[] = {1, 73, 1, 80, 214};
 
 const unsigned int kDefReadingIntervalMs = 20; //must be divisible by 1000 (ms)
 const unsigned int kDefaultCircularBufferLength = 25 * 1000/kDefReadingIntervalMs;
+const double kDefNpwThreshold = 0.02;
 
 enum NpwState {noDropDetected, firstDropDetected, secondDropDetected};
 
@@ -55,6 +56,7 @@ private:
 	unsigned int t1Ms, t2Ms; // the NPW buffer will contain the pressure values for T1 duration before the event and for T2 duration after the event
 	unsigned int totalNPWsDetected;
 
+	double readSensorValueDummy();
 	void fillCircularBufferWithDummyValues();
 public:
 	void npwThread();
