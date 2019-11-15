@@ -14,42 +14,47 @@ const unsigned int kDefNpwBufferLength = 500; //TODO: it should be samples per s
 const unsigned int kDefT1Ms = 3000;
 const unsigned int kDefT2Ms = 7000;
 
+const double kScalingFactor = 0.01;
+const unsigned int kHdrLen = 8;
+const unsigned int kDefByteArrayLength = kDefNpwBufferLength*2 + kHdrLen;
+
 typedef double readingType;
 
-class NpwBuffer{
+class NpwBuffer {
 private:
-	uint64_t timeStamp;
-	readingType readingList[kDefNpwBufferLength];
+    uint64_t timeStamp;
+    readingType readingList[kDefNpwBufferLength];
 public:
-	uint64_t getTimestamp(){
-		return timeStamp;
-	}
-	NpwBuffer():readingList{}{
-		timeStamp = 0;
-	}
-	NpwBuffer(uint64_t ts):readingList{}{
-//		LOG_IF(FATAL, ts==0) << "ts==0";
-		timeStamp = ts;
-		LOG(INFO) << "new NPW Buffer, timeStamp: " << timeStamp;
-	}
-	readingType & operator [](const unsigned int index)
-	{
-		if (index >= kDefNpwBufferLength){
-			LOG(FATAL) << "array index out of bound. index=" << index;
-			return readingList[0];
-		}
-		return readingList[index];
-	}
+    uint64_t getTimestamp() {
+        return timeStamp;
+    }
+    NpwBuffer() :
+            readingList { } {
+        timeStamp = 0;
+    }
+    NpwBuffer(uint64_t ts) :
+            readingList { } {
+        timeStamp = ts;
+        LOG(INFO) << "new NPW Buffer, timeStamp: " << timeStamp;
+    }
+    readingType & operator [](const unsigned int index) {
+        if (index >= kDefNpwBufferLength) {
+            LOG(FATAL) << "array index out of bound. index=" << index;
+            return readingList[0];
+        }
+        return readingList[index];
+    }
 
-	void insertAt(const unsigned int position, readingType value)
-	{
-		if (position >= kDefNpwBufferLength){
-			LOG(FATAL) << "array index out of bound. index=" << position;
-		}
-		readingList[position] = value;
-	}
+    void insertAt(const unsigned int position, readingType value) {
+        if (position >= kDefNpwBufferLength) {
+            LOG(FATAL) << "array index out of bound. index=" << position;
+        }
+        readingList[position] = value;
+    }
+
+    unsigned char * createByteArray();
+
+    std::string serialize();
 };
-
-
 
 #endif /* INCLUDE_NPWBUFFER_H_ */
