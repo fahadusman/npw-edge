@@ -8,20 +8,13 @@
 #include <iostream>
 #include "CommDataBuffer.h"
 CommDataBuffer::CommDataBuffer(){
-	dataBuffer = NULL;
-	value = 0;
-	timestamp = 100;
+	timeStamp = 100;
 	length = 0;
-	type = npwBuffer;
 }
 
-CommDataBuffer::CommDataBuffer(NpwBuffer * npwBufferPtr):CommDataBuffer(){
-	std::cout << npwBufferPtr->getTimestamp();
-}
-
-std::string CommDataBuffer::serialize(){
-	return "{\"payload\": \"dummy payload\"}";
-}
+//std::string CommDataBuffer::serializeJson(){
+//	return "{\"payload\": \"dummy payload\"}";
+//}
 
 
 

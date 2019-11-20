@@ -9,6 +9,7 @@
 #define INCLUDE_NPWBUFFER_H_
 
 #include <glog/logging.h>
+#include "CommDataBuffer.h"
 
 const unsigned int kDefNpwBufferLength = 500; //TODO: it should be samples per second (50) x npw buffer duration (10s) = 500,
 const unsigned int kDefT1Ms = 3000;
@@ -20,9 +21,8 @@ const unsigned int kDefByteArrayLength = kDefNpwBufferLength*2 + kHdrLen;
 
 typedef double readingType;
 
-class NpwBuffer {
+class NpwBuffer: public CommDataBuffer {
 private:
-    uint64_t timeStamp;
     readingType readingList[kDefNpwBufferLength];
 public:
     uint64_t getTimestamp() {
@@ -54,7 +54,8 @@ public:
 
     unsigned char * createByteArray();
 
-    std::string serialize();
+    std::string serializeJson() override;
+    void * serialize(int & length) override;
 };
 
 #endif /* INCLUDE_NPWBUFFER_H_ */

@@ -14,23 +14,20 @@
 #define INCLUDE_COMMDATABUFFER_H_
 #include <cstdint>
 #include <string>
-#include "NpwBuffer.h"
 
-enum BufferType {npwBuffer, periodicData};
 class CommDataBuffer {
-private:
-	void * dataBuffer;
-	double value;
-	int length;
-	uint64_t timestamp;
-	BufferType type;
+protected:
+    unsigned int length;
+    uint64_t timeStamp;
 public:
-	std::string serialize();
-	CommDataBuffer(NpwBuffer * npwBufferPtr);
-	CommDataBuffer();
-	uint64_t getTimestamp(){
-		return timestamp;
-	}
+    virtual std::string serializeJson() = 0;
+    virtual void * serialize(int & length) = 0;
+    CommDataBuffer();
+    uint64_t getTimestamp() {
+        return timeStamp;
+    }
+    virtual ~CommDataBuffer() {
+    }
 };
 
 

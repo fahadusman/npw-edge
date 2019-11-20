@@ -66,7 +66,7 @@ unsigned char * NpwBuffer::createByteArray() {
  * on MQTT for Kepware to receive and serve it on OPC-UA as a byte array.
  */
 
-std::string NpwBuffer::serialize() {
+std::string NpwBuffer::serializeJson() {
     const unsigned char * byteArray = createByteArray();
     rapidjson::StringBuffer s;
     rapidjson::Writer<rapidjson::StringBuffer> writer(s);
@@ -82,3 +82,7 @@ std::string NpwBuffer::serialize() {
     return s.GetString();
 }
 
+void * NpwBuffer::serialize(int & length) {
+    length = kDefByteArrayLength;
+    return createByteArray();
+}
