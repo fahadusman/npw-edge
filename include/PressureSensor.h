@@ -15,6 +15,7 @@
 #include <vector>
 #include <thread>
 #include <new>
+#include "communicator.h"
 
 //const char * kDefaultPTPortName = "/dev/ttyM0";
 const unsigned char kKellerInitCommand[] = {1, 48, 52, 0};
@@ -58,12 +59,14 @@ private:
 
 	double readSensorValueDummy();
 	void fillCircularBufferWithDummyValues();
+
+	communicator * commPtr;
 public:
 	void npwThread();
 	void startNpwThread();
 	void stopNpwThread();
 //	PressureSensor();
-	PressureSensor(std::string portName);
+	PressureSensor(std::string portName, communicator * cPtr);
 	virtual ~PressureSensor();
 };
 

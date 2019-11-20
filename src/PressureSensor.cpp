@@ -65,7 +65,7 @@ double PressureSensor::readSensorValueDummy(){
 //	return v+=0.0000001; //TODO: This is for testing only, remove this later
 
 	static int i = 0;
-	static int totalValues = sizeof (simulatedValues)/sizeof(int);
+	static unsigned int totalValues = sizeof (simulatedValues)/sizeof(int);
 	return (double(simulatedValues[i++ % totalValues]))/100000;
 }
 
@@ -114,11 +114,16 @@ PressureSensor::~PressureSensor() {
 //	initializeSensor();
 //}
 
-PressureSensor::PressureSensor(std::string portName)
-: sPort(portName, kDefaultBaudRate, kDefaultParity, kDefaultBlocking){
+PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
+        sPort(portName, kDefaultBaudRate, kDefaultParity, kDefaultBlocking),
+        commPtr(cPtr) {
 	if (portName == ""){
 		LOG(WARNING) << "portName is null, using default port name";
 		portName = kDefaultPortName;
+	}
+
+	if (not commPtr){
+	    LOG(FATAL) << "commPtr is null.";
 	}
 //	PressureSensor();
 	npwThreadPtr = NULL;
@@ -187,7 +192,8 @@ void PressureSensor::npwThread(){
 				std::chrono::high_resolution_clock::now();
 		if (currentNpwState != noDropDetected and currentTimePoint > npwBufferCreationTime) {
 			npwBufferPtr = createNpwBuffer();
-//			TODO: commHandler->queueForTransmission(npwBufferPtr)
+			commPtr->enqueueMessage(npwBufferPtr);
+
 			LOG(INFO) << "new NPW Buffer created at: " << npwBufferPtr->getTimestamp();
 			if (currentNpwState == firstDropDetected){
 				currentNpwState = noDropDetected;
