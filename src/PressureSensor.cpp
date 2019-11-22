@@ -191,6 +191,7 @@ void PressureSensor::npwThread(){
 		std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint =
 				std::chrono::high_resolution_clock::now();
 		if (currentNpwState != noDropDetected and currentTimePoint > npwBufferCreationTime) {
+		    LOG(INFO) << "Pressure Drop Detected";
 			npwBufferPtr = createNpwBuffer();
 			commPtr->enqueueMessage(npwBufferPtr);
 
@@ -245,14 +246,8 @@ void PressureSensor::stopNpwThread(){
 	recodringValues = false;
 	npwThreadPtr->join();
 
-	NpwBuffer * buff = createNpwBuffer();
-	delete buff;
-
 	delete npwThreadPtr;
 	npwThreadPtr = NULL;
-//	for (auto i:sensorReadingCircularBuffer){
-//		i->print();
-//	}
 }
 
 void PressureSensor::fillCircularBufferWithDummyValues(){
