@@ -15,7 +15,7 @@ const unsigned int kDefNpwBufferLength = 500; //TODO: it should be samples per s
 const unsigned int kDefT1Ms = 3000;
 const unsigned int kDefT2Ms = 7000;
 
-const double kScalingFactor = 0.01;
+const double kScalingFactor = 1000;
 const unsigned int kHdrLen = 8;
 const unsigned int kDefByteArrayLength = kDefNpwBufferLength*2 + kHdrLen;
 
