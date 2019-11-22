@@ -20,7 +20,7 @@ MqttCommunicator::MqttCommunicator() :
     QoS = MQTT_DFLT_QOS;
     cleanSession = MQTT_DFLT_CLEAN_SESSION;
     timeout = MQTT_DFLT_TIMEOUT;
-
+    sendMessagesThreadPtr = new std::thread(&MqttCommunicator::sendQueuedMessagesThread, this);
 }
 
 void MqttCommunicator::connect() {
@@ -55,6 +55,29 @@ void MqttCommunicator::disconnect() {
     } else {
         LOG(WARNING) << "disconnect called for: " << clientID
                 << ", isConnected is already false.";
+    }
+}
+
+void MqttCommunicator::sendQueuedMessagesThread() {
+    LOG(INFO) << "starting MqttCommunicator Thread";
+    while (true){
+        CommDataBuffer * commPtr = NULL;
+        {
+            std::lock_guard<std::mutex> guard(transmitQueueMutex);
+            if (transmitQueue.size() > 0) {
+                commPtr = transmitQueue.begin()->second;
+                transmitQueue.erase(transmitQueue.begin());
+            }
+        }
+
+        if (commPtr != NULL) {
+            LOG(INFO) << "Sending Message with t: " << commPtr->getTimestamp();
+            std::string jsonMessage = commPtr->serializeJson();
+            sendMessage(jsonMessage.c_str(), jsonMessage.length());
+            delete commPtr;
+            commPtr = NULL;
+        }
+        std::this_thread::sleep_for(sendMessagesThreadLoopInterval);
     }
 }
 

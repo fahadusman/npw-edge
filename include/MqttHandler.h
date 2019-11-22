@@ -17,13 +17,14 @@
 #include "mqtt/client.h"
 #include "mqtt/message.h"
 #include "communicator.h"
+#include <glog/logging.h>
 
-const std::string MQTT_DFLT_SERVER_ADDRESS { "tcp://localhost:1883" };
+const std::string MQTT_DFLT_SERVER_ADDRESS { "10.1.17.71:32183" };//{ "tcp://localhost:1883" };
 const std::string MQTT_DFLT_CLIENT_ID { "NPW_APP" };
 const std::string MQTT_DFLT_PERSIST_DIR { "./persist" };
 //const char* MQTT_DFLT_LWT_PAYLOAD = "Last will and testament.";
 
-const std::string MQTT_DFLT_TOPIC { "hello" };
+const std::string MQTT_DFLT_TOPIC { "array" };
 const int MQTT_DFLT_QOS = 1;
 const bool MQTT_DFLT_CLEAN_SESSION = false;
 const auto MQTT_DFLT_TIMEOUT = std::chrono::seconds(10);
@@ -81,9 +82,9 @@ public:
     MqttCommunicator();
     void connect();
     void disconnect();
-    void sendMessage(const char * message, const unsigned int length);
+    void sendMessage(const char * message, const unsigned int length) override;
+    virtual void sendQueuedMessagesThread() override;
     ~MqttCommunicator();
-
 };
 
 #endif /* INCLUDE_MQTTHANDLER_H_ */
