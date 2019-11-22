@@ -24,7 +24,7 @@ const unsigned char kKellerPropReadCommand[] = {1, 73, 1, 80, 214};
 
 const unsigned int kDefReadingIntervalMs = 20; //must be divisible by 1000 (ms)
 const unsigned int kDefaultCircularBufferLength = 25 * 1000/kDefReadingIntervalMs;
-const double kDefNpwThreshold = 0.02;
+const double kDefNpwThreshold = 0.004;
 
 enum NpwState {noDropDetected, firstDropDetected, secondDropDetected};
 
