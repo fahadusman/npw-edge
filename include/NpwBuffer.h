@@ -35,7 +35,7 @@ public:
     NpwBuffer(uint64_t ts) :
             readingList { } {
         timeStamp = ts;
-        LOG(INFO) << "new NPW Buffer, timeStamp: " << timeStamp;
+        LOG(INFO) << "new NPW Buffer, timeStamp: " << timeStamp << ", id: " << bufferId;
     }
     readingType & operator [](const unsigned int index) {
         if (index >= kDefNpwBufferLength) {

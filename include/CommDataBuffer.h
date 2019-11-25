@@ -17,14 +17,19 @@
 
 class CommDataBuffer {
 protected:
+    static uint32_t bufferCount;
     unsigned int length;
     uint64_t timeStamp;
+    uint32_t bufferId;
 public:
     virtual std::string serializeJson() = 0;
     virtual void * serialize(int & length) = 0;
     CommDataBuffer();
     uint64_t getTimestamp() {
         return timeStamp;
+    }
+    uint32_t getBufferId() {
+        return bufferId;
     }
     virtual ~CommDataBuffer() {
     }

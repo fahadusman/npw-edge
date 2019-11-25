@@ -15,7 +15,7 @@
 class communicator{
 protected:
     std::mutex transmitQueueMutex;
-	std::map<uint64_t, CommDataBuffer* > transmitQueue;
+	std::map<uint32_t, CommDataBuffer* > transmitQueue;
     std::thread * sendMessagesThreadPtr;
     std::chrono::duration<int,std::milli> sendMessagesThreadLoopInterval;
 
@@ -28,7 +28,7 @@ public:
 	virtual int enqueueMessage(CommDataBuffer * buff){
 	    LOG(INFO) << "Going to insert in transmission queue with t: " << buff->getTimestamp() << "\t Queue size: " << transmitQueue.size();
 	    std::lock_guard<std::mutex> guard(transmitQueueMutex);
-	    transmitQueue[buff->getTimestamp()] = buff;
+	    transmitQueue[buff->getBufferId()] = buff;
 //	    auto ret = transmitQueue.insert(std::pair<uint64_t, CommDataBuffer * >(buff->getTimestamp(), buff));
 	    return 0;
 	}
