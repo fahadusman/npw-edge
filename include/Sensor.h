@@ -7,6 +7,7 @@
  *  Created on: Sep 25, 2019
  *      Author: Fahad Usman
  */
+#include <string>
 
 class Sensor {
 public:
@@ -19,6 +20,11 @@ public:
 	Sensor();
 protected:
 	double currentValue;
+
+	double periodicValChangeThreshold;
+    unsigned int periodicValMinInterval;
+    unsigned int periodicValMaxInterval;
+    std::string id;
 };
 
 inline Sensor::~Sensor()

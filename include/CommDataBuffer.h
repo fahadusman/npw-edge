@@ -21,6 +21,7 @@ protected:
     unsigned int length;
     uint64_t timeStamp;
     uint32_t bufferId;
+    std::string sensorId;
 public:
     virtual std::string serializeJson() = 0;
     virtual void * serialize(int & length) = 0;

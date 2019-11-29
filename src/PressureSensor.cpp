@@ -8,6 +8,7 @@
 
 #include "PressureSensor.h"
 #include "simulatedValues.h"
+#include "PeriodicValue.h"
 
 #include <iostream>
 #include <new>
@@ -203,10 +204,29 @@ void PressureSensor::updateNPWState(std::chrono::time_point<std::chrono::high_re
 	}
 	wasThresholdExceeded = isThresholdExceeded;
 }
+
+uint64_t PressureSensor::sendPeriodicValue(uint64_t currentTime,
+        uint64_t previousPeriodicValueTransmitTime,
+        double previousPeriodicVal, double currentValue) {
+    if (((currentTime > previousPeriodicValueTransmitTime + periodicValMinInterval)
+            && (fabs(previousPeriodicVal - currentValue) > periodicValChangeThreshold))
+            || currentTime > previousPeriodicValueTransmitTime + periodicValMaxInterval) {
+
+        LOG_EVERY_N(INFO, 10) << "sending periodic value: " << currentValue;
+        CommDataBuffer* pValBuffPtr = new PeriodicValue(currentValue,
+                currentTime, id);
+        commPtr->enqueueMessage(pValBuffPtr);
+        previousPeriodicValueTransmitTime = currentTime;
+    }
+    return previousPeriodicValueTransmitTime;
+}
+
 void PressureSensor::npwThread(){
 //	std::chrono::time_point<std::chrono::high_resolution_clock> readingTimepoint;
 	DLOG(INFO) << "starting npw thread\n";
 	double currentValue = 0;
+	__uint64_t previousPeriodicValueTransmitTime = 0;
+	double previousPeriodicVal = 0;
 	SensorReading<double> * sensorReadingPtr = NULL;
 	__uint64_t currentTime = 0;
 	while(recodringValues){
@@ -221,6 +241,10 @@ void PressureSensor::npwThread(){
 		currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTimePoint.time_since_epoch()).count();
 		sensorReadingPtr = new SensorReading<double> (currentValue, currentTime);
 		sensorReadingCircularBuffer.push_back(sensorReadingPtr);
+
+        previousPeriodicValueTransmitTime = sendPeriodicValue(currentTime,
+                previousPeriodicValueTransmitTime, previousPeriodicVal,
+                currentValue);
 
 		updateMovingAverages();
 		updateNPWState(currentTimePoint);

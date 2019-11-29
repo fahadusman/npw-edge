@@ -58,6 +58,10 @@ private:
 	unsigned int totalNPWsDetected;
 
 	double readSensorValueDummy();
+    uint64_t sendPeriodicValue(uint64_t currentTime,
+            uint64_t previousPeriodicValueTransmitTime,
+            double previousPeriodicVal, double currentValue);
+
 	void fillCircularBufferWithDummyValues();
     void createNPWBuffer(
             const std::chrono::time_point<std::chrono::high_resolution_clock>& currentTimePoint);
