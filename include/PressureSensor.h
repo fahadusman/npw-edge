@@ -59,6 +59,8 @@ private:
 
 	double readSensorValueDummy();
 	void fillCircularBufferWithDummyValues();
+    void createNPWBuffer(
+            const std::chrono::time_point<std::chrono::high_resolution_clock>& currentTimePoint);
 
 	communicator * commPtr;
 public:

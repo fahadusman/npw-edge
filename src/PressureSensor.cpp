@@ -155,6 +155,29 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
 
 }
 
+/*
+ * Creates a new NPW buffer after a pressure drop is detected and the required
+ * time is passed after the initial detection time.
+ */
+void PressureSensor::createNPWBuffer(
+        const std::chrono::time_point<std::chrono::high_resolution_clock>& currentTimePoint) {
+    if (currentNpwState != noDropDetected
+            && currentTimePoint > npwBufferCreationTime) {
+        LOG(INFO) << "Pressure Drop Detected";
+        NpwBuffer* npwBufferPtr = createNpwBuffer();
+        commPtr->enqueueMessage(npwBufferPtr);
+        LOG(INFO) << "new NPW Buffer created at: "
+                << npwBufferPtr->getTimestamp();
+        if (currentNpwState == firstDropDetected) {
+            currentNpwState = noDropDetected;
+        } else if (currentNpwState == secondDropDetected) {
+            currentNpwState = firstDropDetected;
+            npwBufferCreationTime = currentTimePoint
+                    + std::chrono::milliseconds(t1Ms + t2Ms);
+        }
+    }
+}
+
 void PressureSensor::updateNPWState(std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint){
 	static bool wasThresholdExceeded = false;
 	bool isThresholdExceeded = fabs(firstAverage - secondAverage) > npwDetectionthreshold;
@@ -186,24 +209,12 @@ void PressureSensor::npwThread(){
 	double currentValue = 0;
 	SensorReading<double> * sensorReadingPtr = NULL;
 	__uint64_t currentTime = 0;
-	NpwBuffer * npwBufferPtr = NULL;
 	while(recodringValues){
 		std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint =
 				std::chrono::high_resolution_clock::now();
-		if (currentNpwState != noDropDetected and currentTimePoint > npwBufferCreationTime) {
-		    LOG(INFO) << "Pressure Drop Detected";
-			npwBufferPtr = createNpwBuffer();
-			commPtr->enqueueMessage(npwBufferPtr);
 
-			LOG(INFO) << "new NPW Buffer created at: " << npwBufferPtr->getTimestamp();
-			if (currentNpwState == firstDropDetected){
-				currentNpwState = noDropDetected;
-			}
-			else if (currentNpwState == secondDropDetected){
-				currentNpwState = firstDropDetected;
-				npwBufferCreationTime = currentTimePoint + std::chrono::milliseconds(t1Ms+t2Ms);
-			}
-		}
+		createNPWBuffer(currentTimePoint);
+
 //		currentValue = readSensorValue();
 		currentValue = readSensorValueDummy();
 		LOG_EVERY_N(INFO, 50) << "currentValue: " << currentValue;
