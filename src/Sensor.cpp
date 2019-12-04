@@ -7,10 +7,10 @@
 #include "Sensor.h"
 
 Sensor::Sensor() {
-	currentValue = 0;
-	periodicValChangeThreshold = 0;
-	periodicValMinInterval = 1000;
-	periodicValMaxInterval = 5000;
-	id = "defaultId"; //TODO: We need to come up with and identification hierarchy
-	return;
+    currentValue = 0;
+    periodicValChangeThreshold = 0;
+    periodicValMinInterval = 1000;
+    periodicValMaxInterval = 5000;
+    id = "defaultId"; //TODO: We need to come up with and identification hierarchy
+    return;
 }
