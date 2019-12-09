@@ -15,7 +15,6 @@
 #include <vector>
 #include <thread>
 #include <new>
-#include "communicator.h"
 
 //const char * kDefaultPTPortName = "/dev/ttyM0";
 const unsigned char kKellerInitCommand[] = {1, 48, 52, 0};
@@ -66,7 +65,6 @@ private:
     void createNPWBuffer(
             const std::chrono::time_point<std::chrono::high_resolution_clock>& currentTimePoint);
 
-	communicator * commPtr;
 public:
 	void npwThread();
 	void startNpwThread();

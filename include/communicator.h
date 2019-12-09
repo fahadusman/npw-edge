@@ -11,6 +11,7 @@
 #include <map>
 #include "glog/logging.h"
 #include <mutex>
+#include <thread>
 
 class communicator{
 protected:
