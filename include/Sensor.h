@@ -8,7 +8,11 @@
  *      Author: Fahad Usman
  */
 #include <string>
+#include <queue>
+#include <mutex>
+#include <exception>
 #include "communicator.h"
+#include "CommandMsg.h"
 
 class Sensor {
 public:
@@ -16,6 +20,8 @@ public:
     virtual double readSensorValue() = 0;
     virtual void initializeSensor() = 0;
     Sensor(communicator * cptr);
+    void enqueueCommand (CommandMsg *);
+    CommandMsg * dequeueCommand();
 protected:
     double currentValue;
 
@@ -24,6 +30,8 @@ protected:
     unsigned int periodicValMaxInterval;
     std::string id;
     communicator * commPtr;
+    std::queue <CommandMsg *> incomingCommandQueue;
+    std::mutex commandQueueMutex;
 };
 
 inline Sensor::~Sensor() {

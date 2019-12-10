@@ -15,3 +15,27 @@ Sensor::Sensor(communicator * cptr) {
     commPtr = cptr;
     return;
 }
+
+void Sensor::enqueueCommand(CommandMsg * cmd){
+    try {
+        std::lock_guard<std::mutex> guard(commandQueueMutex);
+        incomingCommandQueue.push(cmd);
+    } catch (std::exception & e) {
+        LOG(ERROR) << "exception: " << e.what();
+    }
+}
+
+CommandMsg * Sensor::dequeueCommand() {
+    try {
+        std::lock_guard<std::mutex> guard(commandQueueMutex);
+        if (incomingCommandQueue.empty()) {
+            return NULL;
+        }
+        CommandMsg * cptr = incomingCommandQueue.front();
+        incomingCommandQueue.pop();
+        return cptr;
+    } catch (std::exception & e) {
+        LOG(ERROR) << "exception: " << e.what();
+        return NULL;
+    }
+}
