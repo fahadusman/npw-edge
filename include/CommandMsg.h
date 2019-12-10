@@ -39,6 +39,13 @@ private:
     uint32_t data;
 public:
     CommandMsg();
+    CommandMsg(CommandRegister cmd, uint32_t d);
+    CommandRegister getCommand() {
+        return command;
+    }
+    uint32_t getData() {
+        return data;
+    }
 };
 
 #endif /* INCLUDE_COMMANDMSG_H_ */
