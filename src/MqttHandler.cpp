@@ -83,6 +83,11 @@ void MqttCommunicator::sendQueuedMessagesThread() {
     }
 }
 
+void MqttCommunicator::subscribe(){
+    client.subscribe(commandTopic, QoS);
+    LOG(INFO) << "Subscribing to: " << commandTopic;
+}
+
 MqttCommunicator::~MqttCommunicator() {
     if (isConnected) {
         disconnect();
@@ -93,6 +98,7 @@ MqttCommunicator::~MqttCommunicator() {
 void user_callback::connected(const std::string& cause) {
     connected_ = true;
     LOG(INFO) << "MQTT client connected: " << cause;
+    commPtr->subscribe();
 }
 
 void user_callback::setCommunicator(communicator* c) {

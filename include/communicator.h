@@ -37,6 +37,7 @@ public:
 	virtual void connect() = 0;
 	virtual void disconnect() = 0;
 	virtual void sendQueuedMessagesThread() = 0;
+	virtual void subscribe() = 0;
 };
 
 

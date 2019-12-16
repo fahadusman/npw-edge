@@ -87,6 +87,7 @@ public:
     void sendMessage(const char * message, const unsigned int length) override;
     virtual void sendQueuedMessagesThread() override;
     ~MqttCommunicator();
+    void subscribe() override;
 };
 
 #endif /* INCLUDE_MQTTHANDLER_H_ */
