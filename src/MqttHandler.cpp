@@ -11,6 +11,7 @@ MqttCommunicator::MqttCommunicator() :
                 willmsg) {
 
     client.set_callback(cb);
+    cb.setCommunicator(this);
     conopts.set_will(willOpts);
     conntok = NULL;
     isConnected = false;
@@ -92,4 +93,8 @@ MqttCommunicator::~MqttCommunicator() {
 void user_callback::connected(const std::string& cause) {
     connected_ = true;
     LOG(INFO) << "MQTT client connected: " << cause;
+}
+
+void user_callback::setCommunicator(communicator* c) {
+    commPtr = c;
 }

@@ -36,6 +36,7 @@ const std::string DFLT_MQTT_CMD_TOPIC("command_topic");
 
 class user_callback: public virtual mqtt::callback {
     bool connected_;
+    communicator * commPtr;
 
     void connection_lost(const std::string& cause) override {
         connected_ = false;
@@ -60,7 +61,9 @@ class user_callback: public virtual mqtt::callback {
 public:
     user_callback() {
         connected_ = false;
+        commPtr = NULL;
     }
+    void setCommunicator(communicator * c);
 };
 
 class MqttCommunicator: public communicator {
