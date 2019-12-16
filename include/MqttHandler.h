@@ -48,10 +48,7 @@ class user_callback: public virtual mqtt::callback {
         std::cout << "\n\t[Delivery complete for token: "
                 << (tok ? tok->get_message_id() : -1) << "]" << std::endl;
     }
-    void connected(const std::string& cause) override {
-        connected_ = true;
-        LOG(INFO) << "MQTT client connected: " << cause;
-    }
+    void connected(const std::string& cause) override;
 
 //	void message_arrived(const message * msg) override {
 //	}

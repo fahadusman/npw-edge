@@ -88,3 +88,8 @@ MqttCommunicator::~MqttCommunicator() {
     }
     return;
 }
+
+void user_callback::connected(const std::string& cause) {
+    connected_ = true;
+    LOG(INFO) << "MQTT client connected: " << cause;
+}
