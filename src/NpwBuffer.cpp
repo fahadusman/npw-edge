@@ -71,7 +71,7 @@ std::string NpwBuffer::serializeJson() {
     rapidjson::StringBuffer s;
     rapidjson::Writer<rapidjson::StringBuffer> writer(s);
     writer.StartObject();
-    writer.Key("byteArray");
+    writer.Key("array");
     writer.StartArray();
     for (unsigned int i = 0; i < kDefByteArrayLength; i++)
         writer.Uint(byteArray[i]);
