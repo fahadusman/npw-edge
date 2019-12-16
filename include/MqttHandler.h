@@ -28,6 +28,8 @@ const std::string MQTT_DFLT_TOPIC { "array" };
 const int MQTT_DFLT_QOS = 1;
 const bool MQTT_DFLT_CLEAN_SESSION = false;
 const auto MQTT_DFLT_TIMEOUT = std::chrono::seconds(10);
+const std::string DFLT_MQTT_CMD_TOPIC("command_topic");
+
 
 /////////////////////////////////////////////////////////////////////////////
 // Class to receive callbacks
@@ -66,7 +68,7 @@ public:
 
 class MqttCommunicator: public communicator {
 private:
-    std::string address, clientID, topic, persistDir;
+    std::string address, clientID, publishTopic, persistDir, commandTopic;
 
     mqtt::message willmsg;
     mqtt::async_client client; //(address, clientID);

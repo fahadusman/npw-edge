@@ -14,13 +14,14 @@ MqttCommunicator::MqttCommunicator() :
     conopts.set_will(willOpts);
     conntok = NULL;
     isConnected = false;
-    topic = MQTT_DFLT_TOPIC;
+    publishTopic = MQTT_DFLT_TOPIC;
     clientID = MQTT_DFLT_CLIENT_ID;
     persistDir = MQTT_DFLT_PERSIST_DIR;
     QoS = MQTT_DFLT_QOS;
     cleanSession = MQTT_DFLT_CLEAN_SESSION;
     timeout = MQTT_DFLT_TIMEOUT;
     sendMessagesThreadPtr = new std::thread(&MqttCommunicator::sendQueuedMessagesThread, this);
+    commandTopic = DFLT_MQTT_CMD_TOPIC;
 }
 
 void MqttCommunicator::connect() {
@@ -38,10 +39,10 @@ void MqttCommunicator::connect() {
 
 void MqttCommunicator::sendMessage(const char * message,
         const unsigned int length) {
-    LOG(INFO) << "Sending MQTT Message: " << message << "\ttopic: " << topic
+    LOG(INFO) << "Sending MQTT Message: " << message << "\ttopic: " << publishTopic
             << ", length: " << length;
     mqtt::delivery_token_ptr pubtok;
-    pubtok = client.publish(topic, message, length, QoS, cleanSession);
+    pubtok = client.publish(publishTopic, message, length, QoS, cleanSession);
     pubtok->wait_for(timeout);
 }
 
