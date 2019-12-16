@@ -51,8 +51,7 @@ class user_callback: public virtual mqtt::callback {
     }
     void connected(const std::string& cause) override;
 
-//	void message_arrived(const message * msg) override {
-//	}
+	void message_arrived(mqtt::const_message_ptr msg) override;
 
     bool isConnected() {
         return connected_;

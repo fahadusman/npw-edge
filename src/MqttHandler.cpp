@@ -88,6 +88,10 @@ void MqttCommunicator::subscribe(){
     LOG(INFO) << "Subscribing to: " << commandTopic;
 }
 
+void user_callback::message_arrived(mqtt::const_message_ptr msg) {
+    std::cout << "topic: " << msg->get_topic() << "payload: " << msg->to_string() << "\n";
+}
+
 MqttCommunicator::~MqttCommunicator() {
     if (isConnected) {
         disconnect();
