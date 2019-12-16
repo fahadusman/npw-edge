@@ -90,6 +90,7 @@ void SerialPort::closePort(){
 	    }
 		close(device);
 		device = -1;
+		LOG(INFO) << "Closing serial port: " << device;
 	}
 	else {
 		LOG(ERROR) << "invalid fd in closePort: " << device;
