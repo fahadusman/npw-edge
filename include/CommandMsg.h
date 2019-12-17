@@ -9,11 +9,12 @@
 #define INCLUDE_COMMANDMSG_H_
 
 #include <cstdint>
+
 enum CommandRegister {
-    INVALID_CMD = 0,
+    UNINITIALIZED_CMD = 0,
     NPW_NUM_PACK = 1, //  In case communications are lost, each edge device will store this many packets.
     NPW_EXP_TIME = 2, //  If any NPW packet stored on edge device is this many minutes old, it'll be discarded.
-    MAX_TIME_PERIODIC = 3, //  If the periodic data is not changing, it'll be transmitted after this much time anyway.
+    MAX_TIME_PERIODIC = 3, //  If the periodic data is not changing, it'll be transmitted after this much time anyway (Seconds).
     MIN_TIME_PERIODIC = 4, //  The minimum time between periodic data is this value.
     ON_CHANG_THSH_PT = 5, //  The periodic pressure value will be sent only if it changes by this much value or if the max time exceeds
     ON_CHANG_THSH_TT = 7, //  The periodic temperature value will be sent only if it changes by this much value or if the max time exceeds
@@ -30,7 +31,8 @@ enum CommandRegister {
     NPW_THR_PT1 = 19,  //  negative pressure drop threshold for detecting NPW for PT1
     NPW_THR_PT2 = 20,  //  negative pressure drop threshold for detecting NPW for PT2
     NPW_THR_PT3 = 21,  //  negative pressure drop threshold for detecting NPW for PT3
-    NPW_THR_PT4 = 22   //  negative pressure drop threshold for detecting NPW for PT4
+    NPW_THR_PT4 = 22,   //  negative pressure drop threshold for detecting NPW for PT4
+    INVALID_COMMAND
 };
 
 class CommandMsg {
