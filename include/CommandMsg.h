@@ -10,6 +10,9 @@
 
 #include <cstdint>
 
+#define COMMAND_KEY "command"
+#define VALUE_KEY "value"
+
 enum CommandRegister {
     UNINITIALIZED_CMD = 0,
     NPW_NUM_PACK = 1, //  In case communications are lost, each edge device will store this many packets.
