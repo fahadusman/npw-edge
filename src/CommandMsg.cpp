@@ -7,16 +7,20 @@
 
 #include "CommandMsg.h"
 
+#include <glog/logging.h>
+
 CommandMsg::CommandMsg() {
-    command = INVALID_CMD;
+    command = UNINITIALIZED_CMD;
     data = 0;
 }
 CommandMsg::CommandMsg(CommandRegister cmd, uint32_t d){
-    if (cmd <= NPW_THR_PT4) {   //need to come up with a better condition.
+    LOG(INFO) << "New command message, cmd: " << cmd << " data: " << d;
+    if (cmd >= UNINITIALIZED_CMD and cmd < INVALID_COMMAND) {
         command = cmd;
     }
     else {
-        command = INVALID_CMD;
+        command = INVALID_COMMAND;
+        LOG(WARNING) << "Received invalid command";
     }
     data = d;
 }
