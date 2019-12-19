@@ -16,6 +16,7 @@ class StationEdgeDevice {
 public:
     StationEdgeDevice();
     virtual ~StationEdgeDevice();
+    void processIncomingCommand(CommandMsg * incomingCommand);
 protected:
     std::list<Sensor *> sensorsList;  //List of PTs and TTs
     communicator * commPtr;

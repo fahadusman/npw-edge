@@ -84,6 +84,8 @@ public:
     void connect();
     void disconnect();
     void sendMessage(const char * message, const unsigned int length) override;
+    void processIncomingMessage(const char * message, const int length) override;
+
     virtual void sendQueuedMessagesThread() override;
     ~MqttCommunicator();
     void subscribe() override;

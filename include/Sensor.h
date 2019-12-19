@@ -14,6 +14,8 @@
 #include "communicator.h"
 #include "CommandMsg.h"
 
+class communicator;
+
 class Sensor {
 public:
     virtual ~Sensor() = 0;
@@ -36,6 +38,16 @@ protected:
 
 inline Sensor::~Sensor() {
     // disconnect from sensor and close the socket
+    try{
+        while (not incomingCommandQueue.empty()){
+            CommandMsg * c = incomingCommandQueue.front();
+            delete c;
+            incomingCommandQueue.pop();
+        }
+    }
+    catch (const std::exception & e) {
+        LOG(ERROR) << "Exception: " << e.what();
+    }
 }
 
 #endif /* INCLUDE_SENSOR_H_ */

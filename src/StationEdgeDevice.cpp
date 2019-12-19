@@ -7,6 +7,8 @@
 
 #include <StationEdgeDevice.h>
 
+#include <glog/logging.h>
+
 StationEdgeDevice::StationEdgeDevice() {
     LOG(INFO) << "StationEdgeDevice constructor";
     commPtr = new MqttCommunicator(this);
@@ -16,6 +18,12 @@ StationEdgeDevice::StationEdgeDevice() {
     sensorPtr->startNpwThread();
     sensorsList.push_back(sensorPtr);
 
+}
+
+void StationEdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
+    for (Sensor * sensorPtr : sensorsList) {
+        sensorPtr->enqueueCommand(incomingCommand);
+    }
 }
 
 StationEdgeDevice::~StationEdgeDevice() {
