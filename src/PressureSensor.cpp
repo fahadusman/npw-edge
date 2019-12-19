@@ -102,7 +102,7 @@ void PressureSensor::initializeSensor(){
 
 PressureSensor::~PressureSensor() {
 	// disconnect from sensor and close the socket
-	// stop npwThread
+    stopNpwThread();
 	return;
 }
 
