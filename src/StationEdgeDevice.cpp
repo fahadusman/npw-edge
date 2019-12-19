@@ -9,7 +9,7 @@
 
 StationEdgeDevice::StationEdgeDevice() {
     LOG(INFO) << "StationEdgeDevice constructor";
-    commPtr = new MqttCommunicator();
+    commPtr = new MqttCommunicator(this);
     commPtr->connect();
 
     PressureSensor * sensorPtr = new PressureSensor("/dev/ttyUSB0", commPtr);

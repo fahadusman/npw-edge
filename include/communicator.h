@@ -16,17 +16,21 @@
 
 #include "glog/logging.h"
 
+class StationEdgeDevice;
+
 class communicator{
 protected:
     std::mutex transmitQueueMutex;
 	std::map<uint32_t, CommDataBuffer* > transmitQueue;
     std::thread * sendMessagesThreadPtr;
     std::chrono::duration<int,std::milli> sendMessagesThreadLoopInterval;
+    StationEdgeDevice * edgeDevicePtr;
 
 public:
-	communicator(){
+	communicator(StationEdgeDevice * d) {
         sendMessagesThreadPtr = NULL;
         sendMessagesThreadLoopInterval = std::chrono::milliseconds(100);
+        edgeDevicePtr = d;
 	}
 	virtual void sendMessage(const char * message, const unsigned int length) = 0;
 	virtual int enqueueMessage(CommDataBuffer * buff);
