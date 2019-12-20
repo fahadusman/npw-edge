@@ -11,6 +11,9 @@
 #include <queue>
 #include <mutex>
 #include <exception>
+
+#include <glog/logging.h>
+
 #include "communicator.h"
 #include "CommandMsg.h"
 
@@ -35,19 +38,5 @@ protected:
     std::queue <CommandMsg *> incomingCommandQueue;
     std::mutex commandQueueMutex;
 };
-
-inline Sensor::~Sensor() {
-    // disconnect from sensor and close the socket
-    try{
-        while (not incomingCommandQueue.empty()){
-            CommandMsg * c = incomingCommandQueue.front();
-            delete c;
-            incomingCommandQueue.pop();
-        }
-    }
-    catch (const std::exception & e) {
-        LOG(ERROR) << "Exception: " << e.what();
-    }
-}
 
 #endif /* INCLUDE_SENSOR_H_ */

@@ -25,6 +25,22 @@ void Sensor::enqueueCommand(CommandMsg * cmd){
     }
 }
 
+inline Sensor::~Sensor() {
+    // disconnect from sensor and close the socket
+    try{
+        std::lock_guard<std::mutex> guard(commandQueueMutex);
+        while (not incomingCommandQueue.empty()){
+            CommandMsg * c = incomingCommandQueue.front();
+            LOG(INFO) << "Deleting command: " << c->getCommand();
+            delete c;
+            incomingCommandQueue.pop();
+        }
+    }
+    catch (const std::exception & e) {
+        LOG(ERROR) << "Exception: " << e.what();
+    }
+}
+
 CommandMsg * Sensor::dequeueCommand() {
     try {
         std::lock_guard<std::mutex> guard(commandQueueMutex);
