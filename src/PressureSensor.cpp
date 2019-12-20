@@ -7,12 +7,13 @@
 
 
 #include "PressureSensor.h"
-#include "simulatedValues.h"
-#include "PeriodicValue.h"
 
 #include <iostream>
 #include <new>
 #include <math.h>
+
+#include "simulatedValues.h"
+#include "PeriodicValue.h"
 
 //this function has to be called after adding a new value to the circular buffer
 //and before removing the older value.
@@ -32,7 +33,6 @@ void PressureSensor::updateMovingAverages() {
 
 NpwBuffer* PressureSensor::createNpwBuffer(){
 	size_t circularBufferLength = sensorReadingCircularBuffer.size();
-//	for (auto i:sensorReadingCircularBuffer) {i->print();}
 
 	LOG(INFO) << "createNewNpwBuffer, circularBufferLength:" << circularBufferLength << "\tNPW buffer len:" << npwBufferLength;
 
@@ -52,19 +52,13 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 	}
 
 	for (int i = 0; startIndex + i < circularBufferLength; i++){
-//		newNpwBuffer[i] = sensorReadingCircularBuffer[startIndex+i]->value;
 		newNpwBufferPtr->insertAt(i, sensorReadingCircularBuffer[startIndex+i]->value);
-
 	}
 
 	return newNpwBufferPtr;
 }
 
 double PressureSensor::readSensorValueDummy(){
-//	static readingType v =  0.025;
-//	std::this_thread::sleep_for(std::chrono::milliseconds(4));
-//	return v+=0.0000001; //TODO: This is for testing only, remove this later
-
 	static int i = 0;
 	static unsigned int totalValues = sizeof (simulatedValues)/sizeof(int);
 	return (double(simulatedValues[i++ % totalValues]))/100000;
@@ -106,15 +100,6 @@ PressureSensor::~PressureSensor() {
 	return;
 }
 
-//PressureSensor::PressureSensor() {
-//	npwThreadPtr = NULL;
-//	circularBufferLength = kDefaultCircularBufferLength;
-//	readingIntervalMs = kDefReadingIntervalMs;
-//	recodringValues = false;
-//	npwBufferLength = kDefNpwBufferLength;
-//	initializeSensor();
-//}
-
 PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
         Sensor(cPtr), sPort(portName, kDefaultBaudRate, kDefaultParity,
                 kDefaultBlocking) {
@@ -126,7 +111,7 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
 	if (not commPtr){
 	    LOG(FATAL) << "commPtr is null.";
 	}
-//	PressureSensor();
+
 	npwThreadPtr = NULL;
 	circularBufferLength = kDefaultCircularBufferLength;
 	readingIntervalMs = kDefReadingIntervalMs;
@@ -182,7 +167,6 @@ void PressureSensor::createNPWBuffer(
 void PressureSensor::updateNPWState(std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint){
 	static bool wasThresholdExceeded = false;
 	bool isThresholdExceeded = fabs(firstAverage - secondAverage) > npwDetectionthreshold;
-//	LOG_IF(INFO, isThresholdExceeded) << "Threshold exceeded";
 	LOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
 			"\tisThresholdExceeded: " << isThresholdExceeded << "\tDeltaP: " << firstAverage - secondAverage;
 	if ((not wasThresholdExceeded) and isThresholdExceeded){
@@ -222,7 +206,6 @@ uint64_t PressureSensor::sendPeriodicValue(uint64_t currentTime,
 }
 
 void PressureSensor::npwThread(){
-//	std::chrono::time_point<std::chrono::high_resolution_clock> readingTimepoint;
 	DLOG(INFO) << "starting npw thread\n";
 	double currentValue = 0;
 	__uint64_t previousPeriodicValueTransmitTime = 0;
@@ -302,10 +285,6 @@ void PressureSensor::fillCircularBufferWithDummyValues(){
 	}
 
 	unsigned int i = 0;
-//	for (auto x:sensorReadingCircularBuffer){
-//		std::cout << i++ << ": ";
-//		x->print();
-//	}
 
 	unsigned int end = sensorReadingCircularBuffer.size();
 	double firstSum = 0.0;

@@ -7,14 +7,14 @@
  *      Author: Fahad Usman
  */
 
-#include "serialPort.h"
 #include <string>
-#include "Sensor.h"
-#include "SensorReading.h"
-#include "NpwBuffer.h"
 #include <vector>
 #include <thread>
-#include <new>
+
+#include "Sensor.h"
+#include "serialPort.h"
+#include "SensorReading.h"
+#include "NpwBuffer.h"
 
 //const char * kDefaultPTPortName = "/dev/ttyM0";
 const unsigned char kKellerInitCommand[] = {1, 48, 52, 0};
