@@ -59,7 +59,7 @@ private:
 	double readSensorValueDummy();
     uint64_t sendPeriodicValue(uint64_t currentTime,
             uint64_t previousPeriodicValueTransmitTime,
-            double previousPeriodicVal, double currentValue);
+            double & previousPeriodicVal, const double & currentValue);
 
 	void fillCircularBufferWithDummyValues();
     void createNPWBuffer(
