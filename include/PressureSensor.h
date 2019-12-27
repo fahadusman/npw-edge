@@ -56,7 +56,7 @@ private:
 	unsigned int t1Ms, t2Ms; // the NPW buffer will contain the pressure values for T1 duration before the event and for T2 duration after the event
 	unsigned int totalNPWsDetected;
 
-	double readSensorValueDummy();
+	uint32_t readSensorValueDummy();
     uint64_t sendPeriodicValue(uint64_t currentTime,
             uint64_t previousPeriodicValueTransmitTime,
             double & previousPeriodicVal, const double & currentValue);
