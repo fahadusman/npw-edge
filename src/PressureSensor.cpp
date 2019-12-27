@@ -14,6 +14,9 @@
 
 #include "simulatedValues.h"
 #include "PeriodicValue.h"
+#include "DevConfig.h"
+
+const unsigned int kDefaultCircularBufferLength = kDcNumSamples2ndAvg.def + kDcStartSample2ndAvg.def * (1000/kDefReadingIntervalMs);
 
 //this function has to be called after adding a new value to the circular buffer
 //and before removing the older value.
@@ -58,11 +61,13 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 	return newNpwBufferPtr;
 }
 
-double PressureSensor::readSensorValueDummy(){
+uint32_t PressureSensor::readSensorValueDummy(){
 	static int i = 0;
 	static unsigned int totalValues = sizeof (simulatedValues)/sizeof(int);
-	return (double(simulatedValues[i++ % totalValues]))/100000;
+	return (simulatedValues[i++ % totalValues])/100;
 }
+
+// Returns a 32-bt integer scaled by KPTScalingFactor
 
 double PressureSensor::readSensorValue(){
     sPort.writeBuffer(kKellerPropReadCommand, sizeof kKellerPropReadCommand);
@@ -82,7 +87,7 @@ double PressureSensor::readSensorValue(){
     resPtr[2] = response[3];
     resPtr[3] = response[2];
 
-	return result;
+	return double ((result + KPTOffset) * KPTScalingFactor);
 }
 
 void PressureSensor::initializeSensor(){
@@ -112,6 +117,10 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
 	    LOG(FATAL) << "commPtr is null.";
 	}
 
+    periodicValMinInterval = kDcMinTimePeriodic.def * 1000;
+    periodicValMaxInterval = kDcMaxTimePeriodic.def * 1000;
+    periodicValChangeThreshold = kDcOnChangThshPt.def;
+
 	npwThreadPtr = NULL;
 	circularBufferLength = kDefaultCircularBufferLength;
 	readingIntervalMs = kDefReadingIntervalMs;
@@ -124,11 +133,11 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
 
 	//The start and end of averages is index from the most recent value in the circular buffer
 	firstAverageStart 	= 0;	//first average starts at the most recent value.
-	firstAverageEnd 	= 150; 	//3s x 50 samples/s
+	firstAverageEnd 	= kDcNumSamples1stAvg.def; 	//3s x 50 = 150 samples/s
 	secondAverageStart 	= 250; 	//second average starts at t-5
 	secondAverageEnd 	= 1250; // second average ends at t-25
 
-	npwDetectionthreshold = kDefNpwThreshold; //threshold
+	npwDetectionthreshold = kDcNpwPtThsh.def; //threshold
 	currentNpwState = noDropDetected;
 	totalNPWsDetected = 0;
 
@@ -247,6 +256,9 @@ void PressureSensor::npwThread(){
 		wakeupTime -= std::chrono::nanoseconds((currentTimeNsCount%10000000)); //round it up to 10ms
 		LOG_FIRST_N(INFO, 10) << "wakeupTime: " <<
 				std::chrono::duration_cast<std::chrono::nanoseconds>(wakeupTime.time_since_epoch()).count();
+
+		processIncomingCommand();
+
 		std::this_thread::sleep_until(wakeupTime);
 	}
 
@@ -301,4 +313,64 @@ void PressureSensor::fillCircularBufferWithDummyValues(){
 	secondAverage = secondSum/(secondAverageEnd-secondAverageStart);
 
 	DLOG(INFO) << "firstAverage: " << firstAverage << "\tsecondAverage: " << secondAverage;
+}
+
+void PressureSensor::processIncomingCommand() {
+    try{
+        NpwBuffer* npwBufferPtr = NULL;
+        std::lock_guard<std::mutex> guard(commandQueueMutex);
+        if (not incomingCommandQueue.empty()){
+            CommandMsg * c = incomingCommandQueue.front();
+            LOG(INFO) << "Processing command: " << c->getCommand()
+                    << "\tData: " << c->getData();
+
+            switch (c->getCommand()) {
+            case MAX_TIME_PERIODIC:
+                if (c->getData() > kDcMaxTimePeriodic.min
+                        and c->getData() < kDcMaxTimePeriodic.max) {
+                    this->periodicValMaxInterval = c->getData() * 1000;
+                } else
+                    LOG(WARNING) << "MAX_TIME_PERIODIC value out of range: "
+                            << c->getData();
+                break;
+            case MIN_TIME_PERIODIC:
+                if (c->getData() > kDcMinTimePeriodic.min
+                        and c->getData() < kDcMinTimePeriodic.max) {
+                    this->periodicValMinInterval = c->getData() * 1000;
+                } else
+                    LOG(WARNING) << "MIN_TIME_PERIODIC value out of range: "
+                            << c->getData();
+                break;
+            case ON_CHANG_THSH_PT:
+                if (c->getData() > kDcOnChangThshPt.min
+                        and c->getData() < kDcOnChangThshPt.max) {
+                    this->periodicValChangeThreshold = c->getData();
+                } else
+                    LOG(WARNING) << "ON_CHANG_THSH_PT value out of range: "
+                            << c->getData();
+                break;
+            case TEST_FLAG:
+                npwBufferPtr = createNpwBuffer();
+                if (npwBufferPtr != NULL) {
+                    commPtr->enqueueMessage(npwBufferPtr);
+                    LOG(INFO) << "Received TEST_FLAG, force creating NPW Buffer";
+                }
+                break;
+            case ACK_NPW_BUFF:
+                LOG(INFO) << "Acknowledgment for NPW packet received: " << c->getData();
+//                TODO: Remove NPW Buffer from transmit queue.
+                break;
+
+            default:
+                LOG(WARNING) << "Unhandled command received.";
+            }
+
+            incomingCommandQueue.pop();
+            delete c;
+        }
+    }
+    catch (const std::exception & e) {
+        LOG(ERROR) << "Exception: " << e.what();
+    }
+
 }

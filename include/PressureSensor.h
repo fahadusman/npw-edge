@@ -21,9 +21,14 @@ const unsigned char kKellerInitCommand[] = {1, 48, 52, 0};
 const unsigned char kKellerStandardReadCommand[] = {1, 3, 0, 2, 0, 2, 101, 203};
 const unsigned char kKellerPropReadCommand[] = {1, 73, 1, 80, 214};
 
-const unsigned int kDefReadingIntervalMs = 20; //must be divisible by 1000 (ms)
-const unsigned int kDefaultCircularBufferLength = 25 * 1000/kDefReadingIntervalMs;
-const double kDefNpwThreshold = 0.004;
+const unsigned int kDefReadingIntervalMs = 20; //must be a factor of 1000 (ms)
+
+const double KPTOffset = +1; // This is the initial offset applied to the value
+                             // obtained from PT to compensate for negative values
+                             // as they have to be transmitted as unsigned integers.
+const double KPTScalingFactor = 1000; // for -1 to 100 PSI pressure range, and uint16
+                             // it should be 648.
+
 
 enum NpwState {noDropDetected, firstDropDetected, secondDropDetected};
 
@@ -64,6 +69,7 @@ private:
 	void fillCircularBufferWithDummyValues();
     void createNPWBuffer(
             const std::chrono::time_point<std::chrono::high_resolution_clock>& currentTimePoint);
+    void processIncomingCommand();
 
 public:
 	void npwThread();

@@ -15,6 +15,7 @@ CommDataBuffer::CommDataBuffer(){
 	length = 0;
 	bufferId = bufferCount++;
 	sensorId = "";
+	expiryTime = 0;
 }
 
 //std::string CommDataBuffer::serializeJson(){

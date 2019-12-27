@@ -9,7 +9,9 @@
 #define INCLUDE_NPWBUFFER_H_
 
 #include <glog/logging.h>
+
 #include "CommDataBuffer.h"
+#include "DevConfig.h"
 
 const unsigned int kDefNpwBufferLength = 500; //TODO: it should be samples per second (50) x npw buffer duration (10s) = 500,
 const unsigned int kDefT1Ms = 3000;
