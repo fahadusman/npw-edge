@@ -7,12 +7,8 @@
  *  Created on: Sep 25, 2019
  *      Author: Fahad Usman
  */
-#include <string>
-#include <queue>
-#include <mutex>
-#include <exception>
 
-#include <glog/logging.h>
+#include <queue>
 
 #include "communicator.h"
 #include "CommandMsg.h"
@@ -21,7 +17,7 @@ class communicator;
 
 class Sensor {
 public:
-    virtual ~Sensor() = 0;
+    virtual ~Sensor();
     virtual double readSensorValue() = 0;
     virtual void initializeSensor() = 0;
     Sensor(communicator * cptr);

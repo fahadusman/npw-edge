@@ -6,6 +6,13 @@
  */
 #include "Sensor.h"
 
+#include <string>
+#include <mutex>
+#include <exception>
+
+#include <glog/logging.h>
+
+
 Sensor::Sensor(communicator * cptr) {
     currentValue = 0;
     periodicValChangeThreshold = 0;
@@ -25,7 +32,7 @@ void Sensor::enqueueCommand(CommandMsg * cmd){
     }
 }
 
-inline Sensor::~Sensor() {
+Sensor::~Sensor() {
     // disconnect from sensor and close the socket
     try{
         std::lock_guard<std::mutex> guard(commandQueueMutex);
