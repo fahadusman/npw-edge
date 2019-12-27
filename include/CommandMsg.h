@@ -41,14 +41,14 @@ enum CommandRegister {
 class CommandMsg {
 private:
     CommandRegister command; //this is same as modbus register address
-    uint32_t data;
+    int32_t data;
 public:
     CommandMsg();
     CommandMsg(CommandRegister cmd, uint32_t d);
     CommandRegister getCommand() {
         return command;
     }
-    uint32_t getData() {
+    int32_t getData() {
         return data;
     }
 };
