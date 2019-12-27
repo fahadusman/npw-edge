@@ -202,7 +202,7 @@ uint64_t PressureSensor::sendPeriodicValue(uint64_t currentTime,
         uint64_t previousPeriodicValueTransmitTime,
         double & previousPeriodicVal, const double & currentValue) {
     if (((currentTime >= previousPeriodicValueTransmitTime + periodicValMinInterval)
-            && (fabs(previousPeriodicVal - currentValue) > periodicValChangeThreshold))
+            && (fabs(previousPeriodicVal - currentValue) >= periodicValChangeThreshold))
             || currentTime >= previousPeriodicValueTransmitTime + periodicValMaxInterval) {
 
         LOG_EVERY_N(INFO, 10) << "sending periodic value: " << currentValue;
