@@ -12,6 +12,26 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
+const unsigned int kDefByteArrayLength = kDefNpwBufferLength*2 + kHdrLen;
+NpwBuffer::NpwBuffer() :
+        readingList { } {
+    timeStamp = 0;
+}
+
+NpwBuffer::NpwBuffer(uint64_t ts) :
+        readingList { } {
+    timeStamp = ts;
+    LOG(INFO) << "new NPW Buffer, timeStamp: " << timeStamp << ", id: "
+            << bufferId;
+}
+
+void NpwBuffer::insertAt(const unsigned int position, readingType value) {
+    if (position >= kDefNpwBufferLength) {
+        LOG(FATAL) << "array index out of bound. index=" << position;
+    }
+    readingList[position] = value;
+}
+
 inline unsigned char decToBcd(const unsigned char dec) {
     return ((dec % 100) / 10) * 16 + dec % 10;
 }

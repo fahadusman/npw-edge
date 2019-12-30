@@ -11,7 +11,6 @@
 #include <glog/logging.h>
 
 #include "CommDataBuffer.h"
-#include "DevConfig.h"
 
 const unsigned int kDefNpwBufferLength = 500; //TODO: it should be samples per second (50) x npw buffer duration (10s) = 500,
 const unsigned int kDefT1Ms = 3000;
@@ -19,7 +18,6 @@ const unsigned int kDefT2Ms = 7000;
 
 const double kScalingFactor = 1000;
 const unsigned int kHdrLen = 8;
-const unsigned int kDefByteArrayLength = kDefNpwBufferLength*2 + kHdrLen;
 
 typedef double readingType;
 
@@ -30,31 +28,11 @@ public:
     uint64_t getTimestamp() {
         return timeStamp;
     }
-    NpwBuffer() :
-            readingList { } {
-        timeStamp = 0;
-    }
-    NpwBuffer(uint64_t ts) :
-            readingList { } {
-        timeStamp = ts;
-        LOG(INFO) << "new NPW Buffer, timeStamp: " << timeStamp << ", id: " << bufferId;
-    }
-    readingType & operator [](const unsigned int index) {
-        if (index >= kDefNpwBufferLength) {
-            LOG(FATAL) << "array index out of bound. index=" << index;
-            return readingList[0];
-        }
-        return readingList[index];
-    }
 
-    void insertAt(const unsigned int position, readingType value) {
-        if (position >= kDefNpwBufferLength) {
-            LOG(FATAL) << "array index out of bound. index=" << position;
-        }
-        readingList[position] = value;
-    }
-
+    NpwBuffer();
+    NpwBuffer(uint64_t ts);
     unsigned char * createByteArray();
+    void insertAt(const unsigned int position, readingType value);
 
     std::string serializeJson() override;
     void * serialize(int & length) override;
