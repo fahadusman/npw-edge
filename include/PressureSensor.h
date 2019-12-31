@@ -45,7 +45,7 @@ private:
 	std::thread * npwThreadPtr;
 	NpwBuffer * createNpwBuffer();
 	void updateMovingAverages();
-	void updateNPWState(std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint);
+	void updateNPWState();
 
 	unsigned int firstAverageStart;
 	unsigned int firstAverageEnd;
@@ -57,8 +57,8 @@ private:
 	readingType npwDetectionthreshold;
 
 	NpwState currentNpwState;
-	std::chrono::time_point<std::chrono::high_resolution_clock> npwBufferCreationTime; //this would be the time pint in future to create npw buffer
-	unsigned int t1Ms, t2Ms; // the NPW buffer will contain the pressure values for T1 duration before the event and for T2 duration after the event
+    unsigned int samplesCountBeforeDetection, samplesCountAfterDetection; //Number of sample to buffer before/after NPW detection
+    int remainingSamples;
 	unsigned int totalNPWsDetected;
 
 	uint32_t readSensorValueDummy();
@@ -67,8 +67,7 @@ private:
             double & previousPeriodicVal, const double & currentValue);
 
 	void fillCircularBufferWithDummyValues();
-    void createNPWBuffer(
-            const std::chrono::time_point<std::chrono::high_resolution_clock>& currentTimePoint);
+    void createNPWBuffer();
     void processIncomingCommand();
 
 public:

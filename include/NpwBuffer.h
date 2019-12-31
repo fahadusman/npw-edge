@@ -13,10 +13,7 @@
 #include "CommDataBuffer.h"
 
 const unsigned int kDefNpwBufferLength = 500; //TODO: it should be samples per second (50) x npw buffer duration (10s) = 500,
-const unsigned int kDefT1Ms = 3000;
-const unsigned int kDefT2Ms = 7000;
 
-const double kScalingFactor = 1000;
 const unsigned int kHdrLen = 8;
 
 typedef double readingType;

@@ -141,39 +141,39 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
 	currentNpwState = noDropDetected;
 	totalNPWsDetected = 0;
 
-	t1Ms = kDefT1Ms;
-	t2Ms = kDefT2Ms;
+	samplesCountBeforeDetection = kDcNpwSampleBefore.def;
+	samplesCountAfterDetection = kDcNpwSampleAfter.def;
+	remainingSamples = 0;
 
 	fillCircularBufferWithDummyValues();
-
-	npwBufferCreationTime = std::chrono::high_resolution_clock::now();
-
 }
 
 /*
  * Creates a new NPW buffer after a pressure drop is detected and the required
  * time is passed after the initial detection time.
  */
-void PressureSensor::createNPWBuffer(
-        const std::chrono::time_point<std::chrono::high_resolution_clock>& currentTimePoint) {
-    if (currentNpwState != noDropDetected
-            && currentTimePoint > npwBufferCreationTime) {
-        LOG(INFO) << "Pressure Drop Detected";
-        NpwBuffer* npwBufferPtr = createNpwBuffer();
-        commPtr->enqueueMessage(npwBufferPtr);
-        LOG(INFO) << "new NPW Buffer created at: "
-                << npwBufferPtr->getTimestamp();
-        if (currentNpwState == firstDropDetected) {
-            currentNpwState = noDropDetected;
-        } else if (currentNpwState == secondDropDetected) {
-            currentNpwState = firstDropDetected;
-            npwBufferCreationTime = currentTimePoint
-                    + std::chrono::milliseconds(t1Ms + t2Ms);
+void PressureSensor::createNPWBuffer() {
+    if (currentNpwState != noDropDetected) {
+        if (remainingSamples <= 0) {
+            NpwBuffer* npwBufferPtr = createNpwBuffer();
+            commPtr->enqueueMessage(npwBufferPtr);
+            LOG(INFO) << "new NPW Buffer created at: "
+                    << npwBufferPtr->getTimestamp();
+
+            if (currentNpwState == firstDropDetected) {
+                currentNpwState = noDropDetected;
+            } else if (currentNpwState == secondDropDetected) {
+                currentNpwState = firstDropDetected;
+                remainingSamples = samplesCountBeforeDetection
+                        + samplesCountAfterDetection;
+            }
+        } else {
+            remainingSamples--;
         }
     }
 }
 
-void PressureSensor::updateNPWState(std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint){
+void PressureSensor::updateNPWState(){
 	static bool wasThresholdExceeded = false;
 	bool isThresholdExceeded = fabs(firstAverage - secondAverage) > npwDetectionthreshold;
 	LOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
@@ -183,7 +183,7 @@ void PressureSensor::updateNPWState(std::chrono::time_point<std::chrono::high_re
 		switch (currentNpwState) {
 		case noDropDetected:
 			currentNpwState = firstDropDetected;
-			npwBufferCreationTime = currentTimePoint + std::chrono::milliseconds(t2Ms);
+			remainingSamples = samplesCountAfterDetection;
 			break;
 		case firstDropDetected:
 			currentNpwState = secondDropDetected;
@@ -226,7 +226,7 @@ void PressureSensor::npwThread(){
 		std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint =
 				std::chrono::high_resolution_clock::now();
 
-		createNPWBuffer(currentTimePoint);
+		createNPWBuffer();
 
 //		currentValue = readSensorValue();
 		currentValue = readSensorValueDummy();
@@ -240,7 +240,7 @@ void PressureSensor::npwThread(){
                 currentValue);
 
 		updateMovingAverages();
-		updateNPWState(currentTimePoint);
+		updateNPWState();
 
 		if(sensorReadingCircularBuffer.size() > circularBufferLength){
 			LOG_FIRST_N(INFO, 1) << "Circular Buffer full.";
@@ -284,7 +284,7 @@ void PressureSensor::stopNpwThread(){
 void PressureSensor::fillCircularBufferWithDummyValues(){
 	LOG(WARNING) << "initializing circular buffer with dummy values";
 
-	readingType v = 61.482;
+	readingType v = 61482;
 	SensorReading<double> * sensorReadingPtr = NULL;
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint =
 			std::chrono::high_resolution_clock::now() - std::chrono::seconds(25);
