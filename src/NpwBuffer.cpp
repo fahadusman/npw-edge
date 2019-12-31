@@ -12,7 +12,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
-const unsigned int kDefByteArrayLength = kDefNpwBufferLength*2 + kHdrLen;
+const unsigned int kDefByteArrayLength = kDefNpwBufferLength*2 + kHdrLen;   //TODO: Make this dynamic
 NpwBuffer::NpwBuffer() :
         readingList { } {
     timeStamp = 0;
@@ -76,9 +76,9 @@ unsigned char * NpwBuffer::createByteArray() {
     byteArray[7] = decToBcd((timeStamp % 10) * 10 + npwTime->tm_wday + 1);
 
     for (unsigned int i = 0; i < kDefNpwBufferLength; i++) {
-        int scaledVal = kScalingFactor * readingList[i];
-        byteArray[2 * i + kHdrLen] = scaledVal >> 8;
-        byteArray[2 * i + kHdrLen + 1] = scaledVal & 0xFF;
+        int currentVal = readingList[i];
+        byteArray[2 * i + kHdrLen] = currentVal >> 8;
+        byteArray[2 * i + kHdrLen + 1] = currentVal & 0xFF;
     }
     return byteArray;
 }
