@@ -134,8 +134,8 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
 	//The start and end of averages is index from the most recent value in the circular buffer
 	firstAverageStart 	= 0;	//first average starts at the most recent value.
 	firstAverageEnd 	= kDcNumSamples1stAvg.def; 	//3s x 50 = 150 samples/s
-	secondAverageStart 	= 250; 	//second average starts at t-5
-	secondAverageEnd 	= 1250; // second average ends at t-25
+	secondAverageStart 	= kDcStartSample2ndAvg.def; 	//second average starts at t-5
+	secondAverageEnd 	= kDcNumSamples2ndAvg.def + kDcStartSample2ndAvg.def; // second average ends at t-25
 
 	npwDetectionthreshold = kDcNpwPtThsh.def; //threshold
 	currentNpwState = noDropDetected;
