@@ -19,7 +19,7 @@
 #include "communicator.h"
 #include <glog/logging.h>
 
-const std::string MQTT_DFLT_SERVER_ADDRESS { "10.1.17.71:32183" };//{ "tcp://localhost:1883" };
+const std::string MQTT_DFLT_SERVER_ADDRESS { "tcp://localhost:1883" };
 const std::string MQTT_DFLT_CLIENT_ID { "NPW_APP" };
 const std::string MQTT_DFLT_PERSIST_DIR { "./persist" };
 //const char* MQTT_DFLT_LWT_PAYLOAD = "Last will and testament.";
