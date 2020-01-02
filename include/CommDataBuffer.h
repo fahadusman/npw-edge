@@ -33,6 +33,8 @@ public:
     uint32_t getBufferId() {
         return bufferId;
     }
+    void setExpiryTime(uint64_t et);
+    uint64_t getExpiryTime();
     virtual ~CommDataBuffer() {
     }
 };
