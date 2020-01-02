@@ -26,6 +26,8 @@ protected:
     std::chrono::duration<int,std::milli> sendMessagesThreadLoopInterval;
     StationEdgeDevice * edgeDevicePtr;
 
+    int32_t npwPacketsToBuffer;
+
 public:
 	communicator(StationEdgeDevice * d) {
         sendMessagesThreadPtr = NULL;
@@ -40,6 +42,7 @@ public:
 	virtual void disconnect() = 0;
 	virtual void sendQueuedMessagesThread() = 0;
 	virtual void subscribe() = 0;
+    void setNpwPacketsToBuffer(int32_t v);
 };
 
 

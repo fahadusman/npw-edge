@@ -7,3 +7,11 @@ int communicator::enqueueMessage(CommDataBuffer * buff){
     transmitQueue[buff->getBufferId()] = buff;
     return 0;
 }
+
+void communicator::setNpwPacketsToBuffer(int32_t v) {
+    if (v > kDcNpwNumPack.min and v < kDcNpwNumPack.max) {
+        npwPacketsToBuffer = v;
+    } else {
+        LOG(WARNING) << "NPW_EXP_TIME value out of range";
+    }
+}
