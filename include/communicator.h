@@ -29,11 +29,7 @@ protected:
     int32_t npwPacketsToBuffer;
 
 public:
-	communicator(StationEdgeDevice * d) {
-        sendMessagesThreadPtr = NULL;
-        sendMessagesThreadLoopInterval = std::chrono::milliseconds(100);
-        edgeDevicePtr = d;
-	}
+	communicator(StationEdgeDevice * d);
 	virtual void sendMessage(const char * message, const unsigned int length) = 0;
 	virtual void processIncomingMessage(const char * message, const int length) = 0;
 	virtual int enqueueMessage(CommDataBuffer * buff);

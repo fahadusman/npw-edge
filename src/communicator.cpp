@@ -1,5 +1,13 @@
 #include "communicator.h"
 #include "StationEdgeDevice.h"
+#include "DevConfig.h"
+
+communicator::communicator(StationEdgeDevice * d) {
+    sendMessagesThreadPtr = NULL;
+    sendMessagesThreadLoopInterval = std::chrono::milliseconds(100);
+    edgeDevicePtr = d;
+    npwPacketsToBuffer = kDcNpwNumPack.def;
+}
 
 int communicator::enqueueMessage(CommDataBuffer * buff){
     LOG(INFO) << "Going to insert in transmission queue with t: " << buff->getTimestamp() << "\t Queue size: " << transmitQueue.size();
