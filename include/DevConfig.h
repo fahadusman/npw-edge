@@ -14,7 +14,7 @@ struct DevConfig {
     int32_t min, max, def;
 };
 
-DevConfig kDcNpwNumPack       { 1, 50, 5 },
+const DevConfig kDcNpwNumPack       { 1, 50, 5 },
         kDcNpwExpiryTime      { 1, 600, 60 },
         kDcMaxTimePeriodic    { 5, 300, 10 },
         kDcMinTimePeriodic    { 1, 60, 2 },
