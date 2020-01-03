@@ -49,6 +49,12 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 			NpwBuffer(sensorReadingCircularBuffer[startIndex]->timestampMS);
 	sensorReadingCircularBuffer[startIndex]->print();
 
+	uint64_t currentTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now().time_since_epoch()).count();
+
+	newNpwBufferPtr->setExpiryTime(npwBufferExpiryTime + currentTime);
+
 	if (!newNpwBufferPtr){
 		LOG(FATAL) << "Unable to allocate memory npw buffer";
 		return newNpwBufferPtr;
@@ -144,6 +150,8 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
 	samplesCountBeforeDetection = kDcNpwSampleBefore.def;
 	samplesCountAfterDetection = kDcNpwSampleAfter.def;
 	remainingSamples = 0;
+
+	npwBufferExpiryTime = kDcNpwExpiryTime.def;
 
 	fillCircularBufferWithDummyValues();
 }
@@ -347,6 +355,15 @@ void PressureSensor::processIncomingCommand() {
                     this->periodicValChangeThreshold = c->getData();
                 } else
                     LOG(WARNING) << "ON_CHANG_THSH_PT value out of range: "
+                            << c->getData();
+                break;
+            case NPW_EXP_TIME:
+                if (c->getData() > kDcNpwExpiryTime.min
+                        and c->getData() < kDcNpwExpiryTime.max) {
+                    //Expiry time would be sent in minutes, we need to convert it to milliseconds
+                    this->npwBufferExpiryTime = c->getData() * 60 * 1000;
+                } else
+                    LOG(WARNING) << "NPW_EXP_TIME value out of range: "
                             << c->getData();
                 break;
             case TEST_FLAG:
