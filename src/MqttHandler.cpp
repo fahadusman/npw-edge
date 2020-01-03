@@ -6,6 +6,7 @@
  */
 #include "MqttHandler.h"
 
+#include "chrono"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
@@ -86,9 +87,20 @@ void MqttCommunicator::sendQueuedMessagesThread() {
         }
 
         if (commPtr != NULL) {
-            LOG(INFO) << "Sending Message with t: " << commPtr->getTimestamp();
-            std::string jsonMessage = commPtr->serializeJson();
-            sendMessage(jsonMessage.c_str(), jsonMessage.length());
+            uint64_t currentTime =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::system_clock::now().time_since_epoch()).count();
+
+            if (currentTime > commPtr->getExpiryTime()) {
+                LOG(WARNING) << "Discarding expired message, "
+                        << commPtr->getBufferId() << "t: "
+                        << commPtr->getTimestamp();
+            } else {
+                LOG(INFO) << "Sending Message with t: "
+                        << commPtr->getTimestamp();
+                std::string jsonMessage = commPtr->serializeJson();
+                sendMessage(jsonMessage.c_str(), jsonMessage.length());
+            }
             delete commPtr;
             commPtr = NULL;
         }
