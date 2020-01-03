@@ -121,10 +121,19 @@ void MqttCommunicator::processIncomingMessage(const char * msg, const int len) {
             LOG(ERROR) << "Invalid JSON message received: ";
         } else if (doc.HasMember(COMMAND_KEY) and doc[COMMAND_KEY].IsInt()
                 and doc.HasMember(VALUE_KEY) and doc[VALUE_KEY].IsInt()) {
-            CommandMsg * cmd = new CommandMsg(
-                    static_cast<CommandRegister>(doc[COMMAND_KEY].GetInt()),
-                    doc[VALUE_KEY].GetInt());
-            edgeDevicePtr->processIncomingCommand(cmd);
+            CommandRegister command = static_cast<CommandRegister>(doc[COMMAND_KEY].GetInt());
+            int32_t value = doc[VALUE_KEY].GetInt();
+            switch (command) {
+            case NPW_NUM_PACK:
+                setNpwPacketsToBuffer(value);
+                break;
+            break;
+            default:
+                LOG(INFO) << "Passing incoming command to edge device";
+            CommandMsg * cmd = new CommandMsg(command, value);
+                edgeDevicePtr->processIncomingCommand(cmd);
+            }
+
         }
     } catch (const std::exception & exc) {
         LOG(ERROR) << "STD Exception: " << exc.what();
