@@ -42,12 +42,17 @@ void MqttCommunicator::connect() {
         isConnected = true;
     } catch (const mqtt::exception& exc) {
         LOG(FATAL) << "MQTT Exception: " << exc.what();
+        //TODO: Handle connection failure, reconnect etc.
         return;
     }
 }
 
 void MqttCommunicator::sendMessage(const char * message,
         const unsigned int length) {
+    if (not isConnected) {
+        LOG(FATAL) << "sendMessage: Mqtt client is not connected.";
+        return;
+    }
     LOG(INFO) << "Sending MQTT Message: " << message << "\ttopic: " << publishTopic
             << ", length: " << length;
     mqtt::delivery_token_ptr pubtok;
