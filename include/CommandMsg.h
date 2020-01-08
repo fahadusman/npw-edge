@@ -21,7 +21,7 @@ enum CommandRegister {
     MIN_TIME_PERIODIC = 4, //  The minimum time between periodic data is this value.
     ON_CHANG_THSH_PT = 5, //  The periodic pressure value will be sent only if it changes by this much value or if the max time exceeds
     ON_CHANG_THSH_TT = 7, //  The periodic temperature value will be sent only if it changes by this much value or if the max time exceeds
-    SAMPL_FREQ_NPW = 9, //  The sampling frequency of PT values for NPW detection.
+    SAMPLE_INTERVAL_NPW = 9, //  The sampling interval (in ms) of PT values for NPW detection (must be a multiple of 10ms.
     NUM_SAMPLES_1_AVG = 10, //  Number of Samples in 1st average for NPW detection.
     NUM_SAMPLES_2_AVG = 11, //  Number of Samples in 2nd average for NPW detection.
     START_SAMPLE_2_AVG = 12,   //  1st sample for 2nd average.

@@ -128,8 +128,7 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
     periodicValChangeThreshold = kDcOnChangThshPt.def;
 
 	npwThreadPtr = NULL;
-	circularBufferLength = kDefaultCircularBufferLength;
-	readingIntervalMs = kDefReadingIntervalMs;
+	readingIntervalMs = kDcSampleIntervalNpw.def;
 	recodringValues = false;
 	npwBufferLength = kDefNpwBufferLength;
 	initializeSensor();

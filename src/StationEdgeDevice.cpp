@@ -42,7 +42,7 @@ void StationEdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
     case NPW_EXP_TIME:
     case TEST_FLAG:
 
-    case SAMPL_FREQ_NPW:
+    case SAMPLE_INTERVAL_NPW:
     case NUM_SAMPLES_1_AVG:
     case NUM_SAMPLES_2_AVG:
     case START_SAMPLE_2_AVG:
