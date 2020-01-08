@@ -35,7 +35,6 @@ enum NpwState {noDropDetected, firstDropDetected, secondDropDetected};
 class PressureSensor: public Sensor {
 private:
 	SerialPort sPort;
-	size_t circularBufferLength;
 	size_t npwBufferLength;
 	std::vector<SensorReading<readingType> *> sensorReadingCircularBuffer;
 	unsigned int readingIntervalMs;
@@ -51,6 +50,8 @@ private:
 	unsigned int firstAverageEnd;
 	unsigned int secondAverageStart;
 	unsigned int secondAverageEnd;
+
+	const unsigned int & circularBufferLength = secondAverageEnd;
 
 	readingType firstAverage;
 	readingType secondAverage;
