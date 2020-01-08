@@ -91,10 +91,12 @@ void MqttCommunicator::sendQueuedMessagesThread() {
                     std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::system_clock::now().time_since_epoch()).count();
 
-            if (currentTime > commPtr->getExpiryTime()) {
-                LOG(WARNING) << "Discarding expired message, "
-                        << commPtr->getBufferId() << "t: "
-                        << commPtr->getTimestamp();
+            if (0 != commPtr->getExpiryTime()
+                    and currentTime > commPtr->getExpiryTime()) {
+                LOG(WARNING) << "Discarding expired message, id: "
+                        << commPtr->getBufferId()
+                        << "\tt: " << commPtr->getTimestamp()
+                        << "\tExp time: " << commPtr->getExpiryTime();
             } else {
                 LOG(INFO) << "Sending Message with t: "
                         << commPtr->getTimestamp();
