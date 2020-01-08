@@ -128,6 +128,9 @@ void MqttCommunicator::processIncomingMessage(const char * msg, const int len) {
                 setNpwPacketsToBuffer(value);
                 break;
             break;
+            case ACK_NPW_BUFF:
+                removeMessageFromQueue(value);
+                break;
             default:
                 LOG(INFO) << "Passing incoming command to edge device";
             CommandMsg * cmd = new CommandMsg(command, value);
