@@ -215,6 +215,12 @@ void PressureSensor::createNPWBuffer() {
 
 void PressureSensor::updateNPWState(){
 	static bool wasThresholdExceeded = false;
+	if (circularBufferLength > sensorReadingCircularBuffer.size()) {
+	    LOG_EVERY_N(INFO, 50) << "Not enough values in Circular buffer yet, size: " << sensorReadingCircularBuffer.size();
+	    currentNpwState = noDropDetected;
+	    return;
+	}
+
 	bool isThresholdExceeded = fabs(firstAverage - secondAverage) > npwDetectionthreshold;
 	LOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
 			"\tisThresholdExceeded: " << isThresholdExceeded << "\tDeltaP: " << firstAverage - secondAverage;
