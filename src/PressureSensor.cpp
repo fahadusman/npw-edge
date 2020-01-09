@@ -317,6 +317,11 @@ void PressureSensor::npwThread(){
 
 void PressureSensor::startNpwThread(){
 	DLOG(INFO) << "PressureSensor::startNpwThread()";
+	if (npwThreadPtr != NULL) {
+	    LOG(INFO) << "Stopping previous NPW Thread before starting new one.";
+	    stopNpwThread();
+	    npwThreadPtr = NULL;
+	}
 	recodringValues = true;
 	npwThreadPtr = new std::thread(&PressureSensor::npwThread, this);
 	LOG(INFO) << "New NPW thread launched.";
