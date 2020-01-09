@@ -71,6 +71,7 @@ private:
 	void fillCircularBufferWithDummyValues();
     void createNPWBuffer();
     void processIncomingCommand();
+    void clearNPWBufferAndState();
 
 public:
 	void npwThread();

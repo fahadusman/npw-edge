@@ -390,3 +390,20 @@ void PressureSensor::processIncomingCommand() {
     }
 
 }
+
+void PressureSensor::clearNPWBufferAndState() {
+    LOG(INFO) << "PressureSensor::clearNPWBufferAndState()";
+    try {
+        for (auto sensorReading: sensorReadingCircularBuffer) {
+            delete sensorReading;
+        }
+        sensorReadingCircularBuffer.clear();
+        currentNpwState = noDropDetected;
+        firstAverage = -100;
+        secondAverage = -100;
+        remainingSamples = 0;
+    } catch (const std::exception & e) {
+        LOG(ERROR) << "exception: " << e.what();
+    }
+
+}
