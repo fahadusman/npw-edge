@@ -221,6 +221,8 @@ void PressureSensor::updateNPWState(){
 	    return;
 	}
 
+	updateMovingAverages();
+
 	bool isThresholdExceeded = fabs(firstAverage - secondAverage) > npwDetectionthreshold;
 	LOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
 			"\tisThresholdExceeded: " << isThresholdExceeded << "\tDeltaP: " << firstAverage - secondAverage;
@@ -285,7 +287,6 @@ void PressureSensor::npwThread(){
                 previousPeriodicValueTransmitTime, previousPeriodicVal,
                 currentValue);
 
-		updateMovingAverages();
 		updateNPWState();
 
 		if(sensorReadingCircularBuffer.size() > circularBufferLength){
