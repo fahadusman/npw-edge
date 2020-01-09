@@ -270,6 +270,9 @@ void PressureSensor::npwThread(){
 	double previousPeriodicVal = 0;
 	SensorReading<double> * sensorReadingPtr = NULL;
 	__uint64_t currentTime = 0;
+
+	clearNPWBufferAndState();
+
 	while(recodringValues){
 		std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint =
 				std::chrono::high_resolution_clock::now();
@@ -323,7 +326,7 @@ void PressureSensor::stopNpwThread(){
 	LOG(INFO) << "PressureSensor::stopNpwThread()";
 	recodringValues = false;
 	npwThreadPtr->join();
-
+	clearNPWBufferAndState();
 	delete npwThreadPtr;
 	npwThreadPtr = NULL;
 }
