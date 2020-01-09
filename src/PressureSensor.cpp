@@ -150,9 +150,7 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
 	samplesCountAfterDetection = kDcNpwSampleAfter.def;
 	remainingSamples = 0;
 
-	npwBufferExpiryTime = kDcNpwExpiryTime.def;
-
-	fillCircularBufferWithDummyValues();
+	npwBufferExpiryTime = kDcNpwExpiryTime.def * 60000; //min to ms
 }
 
 /*

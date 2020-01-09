@@ -61,7 +61,7 @@ private:
     unsigned int samplesCountBeforeDetection, samplesCountAfterDetection; //Number of sample to buffer before/after NPW detection
     int remainingSamples;
 	unsigned int totalNPWsDetected;
-	uint64_t npwBufferExpiryTime;
+	uint64_t npwBufferExpiryTime;   //NPW Buffer Expiry time in ms.
 
 	uint32_t readSensorValueDummy();
     uint64_t sendPeriodicValue(uint64_t currentTime,
