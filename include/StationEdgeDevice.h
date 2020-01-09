@@ -18,10 +18,12 @@ public:
     virtual ~StationEdgeDevice();
     void processIncomingCommand(CommandMsg * incomingCommand);
     void setHeartbeatInterval(int32_t hb);
+    void runForever();
 protected:
     std::list<Sensor *> sensorsList;  //List of PTs and TTs
     communicator * commPtr;
     uint32_t heartbeatInterval; //Heartbeat interval for edge device in MS
+    bool keepRunning;
 };
 
 #endif /* INCLUDE_STATIONEDGEDEVICE_H_ */

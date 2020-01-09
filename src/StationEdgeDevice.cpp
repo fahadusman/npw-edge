@@ -20,6 +20,7 @@ StationEdgeDevice::StationEdgeDevice() {
     sensorPtr->startNpwThread();
     sensorsList.push_back(sensorPtr);
     heartbeatInterval = kDcHeartbeatInterval.def;
+    keepRunning = true;
 }
 
 void StationEdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
@@ -30,6 +31,7 @@ void StationEdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         break;
     case REBOOT_TIME:
         //TODO: Implement reboot mechanism
+        keepRunning = false;
         delete incomingCommand;
         break;
     case HEARTBEAT_INTERVAL:
@@ -69,6 +71,14 @@ void StationEdgeDevice::setHeartbeatInterval(int32_t hb) {
         LOG(WARNING) << "HEARTBEAT_INTERVAL value out of range";
     }
 }
+
+void StationEdgeDevice::runForever() {
+    while (keepRunning) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    LOG(WARNING) << "keepRunning loop terminated";
+}
+
 StationEdgeDevice::~StationEdgeDevice() {
     // TODO Auto-generated destructor stub
     for (Sensor * sensorPtr : sensorsList) {

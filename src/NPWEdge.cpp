@@ -12,8 +12,7 @@ int main(int argc, char **argv) {
     LOG(INFO) << "starting LDS app, argc = " << argc;
 
     StationEdgeDevice edgeDevice;
-
-	std::this_thread::sleep_for(std::chrono::seconds(60));
+    edgeDevice.runForever();
 
     LOG(INFO) << "Terminating NPW app";
 	return 0;
