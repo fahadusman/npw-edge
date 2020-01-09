@@ -72,12 +72,12 @@ private:
     void createNPWBuffer();
     void processIncomingCommand();
     void clearNPWBufferAndState();
+    void updateReadingInterval(const int newInterval);
 
 public:
 	void npwThread();
 	void startNpwThread();
 	void stopNpwThread();
-//	PressureSensor();
 	PressureSensor(std::string portName, communicator * cPtr);
 	virtual ~PressureSensor();
 };

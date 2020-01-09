@@ -370,6 +370,20 @@ void PressureSensor::fillCircularBufferWithDummyValues(){
 	DLOG(INFO) << "firstAverage: " << firstAverage << "\tsecondAverage: " << secondAverage;
 }
 
+void PressureSensor::updateReadingInterval(const int newInterval) {
+    if ((const unsigned int) newInterval != readingIntervalMs
+            and newInterval >= kDcSampleIntervalNpw.min
+            and newInterval <= kDcSampleIntervalNpw.max
+            and newInterval % 10 == 0) {
+        readingIntervalMs = newInterval;
+        clearNPWBufferAndState();
+    } else {
+        LOG(WARNING) << "Discarding newInterval: " << newInterval
+                << ", and keeping existing readingIntervalMs: "
+                << readingIntervalMs;
+    }
+}
+
 void PressureSensor::processIncomingCommand() {
     try{
         NpwBuffer* npwBufferPtr = NULL;
@@ -412,6 +426,9 @@ void PressureSensor::processIncomingCommand() {
                 } else
                     LOG(WARNING) << "NPW_EXP_TIME value out of range: "
                             << c->getData();
+                break;
+            case SAMPLE_INTERVAL_NPW:
+                updateReadingInterval(c->getData());
                 break;
             case TEST_FLAG:
                 npwBufferPtr = createNpwBuffer();
