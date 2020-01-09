@@ -21,7 +21,7 @@ public:
     virtual double readSensorValue() = 0;
     virtual void initializeSensor() = 0;
     Sensor(communicator * cptr);
-    void enqueueCommand (CommandMsg *);
+    virtual void enqueueCommand (CommandMsg *);
     CommandMsg * dequeueCommand();
 protected:
     double currentValue;
