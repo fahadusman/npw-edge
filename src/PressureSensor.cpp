@@ -16,22 +16,57 @@
 #include "PeriodicValue.h"
 #include "DevConfig.h"
 
-const unsigned int kDefaultCircularBufferLength = kDcNumSamples2ndAvg.def + kDcStartSample2ndAvg.def * (1000/kDefReadingIntervalMs);
-
 //this function has to be called after adding a new value to the circular buffer
 //and before removing the older value.
 void PressureSensor::updateMovingAverages() {
-	DLOG_EVERY_N(INFO, 50) << "before calculateMovingAverage, firstAverage: " << firstAverage << ", secondAverage: " << secondAverage;
-	firstAverage = (firstAverage*(firstAverageEnd-firstAverageStart+1)
-			+ sensorReadingCircularBuffer[sensorReadingCircularBuffer.size() -1 - firstAverageStart]->value
-			- sensorReadingCircularBuffer[sensorReadingCircularBuffer.size() -1 - firstAverageEnd]->value)
-			/ (firstAverageEnd-firstAverageStart+1);
+    DLOG_EVERY_N(INFO, 50) << "before calculateMovingAverage, firstAverage: "
+            << firstAverage << ", secondAverage: " << secondAverage;
+	try {
+        if (sensorReadingCircularBuffer.size() < circularBufferLength) {
+            LOG(WARNING)
+                    << "Not enough values in circular buffer, cannot calculate averages. Size = "
+                    << sensorReadingCircularBuffer.size();
+            return;
+        }
 
-    secondAverage = (secondAverage*(secondAverageEnd-secondAverageStart+1)
-            + sensorReadingCircularBuffer[sensorReadingCircularBuffer.size() -1 - secondAverageStart]->value
-            - sensorReadingCircularBuffer[sensorReadingCircularBuffer.size() -1 - secondAverageEnd]->value)
-            / (secondAverageEnd-secondAverageStart+1);
-	DLOG_EVERY_N(INFO, 50) << "After calculateMovingAverage, firstAverage: " << firstAverage << ", secondAverage: " << secondAverage;
+	    if (firstAverage == -100 and secondAverage == -100) {
+	        readingType firstSum = 0, secondSum = 0;
+            for (unsigned int i = firstAverageStart; i < firstAverageEnd; i++) {
+                firstSum += sensorReadingCircularBuffer[i]->value;
+            }
+            for (unsigned int i = secondAverageStart; i < secondAverageEnd; i++) {
+                secondSum += sensorReadingCircularBuffer[i]->value;
+            }
+
+            firstAverage = firstSum/(firstAverageEnd - firstAverageStart);
+            secondAverage = secondSum/(secondAverageEnd - secondAverageStart);
+
+            LOG(INFO) << "After initial calculations, firstAverage: " << firstAverage
+                    << ", secondAverage: " << secondAverage;
+            return;
+
+	    }
+        firstAverage = (firstAverage * (firstAverageEnd - firstAverageStart + 1)
+                + sensorReadingCircularBuffer[sensorReadingCircularBuffer.size()
+                        - 1 - firstAverageStart]->value
+                - sensorReadingCircularBuffer[sensorReadingCircularBuffer.size()
+                        - 1 - firstAverageEnd]->value)
+                / (firstAverageEnd - firstAverageStart + 1);
+
+        secondAverage = (secondAverage
+                * (secondAverageEnd - secondAverageStart + 1)
+                + sensorReadingCircularBuffer[sensorReadingCircularBuffer.size()
+                        - 1 - secondAverageStart]->value
+                - sensorReadingCircularBuffer[sensorReadingCircularBuffer.size()
+                        - 1 - secondAverageEnd]->value)
+                / (secondAverageEnd - secondAverageStart + 1);
+    }
+    catch (const std::exception & e) {
+        LOG(ERROR) << "Exception: " << e.what();
+    }
+    DLOG_EVERY_N(INFO, 50)
+    << "After calculateMovingAverage, firstAverage: " << firstAverage
+            << ", secondAverage: " << secondAverage;
 }
 
 NpwBuffer* PressureSensor::createNpwBuffer(){
@@ -133,14 +168,14 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
 	npwBufferLength = kDefNpwBufferLength;
 	initializeSensor();
 
-	firstAverage = 0.0;
-	secondAverage = 0.0;
-
 	//The start and end of averages is index from the most recent value in the circular buffer
 	firstAverageStart 	= 0;	//first average starts at the most recent value.
 	firstAverageEnd 	= kDcNumSamples1stAvg.def; 	//3s x 50 = 150 samples/s
 	secondAverageStart 	= kDcStartSample2ndAvg.def; 	//second average starts at t-5
 	secondAverageEnd 	= kDcNumSamples2ndAvg.def + kDcStartSample2ndAvg.def; // second average ends at t-25
+
+    firstAverage = -100.0;
+    secondAverage = -100.0;
 
 	npwDetectionthreshold = kDcNpwPtThsh.def; //threshold
 	currentNpwState = noDropDetected;
