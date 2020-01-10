@@ -474,6 +474,16 @@ void PressureSensor::processIncomingCommand() {
                         kDcNpwPtThsh, true);
                 //TODO: check pt id first
                 break;
+            case NPW_SAMPLE_AFTER:
+                samplesCountAfterDetection = applyCommand(c->getData(),
+                        samplesCountAfterDetection, kDcNpwSampleAfter, true);
+                updateCircularBufferLen();
+                break;
+            case NPW_SAMPLE_BEFORE:
+                samplesCountBeforeDetection = applyCommand(c->getData(),
+                        samplesCountBeforeDetection, kDcNpwSampleBefore, true);
+                updateCircularBufferLen();
+                break;
             case TEST_FLAG:
                 npwBufferPtr = createNpwBuffer();
                 if (npwBufferPtr != NULL) {
