@@ -195,10 +195,13 @@ void PressureSensor::createNPWBuffer() {
     if (currentNpwState != noDropDetected) {
         if (remainingSamples <= 0) {
             NpwBuffer* npwBufferPtr = createNpwBuffer();
-            commPtr->enqueueMessage(npwBufferPtr);
-            LOG(INFO) << "new NPW Buffer created at: "
-                    << npwBufferPtr->getTimestamp();
-
+            if (npwBufferPtr) {
+                commPtr->enqueueMessage(npwBufferPtr);
+                LOG(INFO) << "new NPW Buffer created at: "
+                        << npwBufferPtr->getTimestamp();
+            } else {
+                LOG(ERROR) << "create NPW Buffer failed.";
+            }
             if (currentNpwState == firstDropDetected) {
                 currentNpwState = noDropDetected;
             } else if (currentNpwState == secondDropDetected) {
