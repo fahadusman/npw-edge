@@ -15,6 +15,7 @@
 #include "serialPort.h"
 #include "SensorReading.h"
 #include "NpwBuffer.h"
+#include "DevConfig.h"
 
 //const char * kDefaultPTPortName = "/dev/ttyM0";
 const unsigned char kKellerInitCommand[] = {1, 48, 52, 0};
@@ -35,7 +36,7 @@ enum NpwState {noDropDetected, firstDropDetected, secondDropDetected};
 class PressureSensor: public Sensor {
 private:
 	SerialPort sPort;
-	size_t npwBufferLength;
+	size_t npwBufferLength; //Number of samples in NPW buffer
 	std::vector<SensorReading<readingType> *> sensorReadingCircularBuffer;
 	unsigned int readingIntervalMs;
 	bool recodringValues;
@@ -52,6 +53,7 @@ private:
 	unsigned int secondAverageEnd;
 
 	const unsigned int & circularBufferLength = secondAverageEnd;
+//	TODO: it should be max of secondAverageEnd and npwBufferLength
 
 	readingType firstAverage;
 	readingType secondAverage;
@@ -73,6 +75,8 @@ private:
     void processIncomingCommand();
     void clearNPWBufferAndState();
     void updateReadingInterval(const int newInterval);
+    int applyCommand(const int newValue, int oldValue, const DevConfig & dc,
+            bool resetNpwThread);
 
 public:
 	void npwThread();

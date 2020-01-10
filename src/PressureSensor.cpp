@@ -14,7 +14,6 @@
 
 #include "simulatedValues.h"
 #include "PeriodicValue.h"
-#include "DevConfig.h"
 
 //this function has to be called after adding a new value to the circular buffer
 //and before removing the older value.
@@ -384,7 +383,21 @@ void PressureSensor::updateReadingInterval(const int newInterval) {
     }
 }
 
+int PressureSensor::applyCommand(const int newValue, int oldValue,
+        const DevConfig & dc, bool resetNpwThread) {
+    if (oldValue != newValue and newValue >= dc.min and newValue <= dc.max) {
+        if (resetNpwThread) {
+            clearNPWBufferAndState();
+        }
+        return newValue;
+    }
+    LOG(WARNING) << "Not applying newValue: " << newValue
+            << ", and keeping oldValue: " << oldValue;
+    return oldValue;
+}
+
 void PressureSensor::processIncomingCommand() {
+    int secondAverageSampleCount = 0;
     try{
         NpwBuffer* npwBufferPtr = NULL;
         std::lock_guard<std::mutex> guard(commandQueueMutex);
@@ -429,6 +442,32 @@ void PressureSensor::processIncomingCommand() {
                 break;
             case SAMPLE_INTERVAL_NPW:
                 updateReadingInterval(c->getData());
+                break;
+            case NUM_SAMPLES_1_AVG:
+                firstAverageEnd = applyCommand(c->getData(), firstAverageEnd,
+                        kDcNumSamples1stAvg, true);
+                break;
+            case NUM_SAMPLES_2_AVG:
+                secondAverageSampleCount = secondAverageEnd - secondAverageStart;
+                secondAverageSampleCount = applyCommand(c->getData(), secondAverageSampleCount,
+                        kDcNumSamples2ndAvg, true);
+                secondAverageEnd = secondAverageStart + secondAverageSampleCount;
+                break;
+            case START_SAMPLE_2_AVG:
+                secondAverageSampleCount = secondAverageEnd
+                        - secondAverageStart;
+                secondAverageStart = applyCommand(c->getData(),
+                        secondAverageStart, kDcStartSample2ndAvg, true);
+                secondAverageEnd = secondAverageStart
+                        + secondAverageSampleCount;
+                break;
+            case NPW_THR_PT1:
+            case NPW_THR_PT2:
+            case NPW_THR_PT3:
+            case NPW_THR_PT4:
+                npwDetectionthreshold = applyCommand(c->getData(), npwDetectionthreshold,
+                        kDcNpwPtThsh, true);
+                //TODO: check pt id first
                 break;
             case TEST_FLAG:
                 npwBufferPtr = createNpwBuffer();
