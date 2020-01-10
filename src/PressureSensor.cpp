@@ -182,7 +182,8 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
 
 	samplesCountBeforeDetection = kDcNpwSampleBefore.def;
 	samplesCountAfterDetection = kDcNpwSampleAfter.def;
-	remainingSamples = 0;
+    remainingSamples = 0;
+    updateCircularBufferLen();
 
 	npwBufferExpiryTime = kDcNpwExpiryTime.def * 60000; //min to ms
 }
@@ -294,8 +295,8 @@ void PressureSensor::npwThread(){
 
 		updateNPWState();
 
-		if(sensorReadingCircularBuffer.size() > circularBufferLength){
-			LOG_FIRST_N(INFO, 1) << "Circular Buffer full.";
+		while (sensorReadingCircularBuffer.size() > circularBufferLength){
+			LOG_FIRST_N(INFO, 10) << "Circular Buffer full.";
 			sensorReadingPtr = sensorReadingCircularBuffer.front();
 			sensorReadingCircularBuffer.erase(sensorReadingCircularBuffer.begin());	//remove the front element
 			delete sensorReadingPtr;
@@ -455,6 +456,7 @@ void PressureSensor::processIncomingCommand() {
                 secondAverageSampleCount = applyCommand(c->getData(), secondAverageSampleCount,
                         kDcNumSamples2ndAvg, true);
                 secondAverageEnd = secondAverageStart + secondAverageSampleCount;
+                updateCircularBufferLen();
                 break;
             case START_SAMPLE_2_AVG:
                 secondAverageSampleCount = secondAverageEnd
