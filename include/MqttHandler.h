@@ -80,7 +80,7 @@ private:
     unsigned int QoS;
     std::chrono::duration<int64_t> timeout;
 public:
-    MqttCommunicator(StationEdgeDevice *);
+    MqttCommunicator(EdgeDevice *);
     void connect();
     void disconnect();
     void sendMessage(const char * message, const unsigned int length) override;

@@ -5,13 +5,12 @@
  *      Author: Fahad Usman
  */
 
-#include <StationEdgeDevice.h>
-
+#include <EdgeDevice.h>
 #include <glog/logging.h>
 
 #include "DevConfig.h"
 
-StationEdgeDevice::StationEdgeDevice() {
+EdgeDevice::EdgeDevice() {
     LOG(INFO) << "StationEdgeDevice constructor";
     commPtr = new MqttCommunicator(this);
     commPtr->connect();
@@ -23,7 +22,7 @@ StationEdgeDevice::StationEdgeDevice() {
     keepRunning = true;
 }
 
-void StationEdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
+void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
     switch (incomingCommand->getCommand()){
     case UNINITIALIZED_CMD:
         LOG(WARNING) << "Uninitialized command received.";
@@ -64,7 +63,7 @@ void StationEdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
     }
 }
 
-void StationEdgeDevice::setHeartbeatInterval(int32_t hb) {
+void EdgeDevice::setHeartbeatInterval(int32_t hb) {
     if (hb > kDcHeartbeatInterval.min and hb < kDcHeartbeatInterval.max) {
         heartbeatInterval = hb * 1000; //convert it from seconds to milliseconds
     } else {
@@ -72,14 +71,14 @@ void StationEdgeDevice::setHeartbeatInterval(int32_t hb) {
     }
 }
 
-void StationEdgeDevice::runForever() {
+void EdgeDevice::runForever() {
     while (keepRunning) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     LOG(WARNING) << "keepRunning loop terminated";
 }
 
-StationEdgeDevice::~StationEdgeDevice() {
+EdgeDevice::~EdgeDevice() {
     // TODO Auto-generated destructor stub
     for (Sensor * sensorPtr : sensorsList) {
         delete sensorPtr;

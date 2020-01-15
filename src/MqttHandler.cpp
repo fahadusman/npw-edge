@@ -4,6 +4,7 @@
  *  Created on: Nov 7, 2019
  *      Author: Fahad Usman
  */
+#include <EdgeDevice.h>
 #include "MqttHandler.h"
 
 #include "chrono"
@@ -12,9 +13,8 @@
 #include "rapidjson/stringbuffer.h"
 
 #include "CommandMsg.h"
-#include "StationEdgeDevice.h"
 
-MqttCommunicator::MqttCommunicator(StationEdgeDevice * d) : communicator(d),
+MqttCommunicator::MqttCommunicator(EdgeDevice * d) : communicator(d),
         willmsg(MQTT_DFLT_TOPIC, "MQTT_DFLT_LWT_PAYLOAD", MQTT_DFLT_QOS, true), client(
                 MQTT_DFLT_SERVER_ADDRESS, MQTT_DFLT_CLIENT_ID), willOpts(
                 willmsg) {

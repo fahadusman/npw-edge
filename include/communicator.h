@@ -16,7 +16,7 @@
 
 #include "glog/logging.h"
 
-class StationEdgeDevice;
+class EdgeDevice;
 
 class communicator{
 protected:
@@ -24,12 +24,12 @@ protected:
 	std::map<uint32_t, CommDataBuffer* > transmitQueue;
     std::thread * sendMessagesThreadPtr;
     std::chrono::duration<int,std::milli> sendMessagesThreadLoopInterval;
-    StationEdgeDevice * edgeDevicePtr;
+    EdgeDevice * edgeDevicePtr;
 
     int32_t npwPacketsToBuffer;
 
 public:
-	communicator(StationEdgeDevice * d);
+	communicator(EdgeDevice * d);
 	virtual void sendMessage(const char * message, const unsigned int length) = 0;
 	virtual void processIncomingMessage(const char * message, const int length) = 0;
 	virtual int enqueueMessage(CommDataBuffer * buff);

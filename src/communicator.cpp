@@ -1,8 +1,8 @@
+#include <EdgeDevice.h>
 #include "communicator.h"
-#include "StationEdgeDevice.h"
 #include "DevConfig.h"
 
-communicator::communicator(StationEdgeDevice * d) {
+communicator::communicator(EdgeDevice * d) {
     sendMessagesThreadPtr = NULL;
     sendMessagesThreadLoopInterval = std::chrono::milliseconds(100);
     edgeDevicePtr = d;

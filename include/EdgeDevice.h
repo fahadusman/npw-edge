@@ -5,17 +5,17 @@
  *      Author: Fahad Usman
  */
 
-#ifndef INCLUDE_STATIONEDGEDEVICE_H_
-#define INCLUDE_STATIONEDGEDEVICE_H_
+#ifndef INCLUDE_EDGEDEVICE_H_
+#define INCLUDE_EDGEDEVICE_H_
 
 #include <list>
 #include "PressureSensor.h"
 #include "MqttHandler.h"
 
-class StationEdgeDevice {
+class EdgeDevice {
 public:
-    StationEdgeDevice();
-    virtual ~StationEdgeDevice();
+    EdgeDevice();
+    virtual ~EdgeDevice();
     void processIncomingCommand(CommandMsg * incomingCommand);
     void setHeartbeatInterval(int32_t hb);
     void runForever();
@@ -26,4 +26,4 @@ protected:
     bool keepRunning;
 };
 
-#endif /* INCLUDE_STATIONEDGEDEVICE_H_ */
+#endif /* INCLUDE_EDGEDEVICE_H_ */
