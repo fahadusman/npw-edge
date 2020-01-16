@@ -12,10 +12,10 @@
 #include <thread>
 
 #include "Sensor.h"
-#include "serialPort.h"
 #include "SensorReading.h"
 #include "NpwBuffer.h"
 #include "DevConfig.h"
+#include "SerialComPort.h"
 
 //const char * kDefaultPTPortName = "/dev/ttyM0";
 const unsigned char kKellerInitCommand[] = {1, 48, 52, 0};
@@ -35,7 +35,7 @@ enum NpwState {noDropDetected, firstDropDetected, secondDropDetected};
 
 class PressureSensor: public Sensor {
 private:
-	SerialPort sPort;
+	SerialComPort sPort;
 	size_t npwBufferLength; //Number of samples in NPW buffer
 	std::vector<SensorReading<readingType> *> sensorReadingCircularBuffer;
 	unsigned int readingIntervalMs;

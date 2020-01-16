@@ -5,14 +5,15 @@
  *      Author: Fahad Usman
  */
 
-#include "serialPort.h"
+#include "SerialComPort.h"
+
 #include <glog/logging.h>
 #include <iostream>
 #include <string.h>
 
 unsigned int serialPortFlags = O_RDWR | O_NOCTTY | O_SYNC;
 
-SerialPort::SerialPort()
+SerialComPort::SerialComPort()
 {
 	speed = kDefaultBaudRate;
 	parity = kDefaultParity;
@@ -23,7 +24,7 @@ SerialPort::SerialPort()
 	setInterfaceAttributes();
 }
 
-SerialPort::SerialPort(const std::string pName, int spd, int par, int shouldBlock)
+SerialComPort::SerialComPort(const std::string pName, int spd, int par, int shouldBlock)
 {
 	LOG(INFO) << "SerialPort::SerialPort(" << pName << ", " << spd << ", " << par  << ", " << shouldBlock << ")";
 	speed = spd;
@@ -41,7 +42,7 @@ SerialPort::SerialPort(const std::string pName, int spd, int par, int shouldBloc
 	setInterfaceAttributes();
 }
 
-SerialPort::~SerialPort(){
+SerialComPort::~SerialComPort(){
 	closePort();
 //	delete portName;
 //	portName = NULL;
@@ -49,7 +50,7 @@ SerialPort::~SerialPort(){
 
 //takes preallocated buffer to read data from serial port
 //returns the number of bytes read
-ssize_t SerialPort::readBuffer(unsigned char * buff, int len){
+ssize_t SerialComPort::readBuffer(unsigned char * buff, int len){
 	if(device < 0){
 		LOG(ERROR) << "invalid device: " << device;
 		return -1;
@@ -58,7 +59,7 @@ ssize_t SerialPort::readBuffer(unsigned char * buff, int len){
 	//TODO: Exception handling
 }
 
-ssize_t SerialPort::writeBuffer(const unsigned char * buff, int len){
+ssize_t SerialComPort::writeBuffer(const unsigned char * buff, int len){
 	if(device < 0){
 		LOG(ERROR) << "invalid device: " << device;
 		return -1;
@@ -70,7 +71,7 @@ ssize_t SerialPort::writeBuffer(const unsigned char * buff, int len){
 	return res;
 }
 
-void SerialPort::openPort(){
+void SerialComPort::openPort(){
 	LOG(INFO) << "Opening Serial Port" << portName;
 	device = open(portName.c_str(), serialPortFlags);
 	if (device < 0){
@@ -82,7 +83,7 @@ void SerialPort::openPort(){
 	}
 }
 
-void SerialPort::closePort(){
+void SerialComPort::closePort(){
 	if (device >= 0){
 	    if (tcsetattr (device, TCSANOW, &originalTtyAttributes) != 0)
 	    {
@@ -97,7 +98,7 @@ void SerialPort::closePort(){
 	}
 }
 
-int SerialPort::setInterfaceAttributes(){
+int SerialComPort::setInterfaceAttributes(){
     termios tty;
     memset (&tty, 0, sizeof tty);
     if (tcgetattr (device, &tty) != 0)

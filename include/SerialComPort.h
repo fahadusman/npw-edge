@@ -1,5 +1,5 @@
-#ifndef INCLUDE_SERIALPORT_H_
-#define INCLUDE_SERIALPORT_H_
+#ifndef INCLUDE_SERIALCOMPORT_H_
+#define INCLUDE_SERIALCOMPORT_H_
 
 /*
  * serialPort.h
@@ -18,7 +18,7 @@ const int kDefaultParity = 0;
 const int kDefaultBlocking = 0;
 const std::string kDefaultPortName = "/dev/ttyUSB0"; //"/dev/ttyM0";
 
-class SerialPort {
+class SerialComPort {
 protected:
 	int device;
 	int speed;
@@ -31,9 +31,9 @@ protected:
 	void openPort();
 	void closePort();
 public:
-	SerialPort();
-	SerialPort(const std::string portName, int spd, int par, int shouldBlock);
-	~SerialPort();
+	SerialComPort();
+	SerialComPort(const std::string portName, int spd, int par, int shouldBlock);
+	~SerialComPort();
 
 	ssize_t readBuffer(unsigned char * buff, int len);
 	ssize_t writeBuffer(const unsigned char * buff, int len);
@@ -41,4 +41,4 @@ public:
 
 
 
-#endif /* INCLUDE_SERIALPORT_H_ */
+#endif /* INCLUDE_SERIALCOMPORT_H_ */
