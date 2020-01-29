@@ -22,6 +22,7 @@ public:
         sensorId = id;
     }
     std::string serializeJson() override;
-    void * serialize(int & length) override;
+    unsigned char * serialize(int & length) override;
+    bool deserialize(const unsigned char * serialBuff, const int & len);
 };
 #endif /* INCLUDE_PERIODICVALUE_H_ */
