@@ -32,7 +32,8 @@ public:
     void insertAt(const unsigned int position, readingType value);
 
     std::string serializeJson() override;
-    void * serialize(int & length) override;
+    unsigned char * serialize(int & length) override;
+    bool deserialize(const unsigned char *, const int & length) override;
 };
 
 #endif /* INCLUDE_NPWBUFFER_H_ */

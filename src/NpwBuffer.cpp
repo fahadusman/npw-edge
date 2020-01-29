@@ -54,9 +54,12 @@ inline unsigned char decToBcd(const unsigned char dec) {
  *
  */
 unsigned char * NpwBuffer::createByteArray() {
-    unsigned char * byteArray = new unsigned char[kDefByteArrayLength](); //2 bytes value, plus the header
-//    std::time_t t = std::time(0);   // get time now
-//    std::tm* npwTime = std::localtime(&t);
+    unsigned char * byteArray =
+            new (std::nothrow) unsigned char[kDefByteArrayLength](); //2 bytes value, plus the header
+    if (byteArray == nullptr) {
+        LOG(ERROR) << "Unable to allocate memory for byteArray";
+        return byteArray;
+    }
 
     const auto durationSinceEpoch = std::chrono::milliseconds(timeStamp);
     const std::chrono::time_point<std::chrono::system_clock> tp_after_duration(
@@ -82,10 +85,10 @@ unsigned char * NpwBuffer::createByteArray() {
     }
     return byteArray;
 }
+
 /* Serialize NPW buffer into JSON object. This object would be published
  * on MQTT for Kepware to receive and serve it on OPC-UA as a byte array.
  */
-
 std::string NpwBuffer::serializeJson() {
     const unsigned char * byteArray = createByteArray();
     rapidjson::StringBuffer s;
@@ -102,7 +105,60 @@ std::string NpwBuffer::serializeJson() {
     return s.GetString();
 }
 
-void * NpwBuffer::serialize(int & length) {
-    length = kDefByteArrayLength;
-    return createByteArray();
+unsigned char * NpwBuffer::serialize(int & length) {
+    unsigned char * serialBuffer = nullptr;
+    try {
+        length = kDefByteArrayLength + sizeof(timeStamp) + sensorId.length() + 1;
+        serialBuffer = new (std::nothrow) unsigned char [length];
+        if (serialBuffer == nullptr) {
+            LOG(ERROR) << "Unable to allocate memory for serialBuffer";
+            length = 0;
+            return serialBuffer;
+        }
+        unsigned char * byteArray = createByteArray();
+        unsigned int i = 0;
+
+        std::memcpy(serialBuffer, byteArray, kDefByteArrayLength);
+        i += kDefByteArrayLength;
+        delete byteArray;
+
+        std::memcpy(serialBuffer+i, &(timeStamp), sizeof(timeStamp));
+        i+= sizeof(timeStamp);
+
+        std::memcpy(serialBuffer+i, sensorId.c_str(), sensorId.length());
+        serialBuffer[i+sensorId.length()] = '\0';
+        return serialBuffer;
+    }
+    catch (const std::exception & e) {
+        LOG(ERROR) << "Exception in serialize: " << e.what();
+    }
+    if (serialBuffer != nullptr) {
+        delete serialBuffer;
+        serialBuffer = nullptr;
+    }
+    length = 0;
+    return serialBuffer;
+
+}
+
+bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
+    if ((unsigned int) len < (kDefByteArrayLength + sizeof(timeStamp))) {
+        LOG(WARNING) << "Length of serialized buffer for NPW buffer value is too short: " << len;
+        return false;
+    }
+    unsigned int i = 0;
+    int temp = 0;
+
+    for (unsigned int j = 0; j < (kDefNpwBufferLength); j++) {
+        temp = (serialBuff[kHdrLen + 2*j] << 8) + serialBuff[kHdrLen + 2*j+1];
+        readingList[j] = temp;
+    }
+    i += kDefByteArrayLength;
+
+    std::memcpy(&(timeStamp), serialBuff+i, sizeof(timeStamp));
+    i+= sizeof(timeStamp);
+
+    sensorId.clear();
+    sensorId.append((char *)(&serialBuff[i]));
+    return true;
 }
