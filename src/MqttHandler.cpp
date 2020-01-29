@@ -115,12 +115,13 @@ void MqttCommunicator::subscribe(){
     LOG(INFO) << "Subscribing to: " << commandTopic;
 }
 
-void MqttCommunicator::processIncomingMessage(const char * msg, const int len) {
+bool MqttCommunicator::processIncomingMessage(const char * msg, const int len) {
     try {
         rapidjson::Document doc;
         LOG(INFO) << "processIncomingMessage(" << msg << ", " << len << ")";
         if (doc.Parse(msg).HasParseError()) {
             LOG(ERROR) << "Invalid JSON message received: ";
+            return false;
         } else if (doc.HasMember(COMMAND_KEY) and doc[COMMAND_KEY].IsInt()
                 and doc.HasMember(VALUE_KEY) and doc[VALUE_KEY].IsInt()) {
             CommandRegister command = static_cast<CommandRegister>(doc[COMMAND_KEY].GetInt());
@@ -135,14 +136,15 @@ void MqttCommunicator::processIncomingMessage(const char * msg, const int len) {
                 break;
             default:
                 LOG(INFO) << "Passing incoming command to edge device";
-            CommandMsg * cmd = new CommandMsg(command, value);
+                CommandMsg * cmd = new CommandMsg(command, value);
                 edgeDevicePtr->processIncomingCommand(cmd);
             }
-
         }
     } catch (const std::exception & exc) {
         LOG(ERROR) << "STD Exception: " << exc.what();
+        return false;
     }
+    return true;
 }
 
 void user_callback::message_arrived(mqtt::const_message_ptr msg) {
