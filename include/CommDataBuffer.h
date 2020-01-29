@@ -25,7 +25,8 @@ protected:
     uint64_t expiryTime;
 public:
     virtual std::string serializeJson() = 0;
-    virtual void * serialize(int & length) = 0;
+    virtual unsigned char * serialize(int & length) = 0;
+    virtual bool deserialize(const unsigned char *, const int & length) = 0;
     CommDataBuffer();
     uint64_t getTimestamp() {
         return timeStamp;
