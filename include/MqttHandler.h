@@ -81,8 +81,8 @@ private:
     std::chrono::duration<int64_t> timeout;
 public:
     MqttCommunicator(EdgeDevice *);
-    void connect();
-    void disconnect();
+    void connect() override;
+    void disconnect() override;
     void sendMessage(const char * message, const unsigned int length) override;
     bool processIncomingMessage(const char * message, const int length) override;
 
