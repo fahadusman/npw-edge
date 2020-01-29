@@ -50,6 +50,7 @@ TARGET_LINK_LIBRARIES(
 	paho-mqttpp3
 	paho-mqtt3as
 	pthread
+	serial
 )
 
 ######## Install targets ########
