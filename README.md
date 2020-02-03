@@ -8,6 +8,8 @@ Fork this repository and submit pull requests for your changes.
 1. [Google logging module](https://github.com/google/glog.git)
 2. [Paho MQTT C++ Library](https://github.com/eclipse/paho.mqtt.cpp) 
 3. pthread
+4. [Lib Serial](https://github.com/crayzeewulf/libserial/)
+5. [RapidJSON](https://github.com/Tencent/rapidjson.git)
 
 ## Maintainers
 1. Fahad Usman <fahad.usman@intechww.com>
