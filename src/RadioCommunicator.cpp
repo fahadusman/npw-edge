@@ -54,7 +54,6 @@ void RadioCommunicator::modbusSlaveThread() {
         std::cout << "available: " << sStream.GetNumberOfBytesAvailable()
                 << "\t";
         char data_byte;
-        // Keep reading data from serial port and print it to the screen.
         while (sStream.IsDataAvailable()) {
             data_byte = sStream.get();
             std::cout << " " << std::hex << int(data_byte);
@@ -118,14 +117,76 @@ void RadioCommunicator::sendMessage(const char * message,
     return;
 }
 
-char LRC(char *nData, int wLength) {
+unsigned char LRC(const char *nData, int wLength) {
     char nLRC = 0; // LRC char initialized
 
     for (int i = 0; i < wLength; i++)
-        nLRC += *nData++;
+        nLRC += *(nData+i);
 
-    return (char)(-nLRC);
+    return (unsigned char)(-nLRC);
 } // End: LRC
+
+// send one message from transmit queue as a response for this command.
+void RadioCommunicator::transmitMessage(CommDataBuffer* commPtr) {
+    unsigned char * serializedMessage = NULL;
+    {
+        std::lock_guard<std::mutex> guard(transmitQueueMutex);
+        if (transmitQueue.size() > 0) {
+            commPtr = transmitQueue.begin()->second;
+            transmitQueue.erase(transmitQueue.begin());
+        }
+    }
+    if (commPtr != NULL) {
+        uint64_t currentTime = std::chrono::duration_cast<
+                std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+        if (0 != commPtr->getExpiryTime()
+                && currentTime > commPtr->getExpiryTime()) {
+            LOG(WARNING) << "Discarding expired message, id: "
+                    << commPtr->getBufferId() << "\tt: "
+                    << commPtr->getTimestamp() << "\tExp time: "
+                    << commPtr->getExpiryTime();
+        } else {
+            LOG(INFO) << "Sending Message with t: "
+                    << commPtr->getTimestamp();
+            int serializedMsgLen = 0;
+            serializedMessage = commPtr->serialize(serializedMsgLen); //TODO: Implement serialize function
+            if (serializedMessage != nullptr && serializedMsgLen > 0) {
+                //                    char * modbusResponse = new char [serializedMsgLen + kModbusResponseHdrLength + 1];
+                char* asciiMessage = binaryToHex(serializedMessage,
+                        serializedMsgLen);
+                if (asciiMessage == nullptr) {
+                    LOG(ERROR)
+                            << "Unable to convert binary buffer to ascii, discarding message, id: "
+                            << commPtr->getBufferId();
+                    delete serializedMessage;
+                    delete commPtr;
+                } else {
+                    std::string modbusResponse = ":0103";
+                    unsigned char size =
+                            (serializedMsgLen < 127) ?
+                                    (unsigned char) serializedMsgLen : 0xFF;
+                    char * tempHexStr = binaryToHex(&size, 1);
+                    modbusResponse.append(tempHexStr);
+                    delete tempHexStr;
+                    modbusResponse.append(asciiMessage);
+                    unsigned char lrc = LRC(modbusResponse.c_str(),
+                            modbusResponse.length());
+                    tempHexStr = binaryToHex(&lrc, 1);
+                    modbusResponse.append(tempHexStr);
+                    delete tempHexStr;
+                    modbusResponse.append("\r\n");
+                    LOG(INFO) << "modbus response len: "
+                            << modbusResponse.length() << "\tdata: "
+                            << modbusResponse;
+                    sendMessage(modbusResponse.c_str(),
+                            modbusResponse.length());
+                }
+                delete serializedMessage;
+            }
+        }
+    }
+}
 
 bool RadioCommunicator::processIncomingMessage(const char * message,
         const int length) {
@@ -164,9 +225,9 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
 
         temp[0] = message[13];
         temp[1] = message[14];
-        temp[2] = message[15];
-        temp[3] = message[16];
-        temp[4] = '\0';
+//        temp[2] = message[15];
+//        temp[3] = message[16];
+        temp[3] = '\0';
         modbusMsg.errorCheck = std::stoi(temp, 0, 16);
         LOG(INFO) << std::hex << "Processed message, \nslaveAddress: " << modbusMsg.slaveAddress
             << "\nfunctionCode: " << modbusMsg.functionCode
@@ -180,7 +241,6 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
     }
 
     CommandMsg * cmd = NULL;
-    unsigned char * serializedMessage = NULL;
     CommDataBuffer * commPtr = NULL;
 
     switch (modbusMsg.functionCode) {
@@ -196,34 +256,7 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
         break;
     case READ_HOLDING_REGISTERS:
         // send one message from transmit queue as a response for this command.
-        {
-            std::lock_guard<std::mutex> guard(transmitQueueMutex);
-            if (transmitQueue.size() > 0) {
-                commPtr = transmitQueue.begin()->second;
-                transmitQueue.erase(transmitQueue.begin());
-            }
-        }
-
-        if (commPtr != NULL) {
-            uint64_t currentTime =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                            std::chrono::system_clock::now().time_since_epoch()).count();
-
-            if (0 != commPtr->getExpiryTime()
-                    and currentTime > commPtr->getExpiryTime()) {
-                LOG(WARNING) << "Discarding expired message, id: "
-                        << commPtr->getBufferId()
-                        << "\tt: " << commPtr->getTimestamp()
-                        << "\tExp time: " << commPtr->getExpiryTime();
-            } else {
-                LOG(INFO) << "Sending Message with t: "
-                        << commPtr->getTimestamp();
-                int len;
-                serializedMessage = commPtr->serialize(len); //TODO: Implemnet serialize function
-                //TODO: send message and delete it
-                delete serializedMessage;
-            }
-        }
+        transmitMessage(commPtr);
         break;
     default:
         LOG(WARNING) << "Unhandled modbus function code.";

@@ -50,6 +50,8 @@ struct ModbusMessage {
     int errorCheck;
 };
 
+const unsigned int kModbusResponseHdrLength = 11;
+
 class RadioCommunicator: public communicator {
 protected:
     SerialStream sStream;
@@ -62,6 +64,7 @@ protected:
     bool parseModbusMessage(ModbusMessage &);
 
 public:
+    void transmitMessage(CommDataBuffer* commPtr);
     RadioCommunicator(EdgeDevice *);
     void connect() override;
     void subscribe() override;
