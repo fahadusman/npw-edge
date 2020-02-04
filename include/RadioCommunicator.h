@@ -62,10 +62,11 @@ protected:
     std::thread * slaveThreadPtr;
     bool isConnected;
     bool parseModbusMessage(ModbusMessage &);
+    int modbusSlaveAddress;
 
 public:
     void transmitMessage(CommDataBuffer* commPtr);
-    RadioCommunicator(EdgeDevice *);
+    RadioCommunicator(EdgeDevice *, const int & slaveAddress);
     void connect() override;
     void subscribe() override;
     void sendMessage(const char * message, const unsigned int length) override;

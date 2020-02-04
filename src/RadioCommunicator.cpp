@@ -11,10 +11,11 @@
 
 #include "communicator.h"
 
-RadioCommunicator::RadioCommunicator(EdgeDevice * d):communicator(d) {
+RadioCommunicator::RadioCommunicator(EdgeDevice * d, const int & slaveAddress):communicator(d) {
     modbusMode = modbusSlave;
     slaveThreadPtr = NULL;
     isConnected = false;
+    modbusSlaveAddress = slaveAddress;
 }
 
 RadioCommunicator::~RadioCommunicator() {
@@ -76,7 +77,7 @@ void RadioCommunicator::modbusSlaveThread() {
                             LOG(INFO) << "Incoming message processed successfully";
                         }
                     } else {
-                        LOG(WARNING) << "malformed packet received\n"
+                        LOG(WARNING) << "Discarding MODBUS message\n"
                                 << receiveBuffer;
                     }
                     receiveBuffer = "";
@@ -204,6 +205,12 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
         temp[1] = message[2];
         temp[2] = '\0';
         modbusMsg.slaveAddress = std::stoi(temp, 0, 16); //convert from hex (base16) encoded string to integer.
+
+        if (modbusMsg.slaveAddress != modbusSlaveAddress) {
+            LOG(INFO) << "Discarding message, slave id ("
+                    << modbusMsg.slaveAddress << ")not matched";
+            return false;
+        }
 
         temp[0] = message[3];
         temp[1] = message[4];
