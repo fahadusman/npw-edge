@@ -35,23 +35,24 @@ MqttCommunicator::MqttCommunicator(EdgeDevice * d) : communicator(d),
 }
 
 void MqttCommunicator::connect() {
-    LOG(INFO) << "connecting to broker";
-    try {
-        conntok = client.connect(conopts);
-        conntok->wait();
-        LOG(INFO) << "MQTT Client Connected: " << clientID;
-        isConnected = true;
-    } catch (const mqtt::exception& exc) {
-        LOG(FATAL) << "MQTT Exception: " << exc.what();
-        //TODO: Handle connection failure, reconnect etc.
-        return;
+    while (not isConnected) {
+        LOG(INFO) << "connecting to broker";
+        try {
+            conntok = client.connect(conopts);
+            conntok->wait();
+            LOG(INFO) << "MQTT Client Connected: " << clientID;
+            isConnected = true;
+        } catch (const mqtt::exception& exc) {
+            LOG(ERROR) << "MQTT Exception: " << exc.what();
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 }
 
 void MqttCommunicator::sendMessage(const char * message,
         const unsigned int length) {
     if (not isConnected) {
-        LOG(FATAL) << "sendMessage: Mqtt client is not connected.";
+        LOG(ERROR) << "sendMessage: Mqtt client is not connected.";
         return;
     }
     LOG(INFO) << "Sending MQTT Message: " << message << "\ttopic: " << publishTopic
@@ -77,6 +78,10 @@ void MqttCommunicator::disconnect() {
 void MqttCommunicator::sendQueuedMessagesThread() {
     LOG(INFO) << "starting MqttCommunicator Thread";
     while (true){
+        while (not isConnected) {
+            LOG(WARNING) << "MQTT Client not connected...";
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
         CommDataBuffer * commPtr = NULL;
         {
             std::lock_guard<std::mutex> guard(transmitQueueMutex);
