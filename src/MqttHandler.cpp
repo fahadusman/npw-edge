@@ -120,7 +120,7 @@ void MqttCommunicator::subscribe(){
     LOG(INFO) << "Subscribing to: " << commandTopic;
 }
 
-bool MqttCommunicator::processIncomingMessage(const char * msg, const int len) {
+bool MqttCommunicator::processIncomingMessage(const char * msg, const int & len) {
     try {
         rapidjson::Document doc;
         LOG(INFO) << "processIncomingMessage(" << msg << ", " << len << ")";

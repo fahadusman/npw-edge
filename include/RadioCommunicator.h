@@ -70,7 +70,7 @@ public:
     void connect() override;
     void subscribe() override;
     void sendMessage(const char * message, const unsigned int length) override;
-    bool processIncomingMessage(const char * message, const int length) override;
+    bool processIncomingMessage(const char * message, const int &length) override;
     void disconnect() override;
     void sendQueuedMessagesThread() override;
     virtual ~RadioCommunicator();
