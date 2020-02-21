@@ -11,7 +11,8 @@
 #include "DevConfig.h"
 #include "CommDataBuffer.h"
 
-EdgeDevice::EdgeDevice() {
+EdgeDevice::EdgeDevice(Role role) {
+    edgeDeviceRole = role;
     LOG(INFO) << "EdgeDevice constructor";
     commPtr = nullptr;
     modbusMaster = nullptr;
