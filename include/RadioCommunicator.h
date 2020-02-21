@@ -48,6 +48,16 @@ struct ModbusMessage {
     uint16_t registerAddress;
     uint16_t writeData;
     uint8_t errorCheck;
+
+    void print () {
+        LOG(INFO) << std::hex << "Processed message, \n"
+            << "slaveAddress: " << (int)slaveAddress
+            << "\nfunctionCode: " << (int)functionCode
+            << "\nregisterAddress: " << registerAddress
+            << "\nquantityOfRegisters: " << quantityOfRegisters
+            << "\nwriteData: " << writeData
+            << "\nerrorCheck: " << (int)errorCheck;
+    }
 };
 
 const unsigned int kModbusResponseHdrLength = 11;
