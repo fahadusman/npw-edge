@@ -80,9 +80,9 @@ bool PeriodicValue::deserialize(const unsigned char * serialBuff, const int & le
     i += sizeof(sensorValue);
 
     std::memcpy(&(timeStamp), serialBuff+i, sizeof(timeStamp));
-    i+= sizeof(timeStamp);
+    i += sizeof(timeStamp);
 
     sensorId.clear();
-    sensorId.append((char *)(&serialBuff[i]));
+    sensorId.append((char *)(&serialBuff[i]), len-i);
     return true;
 }
