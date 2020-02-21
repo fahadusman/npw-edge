@@ -39,15 +39,15 @@ enum ModbusFnCodes {
 };
 
 struct ModbusMessage {
-    int slaveAddress;
-    int functionCode;
-    int startAddress;
-    int quantityOfRegisters;
-    int byteCount;
-    int * data;
-    int registerAddress;
-    int writeData;
-    int errorCheck;
+    uint8_t slaveAddress;
+    uint8_t  functionCode;
+    uint16_t startAddress;
+    uint16_t quantityOfRegisters;
+    uint16_t byteCount;
+    unsigned char * data;
+    uint16_t registerAddress;
+    uint16_t writeData;
+    uint8_t errorCheck;
 };
 
 const unsigned int kModbusResponseHdrLength = 11;
