@@ -12,13 +12,10 @@
 #include "CommDataBuffer.h"
 
 EdgeDevice::EdgeDevice() {
-    LOG(INFO) << "StationEdgeDevice constructor";
-    commPtr = new MqttCommunicator(this);
-    commPtr->connect();
+    LOG(INFO) << "EdgeDevice constructor";
+    commPtr = nullptr;
+    modbusMaster = nullptr;
 
-    PressureSensor * sensorPtr = new PressureSensor("/dev/ttyUSB0", commPtr);
-    sensorPtr->startNpwThread();
-    sensorsList.push_back(sensorPtr);
     heartbeatInterval = kDcHeartbeatInterval.def;
     keepRunning = true;
 }
