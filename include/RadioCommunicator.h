@@ -61,28 +61,47 @@ struct ModbusMessage {
 };
 
 const unsigned int kModbusResponseHdrLength = 11;
+const unsigned int kModbusMaxPacketLen = 2500;
 
 class RadioCommunicator: public communicator {
 protected:
-    SerialStream sStream;
+    SerialStream modbusStream;
     std::string readBuffer;
     ModbusModes modbusMode;
     void modbusSlaveThread();
     void modbusMasterThread();
     std::thread * slaveThreadPtr;
-    bool isConnected;
-    bool parseModbusMessage(ModbusMessage &);
-    int modbusSlaveAddress;
+    std::thread * masterThreadPtr;
+    bool isModbusStreamConnected;
+    bool parseModbusCommand(ModbusMessage & modbusMsg, const char * receivedMsg,
+            const int & msgLen);
+    bool parseModbusResponse(ModbusMessage & modbusMsg, const char * receivedMsg,
+            const int & msgLen);
+    bool receiveModbusAsciiMessage(std::string& receiveBuffer);
+    std::string binaryToModbusAsciiMessage(int serializedMsgLen,
+            unsigned char* asciiMessage);
 
+    int modbusSlaveAddress;
+    std::list<int> modbusSlaveAddressList; //list of slaves for master mode.
+
+    bool slaveThreadDone;
+    bool masterThreadDone;
+
+//    std::chrono::duration<int, > modbusTimeout;
+    std::chrono::milliseconds modbusResponseTimeout;
+    std::chrono::milliseconds modbusMasterPollInterval;
+
+    std::string radioSerialPort;
 public:
     void transmitMessage(CommDataBuffer* commPtr);
-    RadioCommunicator(EdgeDevice *, const int & slaveAddress);
+    RadioCommunicator(EdgeDevice *, const int & slaveAddress, ModbusModes mode, std::string radioPort);
     void connect() override;
     void subscribe() override;
     void sendMessage(const char * message, const unsigned int length) override;
     bool processIncomingMessage(const char * message, const int &length) override;
     void disconnect() override;
     void sendQueuedMessagesThread() override;
+    void startModbusMaster();
     virtual ~RadioCommunicator();
 
 };
