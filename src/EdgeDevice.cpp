@@ -9,15 +9,14 @@
 #include <glog/logging.h>
 
 #include "DevConfig.h"
+#include "CommDataBuffer.h"
 
-EdgeDevice::EdgeDevice() {
-    LOG(INFO) << "StationEdgeDevice constructor";
-    commPtr = new MqttCommunicator(this);
-    commPtr->connect();
+EdgeDevice::EdgeDevice(Role role) {
+    edgeDeviceRole = role;
+    LOG(INFO) << "EdgeDevice constructor";
+    commPtr = nullptr;
+    modbusMaster = nullptr;
 
-    PressureSensor * sensorPtr = new PressureSensor("/dev/ttyUSB0", commPtr);
-    sensorPtr->startNpwThread();
-    sensorsList.push_back(sensorPtr);
     heartbeatInterval = kDcHeartbeatInterval.def;
     keepRunning = true;
 }
@@ -72,10 +71,38 @@ void EdgeDevice::setHeartbeatInterval(int32_t hb) {
 }
 
 void EdgeDevice::runForever() {
+    LOG(INFO) << "Entering edge device infinite loop.";
     while (keepRunning) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(5));
     }
     LOG(WARNING) << "keepRunning loop terminated";
+}
+
+void EdgeDevice::addSensor(Sensor * sensorPtr) {
+    sensorsList.push_back(sensorPtr);
+}
+void EdgeDevice::setCommunicator(communicator * cPtr) {
+    if (commPtr != nullptr) {
+        delete commPtr;
+        commPtr = nullptr;
+    }
+    commPtr = cPtr;
+}
+
+void EdgeDevice::setModbusMaster(communicator * modbusMasterPtr) {
+    if (modbusMaster != nullptr) {
+        delete modbusMaster;
+        modbusMaster = nullptr;
+    }
+    modbusMaster = modbusMasterPtr;
+}
+
+int EdgeDevice::sendMessage(CommDataBuffer * d) {
+    if (commPtr == nullptr) {
+        LOG(FATAL) << "commPtr not set for Edge Device. Cannot send message.";
+        return 0;
+    }
+    return commPtr->enqueueMessage(d);
 }
 
 EdgeDevice::~EdgeDevice() {

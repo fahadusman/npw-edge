@@ -159,6 +159,6 @@ bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
     i+= sizeof(timeStamp);
 
     sensorId.clear();
-    sensorId.append((char *)(&serialBuff[i]));
+    sensorId.append((char *)(&serialBuff[i]), len-i);
     return true;
 }

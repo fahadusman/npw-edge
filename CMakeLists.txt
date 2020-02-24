@@ -41,7 +41,7 @@ set_target_properties(
 	NPWEdge
 	
 	PROPERTIES
-	CXX_STANDARD 17)
+	CXX_STANDARD 14)
 
 TARGET_LINK_LIBRARIES(
 	NPWEdge
