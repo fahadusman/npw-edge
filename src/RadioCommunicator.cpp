@@ -40,7 +40,12 @@ RadioCommunicator::~RadioCommunicator() {
         masterThreadPtr->join();
     }
 
-    modbusStream.Close();
+    disconnect();
+
+    for (ModbusSlave * modbusSlavePtr:modbusSlavesList) {
+        delete modbusSlavePtr;
+    }
+    modbusSlavesList.clear();
 }
 
 void RadioCommunicator::connect() {
@@ -69,42 +74,46 @@ void RadioCommunicator::connect() {
 }
 
 void RadioCommunicator::modbusMasterThread() {
-//    ModbusMessage readRegistersCommand = {0};
-//    readRegistersCommand.functionCode = READ_HOLDING_REGISTERS;
-//    readRegistersCommand.slaveAddress = 1;//TODO: This should come from list of slaves.
     std::string readRegistersCommand = ":01030000000280\r\n";
+    auto slaveIt = modbusSlavesList.begin();
     std::string receiveBuffer = "";
     while (not masterThreadDone) {
         std::this_thread::sleep_for(modbusMasterPollInterval);
-        LOG(INFO) << "modbusMaster polling slave for data";
-        //TODO: try/catch here
         try {
-
-            modbusStream.write(readRegistersCommand.c_str(), readRegistersCommand.length());
+            if (slaveIt == modbusSlavesList.end()) {
+                slaveIt = modbusSlavesList.begin();
+            }
+            modbusSlaveAddress = (*slaveIt)->slaveId;
+            readRegistersCommand = (*slaveIt++)->modbus0x03Command;
+            LOG(INFO) << "modbusMaster polling slave for data, "
+                    << "modbusSlaveAddress: " << (int) modbusSlaveAddress;
+            modbusStream.write(readRegistersCommand.c_str(),
+                    readRegistersCommand.length());
             modbusStream.DrainWriteBuffer();
         } catch (const std::exception & e) {
             LOG(ERROR) << "Exception: " << e.what();
             connect();
         }
-            //wait for response from the slave.
-            std::chrono::time_point<std::chrono::high_resolution_clock> expTime =
-                    std::chrono::high_resolution_clock::now() + modbusResponseTimeout;
+        //wait for response from the slave.
+        std::chrono::time_point<std::chrono::high_resolution_clock> expTime =
+                std::chrono::high_resolution_clock::now()
+                        + modbusResponseTimeout;
 
-            receiveBuffer = "";
-            while (std::chrono::high_resolution_clock::now() < expTime) {
-                if (modbusStream.rdbuf()->in_avail() == 0) {
-                    usleep(50000);
-                } else if (receiveModbusAsciiMessage(receiveBuffer)) {
-                    if (processIncomingMessage(receiveBuffer.c_str(),
-                            receiveBuffer.length())) {
-                        LOG(INFO) << "Incoming message processed successfully";
-                        break;
-                    } else {
-                        LOG(WARNING) << "message processing failed, msg: "
-                                << receiveBuffer;
-                    }
+        receiveBuffer = "";
+        while (std::chrono::high_resolution_clock::now() < expTime) {
+            if (modbusStream.rdbuf()->in_avail() == 0) {
+                usleep(50000);
+            } else if (receiveModbusAsciiMessage(receiveBuffer)) {
+                if (processIncomingMessage(receiveBuffer.c_str(),
+                        receiveBuffer.length())) {
+                    LOG(INFO) << "Incoming message processed successfully";
+                    break;
+                } else {
+                    LOG(WARNING) << "message processing failed, msg: "
+                            << receiveBuffer;
                 }
             }
+        }
         LOG(INFO) << "Modbus slave response timed out.";
     }
 }
@@ -116,8 +125,6 @@ bool RadioCommunicator::receiveModbusAsciiMessage(std::string& receiveBuffer) {
     bool packetStarted = false;
     while (modbusStream.IsDataAvailable()) {
         data_byte = modbusStream.get();
-//        int available = modbusStream.GetNumberOfBytesAvailable();
-//        std::cout << " " << std::hex << int(data_byte) << " " << available;
         if (data_byte == ':') {
             packetStarted = true;
             receiveBuffer = ":";
@@ -195,6 +202,7 @@ void RadioCommunicator::startModbusMaster() {
 void RadioCommunicator::disconnect() {
     //TODO: Discard queued messages.
     modbusStream.Close();
+    isModbusStreamConnected = false;
     return;
 }
 
@@ -382,7 +390,7 @@ bool RadioCommunicator::parseModbusResponse(ModbusMessage & modbusMsg,
 
         if (modbusMsg.slaveAddress != modbusSlaveAddress) {
             LOG(INFO) << "Discarding message, slave id ("
-                    << modbusMsg.slaveAddress << ") not matched";
+                    << (int) modbusMsg.slaveAddress << ") not matched";
             return false;
         }
 
@@ -601,4 +609,19 @@ unsigned char * hexToBinary(const char * hexString, int & binaryBuffLen){
     }
     binaryBuffLen = 0;
     return nullptr;
+}
+
+bool RadioCommunicator::addModbusSlave(uint8_t sId) {
+    ModbusSlave * mbSlave = new ModbusSlave;
+    mbSlave->slaveId = sId;
+    strncpy(mbSlave->modbus0x03Command, ":010300000002FA\r\n\0", 18);
+    sprintf(mbSlave->modbus0x03Command+1, "%02X", sId);
+    mbSlave->modbus0x03Command[3] = '0';
+    uint8_t lrc = LRC(mbSlave->modbus0x03Command, 13);
+    sprintf(mbSlave->modbus0x03Command+13, "%02X", lrc);
+    mbSlave->modbus0x03Command[15] = '\r';
+    LOG(INFO) << "addModbusSlave, sId: " << mbSlave->slaveId
+            << "0x03Command: " << mbSlave->modbus0x03Command;
+    modbusSlavesList.push_back(mbSlave);
+    return true;
 }
