@@ -24,6 +24,10 @@ int main(int argc, char **argv) {
         commPtr = new MqttCommunicator(&edgeDevice);
         RadioCommunicator * modbusMasterPtr =
                 new RadioCommunicator(&edgeDevice, 1, modbusMaster, "/dev/ttyUSB0");
+        modbusMasterPtr->addModbusSlave(1);
+        modbusMasterPtr->addModbusSlave(2);
+        modbusMasterPtr->addModbusSlave(3);
+
         edgeDevice.setModbusMaster(modbusMasterPtr);
         modbusMasterPtr->connect();
         modbusMasterPtr->startModbusMaster();

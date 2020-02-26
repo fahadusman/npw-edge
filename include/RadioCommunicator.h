@@ -60,6 +60,11 @@ struct ModbusMessage {
     }
 };
 
+struct ModbusSlave {
+    uint16_t slaveId;
+    char modbus0x03Command[18]; //e.g. ":010300000002FA\r\n\0"
+};
+
 const unsigned int kModbusResponseHdrLength = 11;
 const unsigned int kModbusMaxPacketLen = 2500;
 
@@ -81,8 +86,9 @@ protected:
     std::string binaryToModbusAsciiMessage(int serializedMsgLen,
             unsigned char* asciiMessage);
 
-    int modbusSlaveAddress;
-    std::list<int> modbusSlaveAddressList; //list of slaves for master mode.
+    uint8_t modbusSlaveAddress; // used as modbus slave address in slave mode,
+                                // and current slave that was being polled when in Master mode
+    std::list <ModbusSlave *> modbusSlavesList; //list of modbus slaves for master mode.
 
     bool slaveThreadDone;
     bool masterThreadDone;
@@ -102,6 +108,7 @@ public:
     void disconnect() override;
     void sendQueuedMessagesThread() override;
     void startModbusMaster();
+    bool addModbusSlave(uint8_t slaveId);
     virtual ~RadioCommunicator();
 
 };
