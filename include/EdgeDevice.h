@@ -41,6 +41,8 @@ public:
     void setCommunicator(communicator * cPtr);
     void setModbusMaster(communicator * modbusMasterPtr);
     int sendMessage(CommDataBuffer * d);
+    std::list<PeriodicValue*> getCurrentValues();
+    PeriodicValue* getPeriodicSensorValue();
 protected:
     std::list<Sensor *> sensorsList;  //List of PTs and TTs
     communicator * commPtr;
