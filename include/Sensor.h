@@ -12,6 +12,7 @@
 
 #include "communicator.h"
 #include "CommandMsg.h"
+#include "PeriodicValue.h"
 
 class communicator;
 
@@ -23,8 +24,10 @@ public:
     Sensor(communicator * cptr);
     virtual void enqueueCommand (CommandMsg *);
     CommandMsg * dequeueCommand();
+    PeriodicValue * getCurrentValue();
 protected:
     double currentValue;
+    __uint64_t currentTime = 0;
 
     double periodicValChangeThreshold;
     unsigned int periodicValMinInterval;
