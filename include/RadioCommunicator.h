@@ -99,7 +99,7 @@ protected:
 
     std::string radioSerialPort;
 public:
-    void transmitMessage(CommDataBuffer* commPtr);
+    void transmitMessage();
     RadioCommunicator(EdgeDevice *, const int & slaveAddress, ModbusModes mode, std::string radioPort);
     void connect() override;
     void subscribe() override;

@@ -254,10 +254,9 @@ std::string RadioCommunicator::binaryToModbusAsciiMessage(int serializedMsgLen,
     return modbusResponse;
 }
 
-#include "PeriodicValue.h"
-
 // send one message from transmit queue.
-void RadioCommunicator::transmitMessage(CommDataBuffer* commPtr) {
+void RadioCommunicator::transmitMessage() {
+    CommDataBuffer* commPtr = nullptr;
     unsigned char * serializedMessage = NULL;
     {
         std::lock_guard<std::mutex> guard(transmitQueueMutex);
@@ -526,8 +525,7 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
             modbusStream.write(message, length);
             break;
         case READ_HOLDING_REGISTERS:
-                transmitMessage(commPtr);
-                //in case of modbus master, publish it on MQTT.
+                transmitMessage();
             break;
         default:
             LOG(WARNING) << "Unhandled modbus function code.";
