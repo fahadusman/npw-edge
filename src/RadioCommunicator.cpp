@@ -254,10 +254,9 @@ std::string RadioCommunicator::binaryToModbusAsciiMessage(int serializedMsgLen,
     return modbusResponse;
 }
 
-#include "PeriodicValue.h"
-
 // send one message from transmit queue.
-void RadioCommunicator::transmitMessage(CommDataBuffer* commPtr) {
+void RadioCommunicator::transmitMessage() {
+    CommDataBuffer* commPtr = nullptr;
     unsigned char * serializedMessage = NULL;
     {
         std::lock_guard<std::mutex> guard(transmitQueueMutex);
@@ -268,13 +267,12 @@ void RadioCommunicator::transmitMessage(CommDataBuffer* commPtr) {
         }
     }
 
-    static int x = 0;
     if (commPtr == nullptr) {
-        LOG(INFO) << "no message in queue, sending dummy message";
-        commPtr = new PeriodicValue(x++, 0, "PT1");
+        LOG(INFO) << "no message in queue, sending current periodic value";
+        commPtr = edgeDevicePtr->getPeriodicSensorValue();
     }
 
-    if (commPtr != NULL) {
+    if (commPtr != nullptr) {
         uint64_t currentTime = std::chrono::duration_cast<
                 std::chrono::milliseconds>(
                 std::chrono::system_clock::now().time_since_epoch()).count();
@@ -373,7 +371,7 @@ bool RadioCommunicator::parseModbusCommand(ModbusMessage & modbusMsg,
 
         modbusMsg.print();
     } catch (const std::exception &e) {
-        LOG(WARNING) << "Error parsing Modbus response message: " << e.what();
+        LOG(WARNING) << "Error parsing Modbus command message: " << e.what();
         return false;
     }
 
@@ -511,8 +509,7 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
             LOG(WARNING) << "parseModbusCommand failed.";
             return ret;
         }
-        CommandMsg * cmd = NULL;
-        CommDataBuffer * commPtr = NULL;
+        CommandMsg * cmd = nullptr;
 
         switch (modbusMsg.functionCode) {
         case WRITE_SINGLE_REGISTER:
@@ -528,8 +525,7 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
             modbusStream.write(message, length);
             break;
         case READ_HOLDING_REGISTERS:
-                transmitMessage(commPtr);
-                //in case of modbus master, publish it on MQTT.
+                transmitMessage();
             break;
         default:
             LOG(WARNING) << "Unhandled modbus function code.";
