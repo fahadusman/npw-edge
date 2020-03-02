@@ -28,7 +28,7 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         delete incomingCommand;
         break;
     case REBOOT_TIME:
-        //TODO: Implement reboot mechanism
+        //TODO: Implement reboot mechanism, for now we just exit the application
         keepRunning = false;
         delete incomingCommand;
         break;
@@ -115,3 +115,23 @@ EdgeDevice::~EdgeDevice() {
     delete commPtr;
 }
 
+std::list<PeriodicValue*> EdgeDevice::getCurrentValues(){
+    std::list<PeriodicValue*> valuesList;
+    for (auto sensorPtr:sensorsList) {
+        valuesList.push_back(sensorPtr->getCurrentValue());
+    }
+    return valuesList;
+}
+
+/*
+ * Returns the current periodic value of each sensor of the Edge device.
+ * Upon subsequent calls, it returns the value of next sensor in the sensorsList.
+ */
+PeriodicValue* EdgeDevice::getPeriodicSensorValue(){
+    static auto sensorIt = sensorsList.begin();
+    if (sensorIt == sensorsList.end()) {
+        sensorIt = sensorsList.begin();
+    }
+    PeriodicValue * pValPtr = (*sensorIt++)->getCurrentValue();
+    return pValPtr;
+}
