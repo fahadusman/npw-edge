@@ -9,16 +9,16 @@
 #include <string>
 #include <mutex>
 #include <exception>
-
 #include <glog/logging.h>
 
+#include "DevConfig.h"
 
 Sensor::Sensor(communicator * cptr) {
     currentValue = 0;
     currentTime = 0;
     periodicValChangeThreshold = 0;
-    periodicValMinInterval = 1000;
-    periodicValMaxInterval = 5000;
+    periodicValMinInterval = kDcMinTimePeriodic.def;
+    periodicValMaxInterval = kDcMaxTimePeriodic.def;
     id = "defaultId"; //TODO: We need to come up with and identification hierarchy
     commPtr = cptr;
     return;
