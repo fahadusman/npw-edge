@@ -21,6 +21,7 @@ Sensor::Sensor(communicator * cptr) {
     periodicValMaxInterval = kDcMaxTimePeriodic.def;
     id = "defaultId"; //TODO: We need to come up with and identification hierarchy
     commPtr = cptr;
+    enablePeriodicValues = false;
     return;
 }
 

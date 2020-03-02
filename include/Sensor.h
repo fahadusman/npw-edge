@@ -25,6 +25,7 @@ public:
     virtual void enqueueCommand (CommandMsg *);
     CommandMsg * dequeueCommand();
     PeriodicValue * getCurrentValue();
+    bool enablePeriodicValues;
 protected:
     double currentValue;
     __uint64_t currentTime = 0;

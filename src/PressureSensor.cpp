@@ -287,9 +287,11 @@ void PressureSensor::npwThread(){
 		sensorReadingPtr = new SensorReading<double> (currentValue, currentTime);
 		sensorReadingCircularBuffer.push_back(sensorReadingPtr);
 
-        previousPeriodicValueTransmitTime = sendPeriodicValue(currentTime,
-                previousPeriodicValueTransmitTime, previousPeriodicVal,
-                currentValue);
+		if (enablePeriodicValues) {
+            previousPeriodicValueTransmitTime = sendPeriodicValue(currentTime,
+                    previousPeriodicValueTransmitTime, previousPeriodicVal,
+                    currentValue);
+		}
 
 		updateNPWState();
 
