@@ -15,6 +15,12 @@
 #include <cstdint>
 #include <string>
 
+enum BufferType {
+    buffTypePeriodicValue,
+    buffTypeNpwBuffer,
+    buffTypeHeartBeat
+};
+
 class CommDataBuffer {
 protected:
     static uint32_t bufferCount;
