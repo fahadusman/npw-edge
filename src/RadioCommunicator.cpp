@@ -208,7 +208,7 @@ void RadioCommunicator::disconnect() {
 
 void RadioCommunicator::sendMessage(const char * message,
         const unsigned int length) {
-    LOG(INFO) << "radio::sendMessage: " << message << "len: " << length;
+    LOG(INFO) << "radio::sendMessage, len: " << length;
     if (not isModbusStreamConnected) {
         connect(); //block till a connection is established
     }
@@ -299,9 +299,8 @@ void RadioCommunicator::transmitMessage() {
 //                } else {
                 std::string modbusResponse = binaryToModbusAsciiMessage(
                         serializedMsgLen, serializedMessage);
-                LOG(INFO) << "modbus response len: "
-                        << modbusResponse.length() << "\tdata: "
-                        << modbusResponse;
+                LOG(INFO) << "modbus response len: " << modbusResponse.length();
+
                 sendMessage(modbusResponse.c_str(),
                         modbusResponse.length());
 //                }
@@ -620,4 +619,64 @@ bool RadioCommunicator::addModbusSlave(uint8_t sId) {
             << "0x03Command: " << mbSlave->modbus0x03Command;
     modbusSlavesList.push_back(mbSlave);
     return true;
+}
+
+bool RadioCommunicator::sendModbusCommand(uint8_t slaveAddress,
+        CommandRegister regAddress, uint16_t value) {
+
+    LOG(INFO) << "sendModbusCommand(slaveAddress: " << std::hex
+            << (unsigned int) slaveAddress << ", regAddress: " << regAddress
+            << ", value: " << value;
+
+    bool ret = false;
+    std::string modbusCommand = ":";
+
+    char* tempHexStr = binaryToHex((unsigned char *)&slaveAddress, sizeof(slaveAddress));
+    modbusCommand.append(tempHexStr);
+    delete tempHexStr;
+
+    modbusCommand.append("06"); //Function code (write single register)
+
+    uint16_t registerAddress = (uint16_t) regAddress;
+    tempHexStr = binaryToHex((unsigned char *)&registerAddress, sizeof(registerAddress));
+    modbusCommand.append(tempHexStr+2, 2);
+    modbusCommand.append(tempHexStr, 2);
+    delete tempHexStr;
+
+    tempHexStr = binaryToHex((unsigned char *)&value, sizeof(value));
+    modbusCommand.append(tempHexStr+2, 2);
+    modbusCommand.append(tempHexStr, 2);
+    delete tempHexStr;
+
+    uint8_t lrc = LRC(modbusCommand.c_str(), modbusCommand.length());
+    tempHexStr = binaryToHex((unsigned char *)&lrc, sizeof(lrc));
+    modbusCommand.append(tempHexStr);
+    delete tempHexStr;
+
+    modbusCommand.append("\r\n\0");
+
+    sendMessage(modbusCommand.c_str(), modbusCommand.length());
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> expTime =
+            std::chrono::high_resolution_clock::now()
+                    + modbusResponseTimeout;
+
+    std::string receiveBuffer = "";
+    while (std::chrono::high_resolution_clock::now() < expTime) {
+        if (modbusStream.rdbuf()->in_avail() == 0) {
+            usleep(50000);
+        } else if (receiveModbusAsciiMessage(receiveBuffer)) {
+            if (receiveBuffer == modbusCommand) {
+                LOG(INFO) << "got response for command: " << receiveBuffer;
+                return true;
+            } else {
+                LOG(WARNING) << "response: " << receiveBuffer <<
+                        " did not match command: " << modbusCommand;
+                return false;
+            }
+        }
+    }
+    LOG(INFO) << "Modbus slave response timed out.";
+
+    return ret;
 }
