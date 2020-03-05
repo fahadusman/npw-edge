@@ -34,7 +34,9 @@ std::string PeriodicValue::serializeJson() {
 unsigned char * PeriodicValue::serialize(int & length) {
     unsigned char * serialBuffer = nullptr;
     try {
-        length = sizeof(sensorValue) + sizeof(timeStamp) + sensorId.length();
+        length = 1/*buffer type*/+ sizeof(bufferId) + sizeof(sensorValue)
+                + sizeof(timeStamp) + sensorId.length() + 1/*null char for sensorId*/;
+
         serialBuffer = new (std::nothrow) unsigned char [length];
         if (serialBuffer == nullptr) {
             LOG(ERROR) << "Unable to allocate memory for serialBuffer";
@@ -43,7 +45,12 @@ unsigned char * PeriodicValue::serialize(int & length) {
         }
         unsigned int i = 0;
 
-        std::memcpy(serialBuffer, &(sensorValue), sizeof(sensorValue));
+        serialBuffer[i++] = (unsigned char)buffTypePeriodicValue; //buffer type
+
+        std::memcpy(serialBuffer+i, &(bufferId), sizeof(bufferId));
+        i += sizeof(bufferId);
+
+        std::memcpy(serialBuffer+i, &(sensorValue), sizeof(sensorValue));
         i += sizeof(sensorValue);
 
         std::memcpy(serialBuffer+i, &(timeStamp), sizeof(timeStamp));
@@ -74,9 +81,12 @@ bool PeriodicValue::deserialize(const unsigned char * serialBuff, const int & le
         LOG(WARNING) << "Length of serialized buffer for periodic value is too short: " << len;
         return false;
     }
-    unsigned int i = 0;
+    unsigned int i = 1; //first (0th) byte is buffer-type, we don't need that here
 
-    std::memcpy(&(sensorValue), serialBuff, sizeof(sensorValue));
+    std::memcpy(&(bufferId), serialBuff+i, sizeof(bufferId));
+    i+= sizeof(bufferId);
+
+    std::memcpy(&(sensorValue), serialBuff+i, sizeof(sensorValue));
     i += sizeof(sensorValue);
 
     std::memcpy(&(timeStamp), serialBuff+i, sizeof(timeStamp));
