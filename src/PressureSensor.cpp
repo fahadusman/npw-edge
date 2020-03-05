@@ -18,7 +18,7 @@
 //this function has to be called after adding a new value to the circular buffer
 //and before removing the older value.
 void PressureSensor::updateMovingAverages() {
-    DLOG_EVERY_N(INFO, 50) << "before calculateMovingAverage, firstAverage: "
+    DLOG_EVERY_N(INFO, 500) << "before calculateMovingAverage, firstAverage: "
             << firstAverage << ", secondAverage: " << secondAverage;
 	try {
         if (sensorReadingCircularBuffer.size() < circularBufferLength) {
@@ -63,7 +63,7 @@ void PressureSensor::updateMovingAverages() {
     catch (const std::exception & e) {
         LOG(ERROR) << "Exception: " << e.what();
     }
-    DLOG_EVERY_N(INFO, 50)
+    DLOG_EVERY_N(INFO, 500)
     << "After calculateMovingAverage, firstAverage: " << firstAverage
             << ", secondAverage: " << secondAverage;
 }
@@ -282,7 +282,7 @@ void PressureSensor::npwThread(){
 
 //		currentValue = readSensorValue();
 		currentValue = readSensorValueDummy();
-		LOG_EVERY_N(INFO, 50) << "currentValue: " << currentValue;
+		LOG_EVERY_N(INFO, 1000) << "currentValue: " << currentValue;
 		currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTimePoint.time_since_epoch()).count();
 		sensorReadingPtr = new SensorReading<double> (currentValue, currentTime);
 		sensorReadingCircularBuffer.push_back(sensorReadingPtr);
