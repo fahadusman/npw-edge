@@ -54,6 +54,9 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
             sensorPtr->enqueueCommand(incomingCommand);
         }
         break;
+    case NPW_BUFF_ACK:
+        commPtr->removeMessageFromQueue(incomingCommand->getData());
+        break;
     case INVALID_COMMAND:
     default:
         LOG(WARNING) << "Unhandled command received.";

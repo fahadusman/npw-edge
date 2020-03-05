@@ -262,8 +262,6 @@ void RadioCommunicator::transmitMessage() {
         std::lock_guard<std::mutex> guard(transmitQueueMutex);
         if (transmitQueue.size() > 0) {
             commPtr = transmitQueue.begin()->second;
-            transmitQueue.erase(transmitQueue.begin());
-            //TODO: Do not erase message until acknowledgment is received.
         }
     }
 
@@ -493,8 +491,14 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
             LOG(INFO)
                     << "Received Buffer successfully deserailzed, timestamp: "
                     << receivedData->getTimestamp();
-            edgeDevicePtr->sendMessage(receivedData);
-            ret = true;
+            if (edgeDevicePtr->sendMessage(receivedData) == 0) {
+                if (modbusMsg.data[0] == (unsigned char) buffTypeNpwBuffer) {
+                    //Send acknowledgment.
+                    sendModbusCommand(modbusMsg.slaveAddress, NPW_BUFF_ACK,
+                            receivedData->getBufferId());
+                }
+                ret = true;
+            }
         } else {
             LOG(ERROR) << "Failed to deserialize received buffer";
             delete receivedData;
@@ -521,7 +525,7 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
             edgeDevicePtr->processIncomingCommand(cmd);
             //after successful processing, echo back the received message (as prescribed by modbus protocol.
             LOG(INFO) << "Writing back same message to ack: " << message;
-            modbusStream.write(message, length);
+            sendMessage(message, length);
             break;
         case READ_HOLDING_REGISTERS:
                 transmitMessage();
