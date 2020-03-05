@@ -25,6 +25,24 @@ void communicator::setNpwPacketsToBuffer(int32_t v) {
 }
 
 bool communicator::removeMessageFromQueue(int32_t messageId) {
-    LOG(INFO) << "Message with ID: " << messageId << " is delivered, and should be removed from Queue";
-    return true;
+    LOG(INFO) << "Message with ID: " << messageId
+            << " is delivered, removing from Queue";
+    bool ret = false;
+    try {
+        std::lock_guard<std::mutex> guard(transmitQueueMutex);
+        auto msgIterator = transmitQueue.find(messageId);
+        if (msgIterator != transmitQueue.end()) {
+            delete (msgIterator->second);
+            transmitQueue.erase(messageId);
+            ret = true;
+        } else {
+            LOG(WARNING)
+                    << "Message not found in transmitQueue to be removed, messageId: "
+                    << messageId << "queue size: " << transmitQueue.size();
+        }
+    } catch (const std::exception & e) {
+        LOG(ERROR) << "Exception in removing message from queue: "
+                << e.what();
+    }
+    return ret;
 }
