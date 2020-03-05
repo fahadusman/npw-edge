@@ -35,6 +35,7 @@ enum CommandRegister {
     NPW_THR_PT2 = 20,  //  negative pressure drop threshold for detecting NPW for PT2
     NPW_THR_PT3 = 21,  //  negative pressure drop threshold for detecting NPW for PT3
     NPW_THR_PT4 = 22,   //  negative pressure drop threshold for detecting NPW for PT4
+    NPW_BUFF_ACK = 23, // Acknowledgment of successfully receiving an NPW buffer with bufferId so that sender removes it from transmission queue.
     INVALID_COMMAND
 };
 

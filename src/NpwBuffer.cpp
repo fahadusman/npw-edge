@@ -108,17 +108,24 @@ std::string NpwBuffer::serializeJson() {
 unsigned char * NpwBuffer::serialize(int & length) {
     unsigned char * serialBuffer = nullptr;
     try {
-        length = kDefByteArrayLength + sizeof(timeStamp) + sensorId.length() + 1;
+        length = 1/*buffer type*/+ sizeof(bufferId) + kDefByteArrayLength
+                + sizeof(timeStamp) + sensorId.length() + 1/*null char for sensorId*/;
+
         serialBuffer = new (std::nothrow) unsigned char [length];
         if (serialBuffer == nullptr) {
             LOG(ERROR) << "Unable to allocate memory for serialBuffer";
             length = 0;
             return serialBuffer;
         }
-        unsigned char * byteArray = createByteArray();
         unsigned int i = 0;
 
-        std::memcpy(serialBuffer, byteArray, kDefByteArrayLength);
+        serialBuffer[i++] = (unsigned char)buffTypeNpwBuffer; //buffer type
+
+        std::memcpy(serialBuffer+i, &(bufferId), sizeof(bufferId));
+        i += sizeof(bufferId);
+
+        unsigned char * byteArray = createByteArray();
+        std::memcpy(serialBuffer+i, byteArray, kDefByteArrayLength);
         i += kDefByteArrayLength;
         delete byteArray;
 
@@ -146,11 +153,16 @@ bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
         LOG(WARNING) << "Length of serialized buffer for NPW buffer value is too short: " << len;
         return false;
     }
-    unsigned int i = 0;
+    unsigned int i = 1; //first (0th) byte is buffer-type, we don't need that here
+
+    std::memcpy(&(bufferId), serialBuff+i, sizeof(bufferId));
+    i+= sizeof(bufferId);
+
     int temp = 0;
 
     for (unsigned int j = 0; j < (kDefNpwBufferLength); j++) {
-        temp = (serialBuff[kHdrLen + 2*j] << 8) + serialBuff[kHdrLen + 2*j+1];
+        temp = (serialBuff[i + kHdrLen + 2 * j] << 8)
+                + serialBuff[i + kHdrLen + 2 * j + 1];
         readingList[j] = temp;
     }
     i += kDefByteArrayLength;

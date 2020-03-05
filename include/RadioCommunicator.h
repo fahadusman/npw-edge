@@ -109,6 +109,8 @@ public:
     void sendQueuedMessagesThread() override;
     void startModbusMaster();
     bool addModbusSlave(uint8_t slaveId);
+    bool sendModbusCommand(uint8_t slaveAddress, CommandRegister regAddress,
+            uint16_t value);
     virtual ~RadioCommunicator();
 
 };
