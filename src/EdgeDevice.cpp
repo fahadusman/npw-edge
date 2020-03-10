@@ -22,6 +22,15 @@ EdgeDevice::EdgeDevice(Role role) {
 }
 
 void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
+    if (edgeDeviceRole == gatewayEdgeDevice) {
+        LOG(INFO) << "Gateway Edge device, going to enqueue command for modbus slave.";
+        if (false == modbusMaster->enqueueSlaveCommand(incomingCommand))
+        {
+            LOG(WARNING) << "Failed to enqueue slave command.";
+        }
+        return;
+    }
+
     switch (incomingCommand->getCommand()){
     case UNINITIALIZED_CMD:
         LOG(WARNING) << "Uninitialized command received.";
