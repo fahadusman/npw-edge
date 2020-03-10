@@ -89,6 +89,11 @@ protected:
     uint8_t modbusSlaveAddress; // used as modbus slave address in slave mode,
                                 // and current slave that was being polled when in Master mode
     std::list <ModbusSlave *> modbusSlavesList; //list of modbus slaves for master mode.
+    std::queue<CommandMsg * > slaveCommandQueue;
+    std::mutex commandQueueMutex;
+    CommandMsg * getQueuedSlaveCommand();
+    bool popQueuedSlaveCommand();
+    void sendQueuedCommand();
 
     bool slaveThreadDone;
     bool masterThreadDone;
@@ -111,6 +116,7 @@ public:
     bool addModbusSlave(uint8_t slaveId);
     bool sendModbusCommand(uint8_t slaveAddress, CommandRegister regAddress,
             uint16_t value);
+    bool enqueueSlaveCommand(CommandMsg * cmd);
     virtual ~RadioCommunicator();
 
 };

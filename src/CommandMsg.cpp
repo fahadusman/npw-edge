@@ -12,8 +12,10 @@
 CommandMsg::CommandMsg() {
     command = UNINITIALIZED_CMD;
     data = 0;
+    deviceId = 0;
 }
-CommandMsg::CommandMsg(CommandRegister cmd, uint32_t d){
+
+CommandMsg::CommandMsg(CommandRegister cmd, uint32_t d):deviceId(0) {
     LOG(INFO) << "New command message, cmd: " << cmd << " data: " << d;
     if (cmd >= UNINITIALIZED_CMD and cmd < INVALID_COMMAND) {
         command = cmd;
@@ -23,4 +25,8 @@ CommandMsg::CommandMsg(CommandRegister cmd, uint32_t d){
         LOG(WARNING) << "Received invalid command";
     }
     data = d;
+}
+
+CommandMsg::CommandMsg(CommandRegister cmd, uint32_t d, uint8_t devId):CommandMsg(cmd, d) {
+    deviceId = devId;
 }

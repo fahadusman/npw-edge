@@ -22,6 +22,15 @@ EdgeDevice::EdgeDevice(Role role) {
 }
 
 void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
+    if (edgeDeviceRole == gatewayEdgeDevice) {
+        LOG(INFO) << "Gateway Edge device, going to enqueue command for modbus slave.";
+        if (false == modbusMaster->enqueueSlaveCommand(incomingCommand))
+        {
+            LOG(WARNING) << "Failed to enqueue slave command.";
+        }
+        return;
+    }
+
     switch (incomingCommand->getCommand()){
     case UNINITIALIZED_CMD:
         LOG(WARNING) << "Uninitialized command received.";
@@ -92,7 +101,7 @@ void EdgeDevice::setCommunicator(communicator * cPtr) {
     commPtr = cPtr;
 }
 
-void EdgeDevice::setModbusMaster(communicator * modbusMasterPtr) {
+void EdgeDevice::setModbusMaster(RadioCommunicator * modbusMasterPtr) {
     if (modbusMaster != nullptr) {
         delete modbusMaster;
         modbusMaster = nullptr;
@@ -109,7 +118,6 @@ int EdgeDevice::sendMessage(CommDataBuffer * d) {
 }
 
 EdgeDevice::~EdgeDevice() {
-    // TODO Auto-generated destructor stub
     for (Sensor * sensorPtr : sensorsList) {
         delete sensorPtr;
         sensorPtr = NULL;
