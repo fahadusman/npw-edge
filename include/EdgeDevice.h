@@ -14,6 +14,8 @@
 #include "MqttHandler.h"
 #include "RadioCommunicator.h"
 
+class RadioCommunicator;
+
 /*
  *  An Edge device can have one of the three roles;
  *  * Block Valve site edge device that would communicate over
@@ -39,16 +41,20 @@ public:
     void runForever();
     void addSensor(Sensor * sensorPtr);
     void setCommunicator(communicator * cPtr);
-    void setModbusMaster(communicator * modbusMasterPtr);
+    void setModbusMaster(RadioCommunicator * modbusMasterPtr);
     int sendMessage(CommDataBuffer * d);
     std::list<PeriodicValue*> getCurrentValues();
     PeriodicValue* getPeriodicSensorValue();
+    Role getRole() {
+        return edgeDeviceRole;
+    }
+    bool sendSlaveCommand();
 protected:
     std::list<Sensor *> sensorsList;  //List of PTs and TTs
     communicator * commPtr;
     uint32_t heartbeatInterval; //Heartbeat interval for edge device in MS
     bool keepRunning;
-    communicator * modbusMaster;
+    RadioCommunicator * modbusMaster;
     Role edgeDeviceRole;
 };
 

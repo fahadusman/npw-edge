@@ -73,12 +73,29 @@ void RadioCommunicator::connect() {
     modbusStream.SetStopBits(StopBits::STOP_BITS_1);
 }
 
+void RadioCommunicator::sendQueuedCommand() {
+    CommandMsg* cmdPtr = getQueuedSlaveCommand();
+    if (cmdPtr != nullptr) {
+        if (sendModbusCommand(cmdPtr->getSlaveId(), cmdPtr->getCommand(),
+                cmdPtr->getData())) {
+            popQueuedSlaveCommand();
+            delete cmdPtr;
+            cmdPtr = nullptr;
+        }
+        else {
+            LOG(WARNING) << "Failed to send modbus command";
+        }
+    }
+}
+
 void RadioCommunicator::modbusMasterThread() {
     std::string readRegistersCommand = ":01030000000280\r\n";
     auto slaveIt = modbusSlavesList.begin();
     std::string receiveBuffer = "";
     while (not masterThreadDone) {
         std::this_thread::sleep_for(modbusMasterPollInterval);
+        sendQueuedCommand();
+
         try {
             if (slaveIt == modbusSlavesList.end()) {
                 slaveIt = modbusSlavesList.begin();
@@ -683,4 +700,49 @@ bool RadioCommunicator::sendModbusCommand(uint8_t slaveAddress,
     LOG(INFO) << "Modbus slave response timed out.";
 
     return ret;
+}
+
+bool RadioCommunicator::enqueueSlaveCommand(CommandMsg * cmd) {
+    //TODO: If slaveId in the commandMsg is 0, then the command should be enqueued for each slave.
+    try {
+        std::lock_guard<std::mutex> guard(commandQueueMutex);
+        slaveCommandQueue.push(cmd);
+        return true;
+    } catch (std::exception & e) {
+        LOG(ERROR) << "exception: " << e.what();
+    }
+    return false;
+}
+
+CommandMsg * RadioCommunicator::getQueuedSlaveCommand() {
+    try {
+        std::lock_guard<std::mutex> guard(commandQueueMutex);
+        if (slaveCommandQueue.empty()) {
+            return nullptr;
+        } else {
+            return slaveCommandQueue.front();
+        }
+    } catch (std::exception & e) {
+        LOG(ERROR) << "exception: " << e.what();
+    }
+    return nullptr;
+}
+
+/*
+ * Pop one slave command from the queue, but the caller would be responsible
+ * for destroying the dynamically allocated command object.
+ */
+bool RadioCommunicator::popQueuedSlaveCommand() {
+    try {
+        std::lock_guard<std::mutex> guard(commandQueueMutex);
+        if (slaveCommandQueue.empty()) {
+            return false;
+        } else {
+            slaveCommandQueue.pop();
+            return true;
+        }
+    } catch (std::exception & e) {
+        LOG(ERROR) << "exception: " << e.what();
+    }
+    return false;
 }
