@@ -12,6 +12,7 @@
 
 #define COMMAND_KEY "command"
 #define VALUE_KEY "value"
+#define DEVICEID_KEY "device_id" //device_id = 0 means that the command is for all devices
 
 enum CommandRegister {
     UNINITIALIZED_CMD = 0,
@@ -42,14 +43,19 @@ class CommandMsg {
 private:
     CommandRegister command; //this is same as modbus register address
     int32_t data;
+    uint8_t deviceId;
 public:
     CommandMsg();
     CommandMsg(CommandRegister cmd, uint32_t d);
+    CommandMsg(CommandRegister cmd, uint32_t d, uint8_t devId);
     CommandRegister getCommand() {
         return command;
     }
     int32_t getData() {
         return data;
+    }
+    int32_t getSlaveId() {
+        return deviceId;
     }
 };
 
