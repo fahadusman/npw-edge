@@ -131,6 +131,11 @@ bool MqttCommunicator::processIncomingMessage(const char * msg, const int & len)
                 and doc.HasMember(VALUE_KEY) and doc[VALUE_KEY].IsInt()) {
             CommandRegister command = static_cast<CommandRegister>(doc[COMMAND_KEY].GetInt());
             int32_t value = doc[VALUE_KEY].GetInt();
+            uint8_t deviceId = 0;
+            if (doc.HasMember(DEVICEID_KEY) and doc[DEVICEID_KEY].IsInt()) {
+                deviceId = doc[DEVICEID_KEY].GetInt();
+            }
+
             switch (command) {
             case NPW_NUM_PACK:
                 setNpwPacketsToBuffer(value);
@@ -141,9 +146,11 @@ bool MqttCommunicator::processIncomingMessage(const char * msg, const int & len)
                 break;
             default:
                 LOG(INFO) << "Passing incoming command to edge device";
-                CommandMsg * cmd = new CommandMsg(command, value);
+                CommandMsg * cmd = new CommandMsg(command, value, deviceId);
                 edgeDevicePtr->processIncomingCommand(cmd);
             }
+        } else {
+            LOG(WARNING) << "Message received on command topic is not properly formed.";
         }
     } catch (const std::exception & exc) {
         LOG(ERROR) << "STD Exception: " << exc.what();
