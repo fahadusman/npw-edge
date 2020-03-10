@@ -92,7 +92,7 @@ void EdgeDevice::setCommunicator(communicator * cPtr) {
     commPtr = cPtr;
 }
 
-void EdgeDevice::setModbusMaster(communicator * modbusMasterPtr) {
+void EdgeDevice::setModbusMaster(RadioCommunicator * modbusMasterPtr) {
     if (modbusMaster != nullptr) {
         delete modbusMaster;
         modbusMaster = nullptr;
@@ -109,7 +109,6 @@ int EdgeDevice::sendMessage(CommDataBuffer * d) {
 }
 
 EdgeDevice::~EdgeDevice() {
-    // TODO Auto-generated destructor stub
     for (Sensor * sensorPtr : sensorsList) {
         delete sensorPtr;
         sensorPtr = NULL;
