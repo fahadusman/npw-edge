@@ -9,7 +9,7 @@
 
 #include <string>
 
-#include "communicator.h"
+#include "HeartbeatBuffer.h"
 
 RadioCommunicator::RadioCommunicator(EdgeDevice * d, const int & slaveAddress,
         ModbusModes mode, std::string radioPort) :
@@ -273,18 +273,17 @@ std::string RadioCommunicator::binaryToModbusAsciiMessage(int serializedMsgLen,
 
 // send one message from transmit queue.
 void RadioCommunicator::transmitMessage() {
-    CommDataBuffer* commPtr = nullptr;
-    unsigned char * serializedMessage = NULL;
-    {
-        std::lock_guard<std::mutex> guard(transmitQueueMutex);
-        if (transmitQueue.size() > 0) {
-            commPtr = transmitQueue.begin()->second;
-        }
+    CommDataBuffer* commPtr = getQueuedMessage();
+    unsigned char * serializedMessage = nullptr;
+
+    if (commPtr == nullptr) {
+        commPtr = edgeDevicePtr->getHeartBeat();
     }
 
     if (commPtr == nullptr) {
-        LOG(INFO) << "no message in queue, sending current periodic value";
         commPtr = edgeDevicePtr->getPeriodicSensorValue();
+        LOG_IF(INFO, (commPtr != nullptr))
+            << "no message in queue, sending current periodic value";
     }
 
     if (commPtr != nullptr) {
@@ -497,24 +496,35 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
 
     if (modbusMode == modbusMaster) {
         CommDataBuffer * receivedData = nullptr;
-        ret = parseModbusResponse(modbusMsg, message, length);
-        if (modbusMsg.byteCount > 200) { //It should be an NPW Buffer
-            receivedData = new NpwBuffer();
-        } else {
-            receivedData = new PeriodicValue(0, 0, "");
+        if (parseModbusResponse(modbusMsg, message, length)) {
+            if ((BufferType)modbusMsg.data[0] == buffTypeNpwBuffer) {
+                receivedData = new NpwBuffer();
+            } else if ((BufferType)modbusMsg.data[0] == buffTypePeriodicValue) {
+                receivedData = new PeriodicValue(0, 0, "");
+            } else if ((BufferType)modbusMsg.data[0] == buffTypeHeartBeat) {
+                receivedData = new HeartbeatBuffer(0);
+            } else {
+                LOG(ERROR) << "Unknown buffer type, processIncomingMessage. "
+                        << int(modbusMsg.data[0]);
+                return false;
+            }
+
         }
 
         if (receivedData->deserialize(modbusMsg.data, modbusMsg.byteCount)) {
             LOG(INFO)
                     << "Received Buffer successfully deserailzed, timestamp: "
                     << receivedData->getTimestamp();
-            if (edgeDevicePtr->sendMessage(receivedData) == 0) {
+            if (edgeDevicePtr->sendMessage(receivedData) == 1) {
                 if (modbusMsg.data[0] == (unsigned char) buffTypeNpwBuffer) {
                     //Send acknowledgment.
                     sendModbusCommand(modbusMsg.slaveAddress, ACK_NPW_BUFF,
                             receivedData->getBufferId());
                 }
                 ret = true;
+            } else {
+                delete receivedData;
+                LOG(WARNING) << "sendMessage failed, discarding received data";
             }
         } else {
             LOG(ERROR) << "Failed to deserialize received buffer";
@@ -538,7 +548,7 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
                 return false;
             }
             cmd = new CommandMsg(CommandRegister(modbusMsg.registerAddress),
-                    modbusMsg.writeData);
+                    modbusMsg.writeData, modbusMsg.slaveAddress);
             edgeDevicePtr->processIncomingCommand(cmd);
             //after successful processing, echo back the received message (as prescribed by modbus protocol.
             LOG(INFO) << "Writing back same message to ack: " << message;

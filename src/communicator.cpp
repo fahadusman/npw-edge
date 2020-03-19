@@ -16,7 +16,7 @@ int communicator::enqueueMessage(CommDataBuffer * buff){
 
     std::lock_guard<std::mutex> guard(transmitQueueMutex);
     transmitQueue[buff->getBufferId()] = buff;
-    return 0;
+    return 1;
 }
 
 void communicator::setNpwPacketsToBuffer(int32_t v) {
@@ -48,4 +48,17 @@ bool communicator::removeMessageFromQueue(int32_t messageId) {
                 << e.what();
     }
     return ret;
+}
+
+CommDataBuffer * communicator::getQueuedMessage() {
+    CommDataBuffer * commPtr = nullptr;
+    try {
+        std::lock_guard<std::mutex> guard(transmitQueueMutex);
+        if (transmitQueue.size() > 0) {
+            commPtr = transmitQueue.begin()->second;
+        }
+    } catch (const std::exception & e) {
+        LOG(ERROR) << "Exception in retrieving queued message " << e.what();
+    }
+    return commPtr;
 }

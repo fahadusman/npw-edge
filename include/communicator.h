@@ -40,6 +40,7 @@ public:
 	virtual void subscribe() = 0;
     void setNpwPacketsToBuffer(int32_t v);
     virtual bool removeMessageFromQueue(int32_t messageId);
+    CommDataBuffer * getQueuedMessage();
 };
 
 
