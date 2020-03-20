@@ -342,18 +342,21 @@ void PressureSensor::stopNpwThread(){
 void PressureSensor::fillCircularBufferWithDummyValues(){
 	LOG(WARNING) << "initializing circular buffer with dummy values";
 
-	readingType v = 61482;
-	SensorReading<double> * sensorReadingPtr = NULL;
-	std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint =
-			std::chrono::high_resolution_clock::now() - std::chrono::seconds(25);
-	__uint64_t currentTimeMs =
-			std::chrono::duration_cast<std::chrono::milliseconds>(currentTimePoint.time_since_epoch()).count();
-	currentTimeMs -= currentTimeMs%10;
+    readingType v = 61482;
+    SensorReading<double> * sensorReadingPtr = NULL;
+    std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint =
+            std::chrono::high_resolution_clock::now()
+                    - std::chrono::seconds(25);
+    __uint64_t currentTimeMs =
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                    currentTimePoint.time_since_epoch()).count();
+    currentTimeMs -= currentTimeMs % 10;
 
-	for(unsigned int i = 0; i < circularBufferLength; i++){
-		sensorReadingPtr = new (std::nothrow) SensorReading<double> (v, currentTimeMs+=kDefReadingIntervalMs);
-		sensorReadingCircularBuffer.push_back(sensorReadingPtr);
-	}
+    for (unsigned int i = 0; i < circularBufferLength; i++) {
+        sensorReadingPtr = new (std::nothrow) SensorReading<double>(v,
+                currentTimeMs += readingIntervalMs);
+        sensorReadingCircularBuffer.push_back(sensorReadingPtr);
+    }
 
 	unsigned int i = 0;
 
