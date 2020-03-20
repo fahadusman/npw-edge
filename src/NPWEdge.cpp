@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
     LOG(INFO) << "starting LDS app, argc = " << argc;
 
     Role edgeDeviceRole = gatewayEdgeDevice;
-    EdgeDevice edgeDevice(edgeDeviceRole);
+    EdgeDevice edgeDevice(1, edgeDeviceRole);
     communicator * commPtr = nullptr;
     
     if (edgeDeviceRole == stationEdgeDevice) {

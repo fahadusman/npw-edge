@@ -7,18 +7,22 @@
 
 #include <EdgeDevice.h>
 #include <glog/logging.h>
+#include <HeartbeatBuffer.h>
+#include <chrono>
 
 #include "DevConfig.h"
 #include "CommDataBuffer.h"
 
-EdgeDevice::EdgeDevice(Role role) {
-    edgeDeviceRole = role;
+EdgeDevice::EdgeDevice(int devId, Role role) :
+        deviceId(devId), edgeDeviceRole(role) {
     LOG(INFO) << "EdgeDevice constructor";
     commPtr = nullptr;
     modbusMaster = nullptr;
 
     heartbeatInterval = kDcHeartbeatInterval.def;
     keepRunning = true;
+    nextHBTimePoint = std::chrono::high_resolution_clock::now();
+//            + std::chrono::seconds(heartbeatInterval);
 }
 
 void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
@@ -76,7 +80,7 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
 
 void EdgeDevice::setHeartbeatInterval(int32_t hb) {
     if (hb > kDcHeartbeatInterval.min and hb < kDcHeartbeatInterval.max) {
-        heartbeatInterval = hb * 1000; //convert it from seconds to milliseconds
+        heartbeatInterval = hb; //seconds
     } else {
         LOG(WARNING) << "HEARTBEAT_INTERVAL value out of range";
     }
@@ -145,4 +149,15 @@ PeriodicValue* EdgeDevice::getPeriodicSensorValue(){
     }
     PeriodicValue * pValPtr = (*sensorIt++)->getCurrentValue();
     return pValPtr;
+}
+
+CommDataBuffer * EdgeDevice::getHeartBeat() {
+    CommDataBuffer * hbPtr = nullptr;
+    if(nextHBTimePoint < std::chrono::high_resolution_clock::now()) {
+        hbPtr = new HeartbeatBuffer(deviceId);
+        nextHBTimePoint = std::chrono::high_resolution_clock::now()
+                + std::chrono::seconds(heartbeatInterval);
+        DLOG(INFO) << "Creating new heartbeat buffer";
+    }
+    return hbPtr;
 }

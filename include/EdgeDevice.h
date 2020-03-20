@@ -34,7 +34,7 @@ enum Role {
 
 class EdgeDevice {
 public:
-    EdgeDevice(Role role);
+    EdgeDevice(int devId, Role role);
     virtual ~EdgeDevice();
     void processIncomingCommand(CommandMsg * incomingCommand);
     void setHeartbeatInterval(int32_t hb);
@@ -49,13 +49,16 @@ public:
         return edgeDeviceRole;
     }
     bool sendSlaveCommand();
+    CommDataBuffer * getHeartBeat();
 protected:
+    int deviceId;
     std::list<Sensor *> sensorsList;  //List of PTs and TTs
     communicator * commPtr;
-    uint32_t heartbeatInterval; //Heartbeat interval for edge device in MS
+    uint32_t heartbeatInterval; //Heartbeat interval for edge device in seconds
     bool keepRunning;
     RadioCommunicator * modbusMaster;
     Role edgeDeviceRole;
+    std::chrono::time_point<std::chrono::high_resolution_clock> nextHBTimePoint;
 };
 
 #endif /* INCLUDE_EDGEDEVICE_H_ */
