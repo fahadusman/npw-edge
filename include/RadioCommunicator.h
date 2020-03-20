@@ -82,7 +82,8 @@ protected:
             const int & msgLen);
     bool parseModbusResponse(ModbusMessage & modbusMsg, const char * receivedMsg,
             const int & msgLen);
-    bool receiveModbusAsciiMessage(std::string& receiveBuffer);
+    bool receiveModbusAsciiMessage(std::string& receiveBuffer,
+            std::chrono::time_point<std::chrono::high_resolution_clock> expTime);
     std::string binaryToModbusAsciiMessage(int serializedMsgLen,
             unsigned char* asciiMessage);
 
@@ -101,6 +102,8 @@ protected:
 //    std::chrono::duration<int, > modbusTimeout;
     std::chrono::milliseconds modbusResponseTimeout;
     std::chrono::milliseconds modbusMasterPollInterval;
+    std::chrono::milliseconds modbusTransmissionTimeout;
+
 
     std::string radioSerialPort;
 public:

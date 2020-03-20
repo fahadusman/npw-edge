@@ -23,7 +23,8 @@ RadioCommunicator::RadioCommunicator(EdgeDevice * d, const int & slaveAddress,
     slaveThreadDone = true;
     modbusMode = mode;
     modbusResponseTimeout = std::chrono::milliseconds(1000);
-    modbusMasterPollInterval = std::chrono::milliseconds(5000);
+    modbusMasterPollInterval = std::chrono::milliseconds(3000);
+    modbusTransmissionTimeout = std::chrono::milliseconds(2000);
     radioSerialPort = radioPort;
 }
 
@@ -120,7 +121,7 @@ void RadioCommunicator::modbusMasterThread() {
         while (std::chrono::high_resolution_clock::now() < expTime) {
             if (modbusStream.rdbuf()->in_avail() == 0) {
                 usleep(50000);
-            } else if (receiveModbusAsciiMessage(receiveBuffer)) {
+            } else if (receiveModbusAsciiMessage(receiveBuffer, expTime)) {
                 if (processIncomingMessage(receiveBuffer.c_str(),
                         receiveBuffer.length())) {
                     LOG(INFO) << "Incoming message processed successfully";
@@ -131,11 +132,11 @@ void RadioCommunicator::modbusMasterThread() {
                 }
             }
         }
-        LOG(INFO) << "Modbus slave response timed out.";
     }
 }
 
-bool RadioCommunicator::receiveModbusAsciiMessage(std::string& receiveBuffer) {
+bool RadioCommunicator::receiveModbusAsciiMessage(std::string& receiveBuffer,
+        std::chrono::time_point<std::chrono::high_resolution_clock> expTime) {
     LOG(INFO) << "data available, number of bytes:"
             << modbusStream.GetNumberOfBytesAvailable();
     char data_byte = 0;
@@ -174,11 +175,14 @@ bool RadioCommunicator::receiveModbusAsciiMessage(std::string& receiveBuffer) {
                 receiveBuffer = "";
                 packetStarted = false;
             }
+            while (not modbusStream.IsDataAvailable()
+                    and std::chrono::high_resolution_clock::now() < expTime) {
+                // Wait a brief period for more data to arrive.
+                LOG(INFO) << "packet started, but IsDataAvailable == false, waiting briefly";
+                usleep(50000);
+            }
         }
-        // Wait a brief period for more data to arrive.
-        usleep(1000);
     }
-//    std::cout << "Done." << std::endl;
     return false;
 }
 
@@ -191,7 +195,9 @@ void RadioCommunicator::modbusSlaveThread() {
         }
 
         usleep(1000);
-        if (receiveModbusAsciiMessage(receiveBuffer)) {
+        if (receiveModbusAsciiMessage(receiveBuffer,
+                std::chrono::high_resolution_clock::now()
+                        + modbusTransmissionTimeout)) {
             if (processIncomingMessage(receiveBuffer.c_str(),
                     receiveBuffer.length())) {
                 LOG(INFO) << "Incoming message processed successfully";
@@ -696,7 +702,9 @@ bool RadioCommunicator::sendModbusCommand(uint8_t slaveAddress,
     while (std::chrono::high_resolution_clock::now() < expTime) {
         if (modbusStream.rdbuf()->in_avail() == 0) {
             usleep(50000);
-        } else if (receiveModbusAsciiMessage(receiveBuffer)) {
+        } else if (receiveModbusAsciiMessage(receiveBuffer,
+                std::chrono::high_resolution_clock::now()
+                        + modbusTransmissionTimeout)) {
             if (receiveBuffer == modbusCommand) {
                 LOG(INFO) << "got response for command: " << receiveBuffer;
                 return true;
