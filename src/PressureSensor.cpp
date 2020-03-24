@@ -184,7 +184,7 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
 	samplesCountBeforeDetection = kDcNpwSampleBefore.def;
 	samplesCountAfterDetection = kDcNpwSampleAfter.def;
     remainingSamples = 0;
-    updateCircularBufferLen();
+    updateBufferLengths();
 
 	npwBufferExpiryTime = kDcNpwExpiryTime.def * 60000; //min to ms
 }
@@ -460,7 +460,7 @@ void PressureSensor::processIncomingCommand() {
                 secondAverageSampleCount = applyCommand(c->getData(), secondAverageSampleCount,
                         kDcNumSamples2ndAvg, true);
                 secondAverageEnd = secondAverageStart + secondAverageSampleCount;
-                updateCircularBufferLen();
+                updateBufferLengths();
                 break;
             case START_SAMPLE_2_AVG:
                 secondAverageSampleCount = secondAverageEnd
@@ -481,12 +481,12 @@ void PressureSensor::processIncomingCommand() {
             case NPW_SAMPLE_AFTER:
                 samplesCountAfterDetection = applyCommand(c->getData(),
                         samplesCountAfterDetection, kDcNpwSampleAfter, true);
-                updateCircularBufferLen();
+                updateBufferLengths();
                 break;
             case NPW_SAMPLE_BEFORE:
                 samplesCountBeforeDetection = applyCommand(c->getData(),
                         samplesCountBeforeDetection, kDcNpwSampleBefore, true);
-                updateCircularBufferLen();
+                updateBufferLengths();
                 break;
             case TEST_FLAG:
                 npwBufferPtr = createNpwBuffer();
@@ -529,4 +529,21 @@ void PressureSensor::clearNPWBufferAndState() {
         LOG(ERROR) << "exception: " << e.what();
     }
 
+}
+
+void PressureSensor::updateBufferLengths() {
+    npwBufferLength = samplesCountAfterDetection
+            + samplesCountBeforeDetection;
+    LOG(INFO) << "current circularBufferLength: "
+            << circularBufferLength;
+    circularBufferLength =
+            (secondAverageEnd
+                    > (samplesCountBeforeDetection
+                            + samplesCountAfterDetection)) ?
+                    secondAverageEnd :
+                    (samplesCountBeforeDetection
+                            + samplesCountAfterDetection);
+
+    LOG(INFO) << "updatedCircularBufferLength: "
+            << circularBufferLength;
 }

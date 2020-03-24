@@ -63,6 +63,8 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
     case NPW_THR_PT2:
     case NPW_THR_PT3:
     case NPW_THR_PT4:
+    case NPW_SAMPLE_BEFORE:
+    case NPW_SAMPLE_AFTER:
         for (Sensor * sensorPtr : sensorsList) {
             sensorPtr->enqueueCommand(incomingCommand);
         }
