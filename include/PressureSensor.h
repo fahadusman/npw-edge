@@ -74,21 +74,7 @@ private:
     void updateReadingInterval(const int newInterval);
     int applyCommand(const int newValue, int oldValue, const DevConfig & dc,
             bool resetNpwThread);
-    void updateCircularBufferLen() {
-        LOG(INFO) << "current circularBufferLength: "
-                << circularBufferLength;
-        circularBufferLength =
-                (secondAverageEnd
-                        > (samplesCountBeforeDetection
-                                + samplesCountAfterDetection)) ?
-                        secondAverageEnd :
-                        (samplesCountBeforeDetection
-                                + samplesCountAfterDetection);
-
-        LOG(INFO) << "updatedCircularBufferLength: "
-                << circularBufferLength;
-    }
-
+    void updateBufferLengths();
 public:
 	void npwThread();
 	void startNpwThread();
