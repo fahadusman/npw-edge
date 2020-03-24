@@ -12,28 +12,28 @@
 
 #include "CommDataBuffer.h"
 
-const unsigned int kDefNpwBufferLength = 500; //TODO: it should be samples per second (50) x npw buffer duration (10s) = 500,
-
 const unsigned int kHdrLen = 8;
 
 typedef double readingType;
 
 class NpwBuffer: public CommDataBuffer {
 private:
-    readingType readingList[kDefNpwBufferLength];
+    readingType * readingList;
+    unsigned int readingListLength;
+    unsigned int byteArrayLength;
 public:
     uint64_t getTimestamp() {
         return timeStamp;
     }
-
     NpwBuffer();
-    NpwBuffer(uint64_t ts);
+    NpwBuffer(uint64_t ts, unsigned int readingListLen);
     unsigned char * createByteArray();
     void insertAt(const unsigned int position, readingType value);
 
     std::string serializeJson() override;
     unsigned char * serialize(int & length) override;
     bool deserialize(const unsigned char *, const int & length) override;
+    ~NpwBuffer();
 };
 
 #endif /* INCLUDE_NPWBUFFER_H_ */
