@@ -12,23 +12,27 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
-const unsigned int kDefByteArrayLength = kDefNpwBufferLength*2 + kHdrLen;   //TODO: Make this dynamic
-NpwBuffer::NpwBuffer() :
-        readingList { } {
-    timeStamp = 0;
+NpwBuffer::NpwBuffer() {
+    readingList = nullptr;
+    readingListLength = 0;
+    byteArrayLength = 0;
 }
 
-NpwBuffer::NpwBuffer(uint64_t ts) :
-        readingList { } {
+NpwBuffer::NpwBuffer(uint64_t ts, unsigned int readingListLen) {
+    readingListLength = readingListLen;
+    readingList = new (std::nothrow) readingType[readingListLen];
+    LOG_IF(FATAL, readingList == nullptr) << "Unable to allocate memory for readingList";
     timeStamp = ts;
+    byteArrayLength = 2*readingListLength + kHdrLen; //2 bytes value, plus the header
+
     LOG(INFO) << "new NPW Buffer, timeStamp: " << timeStamp << ", id: "
             << bufferId;
 }
 
 void NpwBuffer::insertAt(const unsigned int position, readingType value) {
-    if (position >= kDefNpwBufferLength) {
-        LOG(FATAL) << "array index out of bound. index=" << position;
-    }
+    LOG_IF(FATAL,readingList == nullptr) << "readingList is not unallocated.";
+    LOG_IF(FATAL,position > readingListLength) << "array index out of bound. index=" << position;
+
     readingList[position] = value;
 }
 
@@ -55,7 +59,7 @@ inline unsigned char decToBcd(const unsigned char dec) {
  */
 unsigned char * NpwBuffer::createByteArray() {
     unsigned char * byteArray =
-            new (std::nothrow) unsigned char[kDefByteArrayLength](); //2 bytes value, plus the header
+            new (std::nothrow) unsigned char[byteArrayLength]();
     if (byteArray == nullptr) {
         LOG(ERROR) << "Unable to allocate memory for byteArray";
         return byteArray;
@@ -78,7 +82,7 @@ unsigned char * NpwBuffer::createByteArray() {
     byteArray[6] = decToBcd((timeStamp % 1000) / 10); //First two digits of the millisecond (00..99)
     byteArray[7] = decToBcd((timeStamp % 10) * 10 + npwTime->tm_wday + 1);
 
-    for (unsigned int i = 0; i < kDefNpwBufferLength; i++) {
+    for (unsigned int i = 0; i < readingListLength; i++) {
         int currentVal = readingList[i];
         byteArray[2 * i + kHdrLen] = currentVal >> 8;
         byteArray[2 * i + kHdrLen + 1] = currentVal & 0xFF;
@@ -96,7 +100,7 @@ std::string NpwBuffer::serializeJson() {
     writer.StartObject();
     writer.Key("array");
     writer.StartArray();
-    for (unsigned int i = 0; i < kDefByteArrayLength; i++)
+    for (unsigned int i = 0; i < byteArrayLength; i++)
         writer.Uint(byteArray[i]);
     writer.EndArray();
     writer.EndObject();
@@ -108,7 +112,7 @@ std::string NpwBuffer::serializeJson() {
 unsigned char * NpwBuffer::serialize(int & length) {
     unsigned char * serialBuffer = nullptr;
     try {
-        length = 1/*buffer type*/+ sizeof(bufferId) + kDefByteArrayLength
+        length = 1/*buffer type*/+ sizeof(bufferId) + sizeof(byteArrayLength) + byteArrayLength
                 + sizeof(timeStamp) + sensorId.length() + 1/*null char for sensorId*/;
 
         serialBuffer = new (std::nothrow) unsigned char [length];
@@ -124,9 +128,12 @@ unsigned char * NpwBuffer::serialize(int & length) {
         std::memcpy(serialBuffer+i, &(bufferId), sizeof(bufferId));
         i += sizeof(bufferId);
 
+        std::memcpy(serialBuffer+i, &(byteArrayLength), sizeof(byteArrayLength));
+        i += sizeof(byteArrayLength);
+
         unsigned char * byteArray = createByteArray();
-        std::memcpy(serialBuffer+i, byteArray, kDefByteArrayLength);
-        i += kDefByteArrayLength;
+        std::memcpy(serialBuffer+i, byteArray, byteArrayLength);
+        i += byteArrayLength;
         delete byteArray;
 
         std::memcpy(serialBuffer+i, &(timeStamp), sizeof(timeStamp));
@@ -149,7 +156,8 @@ unsigned char * NpwBuffer::serialize(int & length) {
 }
 
 bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
-    if ((unsigned int) len < (kDefByteArrayLength + sizeof(timeStamp))) {
+//    TODO: Determine length of byte array
+    if ((unsigned int) len < (byteArrayLength + sizeof(timeStamp))) {
         LOG(WARNING) << "Length of serialized buffer for NPW buffer value is too short: " << len;
         return false;
     }
@@ -158,14 +166,26 @@ bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
     std::memcpy(&(bufferId), serialBuff+i, sizeof(bufferId));
     i+= sizeof(bufferId);
 
-    int temp = 0;
+    std::memcpy(&(byteArrayLength), serialBuff+i, sizeof(byteArrayLength));
+    i+= sizeof(byteArrayLength);
 
-    for (unsigned int j = 0; j < (kDefNpwBufferLength); j++) {
+    readingListLength = (byteArrayLength-kHdrLen)/2;
+    readingList = new (std::nothrow) readingType[readingListLength];
+    LOG(INFO) << "readingListLength: " << readingListLength
+            << "\tbyteArrayLength: " << byteArrayLength;
+
+    if (readingList == nullptr) {
+        LOG(ERROR) << "Unable to allocate memory for readingList";
+        return false;
+    }
+
+    int temp = 0;
+    for (unsigned int j = 0; j < (readingListLength); j++) {
         temp = (serialBuff[i + kHdrLen + 2 * j] << 8)
                 + serialBuff[i + kHdrLen + 2 * j + 1];
         readingList[j] = temp;
     }
-    i += kDefByteArrayLength;
+    i += byteArrayLength;
 
     std::memcpy(&(timeStamp), serialBuff+i, sizeof(timeStamp));
     i+= sizeof(timeStamp);
@@ -173,4 +193,10 @@ bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
     sensorId.clear();
     sensorId.append((char *)(&serialBuff[i]), len-i);
     return true;
+}
+
+NpwBuffer::~NpwBuffer() {
+    if (readingList != nullptr) {
+        delete readingList;
+    }
 }

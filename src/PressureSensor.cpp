@@ -70,17 +70,18 @@ void PressureSensor::updateMovingAverages() {
 
 NpwBuffer* PressureSensor::createNpwBuffer(){
 	size_t circularBufferLength = sensorReadingCircularBuffer.size();
-
-	LOG(INFO) << "createNewNpwBuffer, circularBufferLength:" << circularBufferLength << "\tNPW buffer len:" << npwBufferLength;
-
 	if (circularBufferLength < npwBufferLength){
-		LOG(ERROR) << "Not enough values (" << circularBufferLength << ") in circular buffer to create NPW buffer of " << npwBufferLength;
-		return NULL;
+        LOG(ERROR) << "Not enough values (" << circularBufferLength
+                << ") in circular buffer to create NPW buffer of "
+                << npwBufferLength;
+		return nullptr;
 	}
 
 	unsigned int startIndex = circularBufferLength - npwBufferLength;
 	NpwBuffer * newNpwBufferPtr = new (std::nothrow)
-			NpwBuffer(sensorReadingCircularBuffer[startIndex]->timestampMS);
+			NpwBuffer(
+            sensorReadingCircularBuffer[startIndex]->timestampMS,
+            samplesCountBeforeDetection + samplesCountAfterDetection);
 	sensorReadingCircularBuffer[startIndex]->print();
 
 	uint64_t currentTime =
@@ -164,7 +165,7 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
 	npwThreadPtr = nullptr;
 	readingIntervalMs = kDcSampleIntervalNpw.def;
 	recodringValues = false;
-	npwBufferLength = kDefNpwBufferLength;
+    npwBufferLength = kDcNpwSampleBefore.def + kDcNpwSampleAfter.def;
 	initializeSensor();
 
 	//The start and end of averages is index from the most recent value in the circular buffer
@@ -183,7 +184,7 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
 	samplesCountBeforeDetection = kDcNpwSampleBefore.def;
 	samplesCountAfterDetection = kDcNpwSampleAfter.def;
     remainingSamples = 0;
-    updateCircularBufferLen();
+    updateBufferLengths();
 
 	npwBufferExpiryTime = kDcNpwExpiryTime.def * 60000; //min to ms
 }
@@ -342,18 +343,21 @@ void PressureSensor::stopNpwThread(){
 void PressureSensor::fillCircularBufferWithDummyValues(){
 	LOG(WARNING) << "initializing circular buffer with dummy values";
 
-	readingType v = 61482;
-	SensorReading<double> * sensorReadingPtr = NULL;
-	std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint =
-			std::chrono::high_resolution_clock::now() - std::chrono::seconds(25);
-	__uint64_t currentTimeMs =
-			std::chrono::duration_cast<std::chrono::milliseconds>(currentTimePoint.time_since_epoch()).count();
-	currentTimeMs -= currentTimeMs%10;
+    readingType v = 61482;
+    SensorReading<double> * sensorReadingPtr = NULL;
+    std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint =
+            std::chrono::high_resolution_clock::now()
+                    - std::chrono::seconds(25);
+    __uint64_t currentTimeMs =
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                    currentTimePoint.time_since_epoch()).count();
+    currentTimeMs -= currentTimeMs % 10;
 
-	for(unsigned int i = 0; i < circularBufferLength; i++){
-		sensorReadingPtr = new (std::nothrow) SensorReading<double> (v, currentTimeMs+=kDefReadingIntervalMs);
-		sensorReadingCircularBuffer.push_back(sensorReadingPtr);
-	}
+    for (unsigned int i = 0; i < circularBufferLength; i++) {
+        sensorReadingPtr = new (std::nothrow) SensorReading<double>(v,
+                currentTimeMs += readingIntervalMs);
+        sensorReadingCircularBuffer.push_back(sensorReadingPtr);
+    }
 
 	unsigned int i = 0;
 
@@ -456,7 +460,7 @@ void PressureSensor::processIncomingCommand() {
                 secondAverageSampleCount = applyCommand(c->getData(), secondAverageSampleCount,
                         kDcNumSamples2ndAvg, true);
                 secondAverageEnd = secondAverageStart + secondAverageSampleCount;
-                updateCircularBufferLen();
+                updateBufferLengths();
                 break;
             case START_SAMPLE_2_AVG:
                 secondAverageSampleCount = secondAverageEnd
@@ -477,12 +481,12 @@ void PressureSensor::processIncomingCommand() {
             case NPW_SAMPLE_AFTER:
                 samplesCountAfterDetection = applyCommand(c->getData(),
                         samplesCountAfterDetection, kDcNpwSampleAfter, true);
-                updateCircularBufferLen();
+                updateBufferLengths();
                 break;
             case NPW_SAMPLE_BEFORE:
                 samplesCountBeforeDetection = applyCommand(c->getData(),
                         samplesCountBeforeDetection, kDcNpwSampleBefore, true);
-                updateCircularBufferLen();
+                updateBufferLengths();
                 break;
             case TEST_FLAG:
                 npwBufferPtr = createNpwBuffer();
@@ -525,4 +529,21 @@ void PressureSensor::clearNPWBufferAndState() {
         LOG(ERROR) << "exception: " << e.what();
     }
 
+}
+
+void PressureSensor::updateBufferLengths() {
+    npwBufferLength = samplesCountAfterDetection
+            + samplesCountBeforeDetection;
+    LOG(INFO) << "current circularBufferLength: "
+            << circularBufferLength;
+    circularBufferLength =
+            (secondAverageEnd
+                    > (samplesCountBeforeDetection
+                            + samplesCountAfterDetection)) ?
+                    secondAverageEnd :
+                    (samplesCountBeforeDetection
+                            + samplesCountAfterDetection);
+
+    LOG(INFO) << "updatedCircularBufferLength: "
+            << circularBufferLength;
 }
