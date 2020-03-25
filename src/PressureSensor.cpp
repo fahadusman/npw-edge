@@ -534,15 +534,10 @@ void PressureSensor::clearNPWBufferAndState() {
 void PressureSensor::updateBufferLengths() {
     npwBufferLength = samplesCountAfterDetection
             + samplesCountBeforeDetection;
-    LOG(INFO) << "current circularBufferLength: "
-            << circularBufferLength;
+    LOG(INFO) << "current circularBufferLength: " << circularBufferLength;
     circularBufferLength =
-            (secondAverageEnd
-                    > (samplesCountBeforeDetection
-                            + samplesCountAfterDetection)) ?
-                    secondAverageEnd :
-                    (samplesCountBeforeDetection
-                            + samplesCountAfterDetection);
+            (secondAverageEnd > npwBufferLength) ?
+                    secondAverageEnd : npwBufferLength;
 
     LOG(INFO) << "updatedCircularBufferLength: "
             << circularBufferLength;
