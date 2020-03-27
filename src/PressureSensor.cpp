@@ -394,15 +394,17 @@ void PressureSensor::updateReadingInterval(const int newInterval) {
     }
 }
 
-int PressureSensor::applyCommand(const int newValue, int oldValue,
+int PressureSensor::applyCommand(CommandMsg * cmd, int oldValue,
         const DevConfig & dc, bool resetNpwThread) {
-    if (oldValue != newValue and newValue >= dc.min and newValue <= dc.max) {
+    if (oldValue != cmd->getData() and cmd->getData() >= dc.min
+            and cmd->getData() <= dc.max) {
         if (resetNpwThread) {
             clearNPWBufferAndState();
         }
-        return newValue;
+        return cmd->getData();
+        edgeDevicePtr->updateRegisterValue(cmd);
     }
-    LOG(WARNING) << "Not applying newValue: " << newValue
+    LOG(WARNING) << "Not applying newValue: " << cmd->getData()
             << ", and keeping oldValue: " << oldValue;
     return oldValue;
 }
@@ -419,48 +421,48 @@ void PressureSensor::processIncomingCommand() {
 
             switch (c->getCommand()) {
             case MAX_TIME_PERIODIC:
-                if (c->getData() > kDcMaxTimePeriodic.min
-                        and c->getData() < kDcMaxTimePeriodic.max) {
-                    this->periodicValMaxInterval = c->getData() * 1000;
+                if (c->getData() >= kDcMaxTimePeriodic.min
+                        and c->getData() <= kDcMaxTimePeriodic.max) {
+                    periodicValMaxInterval = c->getData() * 1000;
+                    edgeDevicePtr->updateRegisterValue(c);
                 } else
                     LOG(WARNING) << "MAX_TIME_PERIODIC value out of range: "
                             << c->getData();
                 break;
             case MIN_TIME_PERIODIC:
-                if (c->getData() > kDcMinTimePeriodic.min
-                        and c->getData() < kDcMinTimePeriodic.max) {
+                if (c->getData() >= kDcMinTimePeriodic.min
+                        and c->getData() <= kDcMinTimePeriodic.max) {
                     this->periodicValMinInterval = c->getData() * 1000;
+                    edgeDevicePtr->updateRegisterValue(c);
                 } else
                     LOG(WARNING) << "MIN_TIME_PERIODIC value out of range: "
                             << c->getData();
                 break;
             case ON_CHANG_THSH_PT:
-                if (c->getData() > kDcOnChangThshPt.min
-                        and c->getData() < kDcOnChangThshPt.max) {
-                    this->periodicValChangeThreshold = c->getData();
-                } else
-                    LOG(WARNING) << "ON_CHANG_THSH_PT value out of range: "
-                            << c->getData();
+                periodicValChangeThreshold = applyCommand(c,
+                        periodicValChangeThreshold, kDcOnChangThshPt, false);
                 break;
             case NPW_EXP_TIME:
                 if (c->getData() > kDcNpwExpiryTime.min
                         and c->getData() < kDcNpwExpiryTime.max) {
                     //Expiry time would be sent in minutes, we need to convert it to milliseconds
                     this->npwBufferExpiryTime = c->getData() * 60 * 1000;
+                    edgeDevicePtr->updateRegisterValue(c);
                 } else
                     LOG(WARNING) << "NPW_EXP_TIME value out of range: "
                             << c->getData();
                 break;
             case SAMPLE_INTERVAL_NPW:
                 updateReadingInterval(c->getData());
+                edgeDevicePtr->updateRegisterValue(c);
                 break;
             case NUM_SAMPLES_1_AVG:
-                firstAverageEnd = applyCommand(c->getData(), firstAverageEnd,
+                firstAverageEnd = applyCommand(c, firstAverageEnd,
                         kDcNumSamples1stAvg, true);
                 break;
             case NUM_SAMPLES_2_AVG:
                 secondAverageSampleCount = secondAverageEnd - secondAverageStart;
-                secondAverageSampleCount = applyCommand(c->getData(), secondAverageSampleCount,
+                secondAverageSampleCount = applyCommand(c, secondAverageSampleCount,
                         kDcNumSamples2ndAvg, true);
                 secondAverageEnd = secondAverageStart + secondAverageSampleCount;
                 updateBufferLengths();
@@ -468,7 +470,7 @@ void PressureSensor::processIncomingCommand() {
             case START_SAMPLE_2_AVG:
                 secondAverageSampleCount = secondAverageEnd
                         - secondAverageStart;
-                secondAverageStart = applyCommand(c->getData(),
+                secondAverageStart = applyCommand(c,
                         secondAverageStart, kDcStartSample2ndAvg, true);
                 secondAverageEnd = secondAverageStart
                         + secondAverageSampleCount;
@@ -477,17 +479,17 @@ void PressureSensor::processIncomingCommand() {
             case NPW_THR_PT2:
             case NPW_THR_PT3:
             case NPW_THR_PT4:
-                npwDetectionthreshold = applyCommand(c->getData(), npwDetectionthreshold,
+                npwDetectionthreshold = applyCommand(c, npwDetectionthreshold,
                         kDcNpwPtThsh, true);
                 //TODO: check pt id first
                 break;
             case NPW_SAMPLE_AFTER:
-                samplesCountAfterDetection = applyCommand(c->getData(),
+                samplesCountAfterDetection = applyCommand(c,
                         samplesCountAfterDetection, kDcNpwSampleAfter, true);
                 updateBufferLengths();
                 break;
             case NPW_SAMPLE_BEFORE:
-                samplesCountBeforeDetection = applyCommand(c->getData(),
+                samplesCountBeforeDetection = applyCommand(c,
                         samplesCountBeforeDetection, kDcNpwSampleBefore, true);
                 updateBufferLengths();
                 break;

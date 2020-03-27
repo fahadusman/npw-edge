@@ -72,7 +72,7 @@ private:
     void processIncomingCommand();
     void clearNPWBufferAndState();
     void updateReadingInterval(const int newInterval);
-    int applyCommand(const int newValue, int oldValue, const DevConfig & dc,
+    int applyCommand(CommandMsg * cmd, int oldValue, const DevConfig & dc,
             bool resetNpwThread);
     void updateBufferLengths();
 public:
