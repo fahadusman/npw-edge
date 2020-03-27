@@ -15,13 +15,14 @@
 #include "PeriodicValue.h"
 
 class communicator;
+class EdgeDevice;
 
 class Sensor {
 public:
     virtual ~Sensor();
     virtual double readSensorValue() = 0;
     virtual void initializeSensor() = 0;
-    Sensor(communicator * cptr);
+    Sensor(communicator * cptr, EdgeDevice * ePtr);
     virtual void enqueueCommand (CommandMsg *);
     CommandMsg * dequeueCommand();
     PeriodicValue * getCurrentValue();
@@ -37,6 +38,7 @@ protected:
     communicator * commPtr;
     std::queue <CommandMsg *> incomingCommandQueue;
     std::mutex commandQueueMutex;
+    EdgeDevice * edgeDevicePtr;
 };
 
 #endif /* INCLUDE_SENSOR_H_ */

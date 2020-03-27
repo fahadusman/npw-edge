@@ -14,6 +14,7 @@
 
 #include "simulatedValues.h"
 #include "PeriodicValue.h"
+#include "EdgeDevice.h"
 
 //this function has to be called after adding a new value to the circular buffer
 //and before removing the older value.
@@ -146,8 +147,8 @@ PressureSensor::~PressureSensor() {
 	return;
 }
 
-PressureSensor::PressureSensor(std::string portName, communicator * cPtr) :
-        Sensor(cPtr), sPort(portName, kDefaultBaudRate, kDefaultParity,
+PressureSensor::PressureSensor(std::string portName, communicator * cPtr, EdgeDevice * ePtr) :
+        Sensor(cPtr, ePtr), sPort(portName, kDefaultBaudRate, kDefaultParity,
                 kDefaultBlocking) {
 	if (portName == ""){
 		LOG(WARNING) << "portName is null, using default port name";
