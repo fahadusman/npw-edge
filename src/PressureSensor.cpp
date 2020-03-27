@@ -159,35 +159,37 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr, EdgeDe
 	    LOG(FATAL) << "commPtr is null.";
 	}
 
-    periodicValMinInterval = kDcMinTimePeriodic.def * 1000;
-    periodicValMaxInterval = kDcMaxTimePeriodic.def * 1000;
-    periodicValChangeThreshold = kDcOnChangThshPt.def;
+    periodicValMinInterval = edgeDevicePtr->getRegisterValue(MIN_TIME_PERIODIC) * 1000;
+    periodicValMaxInterval = edgeDevicePtr->getRegisterValue(MAX_TIME_PERIODIC) * 1000;
+    periodicValChangeThreshold = edgeDevicePtr->getRegisterValue(ON_CHANG_THSH_PT);
 
 	npwThreadPtr = nullptr;
-	readingIntervalMs = kDcSampleIntervalNpw.def;
+	readingIntervalMs = edgeDevicePtr->getRegisterValue(SAMPLE_INTERVAL_NPW);
 	recodringValues = false;
-    npwBufferLength = kDcNpwSampleBefore.def + kDcNpwSampleAfter.def;
+    npwBufferLength = edgeDevicePtr->getRegisterValue(NPW_SAMPLE_BEFORE)
+            + edgeDevicePtr->getRegisterValue(NPW_SAMPLE_AFTER);
 	initializeSensor();
 
 	//The start and end of averages is index from the most recent value in the circular buffer
 	firstAverageStart 	= 0;	//first average starts at the most recent value.
-	firstAverageEnd 	= kDcNumSamples1stAvg.def; 	//3s x 50 = 150 samples/s
-	secondAverageStart 	= kDcStartSample2ndAvg.def; 	//second average starts at t-5
-	secondAverageEnd 	= kDcNumSamples2ndAvg.def + kDcStartSample2ndAvg.def; // second average ends at t-25
+	firstAverageEnd 	= edgeDevicePtr->getRegisterValue(NUM_SAMPLES_1_AVG);
+	secondAverageStart 	= edgeDevicePtr->getRegisterValue(START_SAMPLE_2_AVG); 	//second average starts at t-5
+	secondAverageEnd 	= edgeDevicePtr->getRegisterValue(START_SAMPLE_2_AVG)
+	        + edgeDevicePtr->getRegisterValue(NUM_SAMPLES_2_AVG);
 
     firstAverage = -100.0;
     secondAverage = -100.0;
 
-	npwDetectionthreshold = kDcNpwPtThsh.def; //threshold
+	npwDetectionthreshold = edgeDevicePtr->getRegisterValue(NPW_THR_PT1); //TODO: Use correct value wrt PT
 	currentNpwState = noDropDetected;
 	totalNPWsDetected = 0;
 
-	samplesCountBeforeDetection = kDcNpwSampleBefore.def;
-	samplesCountAfterDetection = kDcNpwSampleAfter.def;
+	samplesCountBeforeDetection = edgeDevicePtr->getRegisterValue(NPW_SAMPLE_BEFORE);
+	samplesCountAfterDetection = edgeDevicePtr->getRegisterValue(NPW_SAMPLE_AFTER);
     remainingSamples = 0;
     updateBufferLengths();
 
-	npwBufferExpiryTime = kDcNpwExpiryTime.def * 60000; //min to ms
+	npwBufferExpiryTime = edgeDevicePtr->getRegisterValue(NPW_EXP_TIME) * 60000; //min to ms
 }
 
 /*
