@@ -508,13 +508,12 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
             } else if ((BufferType)modbusMsg.data[0] == buffTypePeriodicValue) {
                 receivedData = new PeriodicValue(0, 0, "");
             } else if ((BufferType)modbusMsg.data[0] == buffTypeHeartBeat) {
-                receivedData = new HeartbeatBuffer(0);
+                receivedData = new HeartbeatBuffer();
             } else {
                 LOG(ERROR) << "Unknown buffer type, processIncomingMessage. "
                         << int(modbusMsg.data[0]);
                 return false;
             }
-
         }
 
         if (receivedData->deserialize(modbusMsg.data, modbusMsg.byteCount)) {

@@ -24,8 +24,8 @@ std::string HeartbeatBuffer::serializeJson() {
     hbJsonWriter.Uint64(timeStamp);
     hbJsonWriter.Key("registerMap");
     hbJsonWriter.StartArray();
-    for (int i = 0; i < registerMapSize; i++) {
-        hbJsonWriter.Uint64(registerMap[i]);
+    for (unsigned int i = 0; i < registerMapSize; i++) {
+        hbJsonWriter.Int64(registerMap[i]);
     }
     hbJsonWriter.EndArray();
     hbJsonWriter.EndObject();
@@ -110,14 +110,23 @@ bool HeartbeatBuffer::deserialize(const unsigned char * hbBuffer,
     return true;
 }
 
-HeartbeatBuffer::HeartbeatBuffer(uint32_t devId):deviceId(devId) {
-    for (int i = 0; i < registerMapSize; i++) {
-        registerMap[i] = 0xDEADBEEF;
+HeartbeatBuffer::HeartbeatBuffer(uint32_t devId,
+        std::array<int32_t, registerMapSize> regMap) :
+        deviceId(devId) {
+    for (unsigned int i = 0; i < registerMapSize; i++) {
+        registerMap[i] = regMap[i];
     }
     timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
 }
-
+HeartbeatBuffer::HeartbeatBuffer() {
+    deviceId = 0;
+    timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+    for (unsigned int i = 0; i < registerMapSize; i++) {
+        registerMap[i] = 0;
+    }
+}
 HeartbeatBuffer::~HeartbeatBuffer() {
 }
 

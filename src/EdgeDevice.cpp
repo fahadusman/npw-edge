@@ -22,7 +22,27 @@ EdgeDevice::EdgeDevice(int devId, Role role) :
     heartbeatInterval = kDcHeartbeatInterval.def;
     keepRunning = true;
     nextHBTimePoint = std::chrono::high_resolution_clock::now();
-//            + std::chrono::seconds(heartbeatInterval);
+    initializeRegisterMap();
+}
+
+bool EdgeDevice::updateRegisterValue(CommandMsg *incomingCommand) {
+    if (incomingCommand->getCommand() > UNINITIALIZED_CMD
+            && incomingCommand->getCommand() < INVALID_COMMAND) {
+        registerMap[incomingCommand->getCommand()] = incomingCommand->getData();
+        return true;
+    }
+    LOG(FATAL) << "update register map, index out of bound";
+    return false;
+}
+
+int32_t EdgeDevice::getRegisterValue(CommandRegister c) {
+    LOG_IF(FATAL, c < 0 || c >= registerMapSize)
+            << "Get register value, invalid out of bound";
+
+    if (c >= 0 and c < registerMapSize) {
+        return registerMap[c];
+    }
+    return 0;
 }
 
 void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
@@ -35,6 +55,8 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         return;
     }
 
+    updateRegisterValue(incomingCommand);
+
     switch (incomingCommand->getCommand()){
     case UNINITIALIZED_CMD:
         LOG(WARNING) << "Uninitialized command received.";
@@ -46,7 +68,7 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         delete incomingCommand;
         break;
     case HEARTBEAT_INTERVAL:
-        setHeartbeatInterval(incomingCommand->getData());
+        setHeartbeatInterval(incomingCommand);
         delete incomingCommand;
         break;
     case MAX_TIME_PERIODIC:
@@ -80,9 +102,12 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
     }
 }
 
-void EdgeDevice::setHeartbeatInterval(int32_t hb) {
+void EdgeDevice::setHeartbeatInterval(CommandMsg * cmd) {
+    int32_t hb = cmd->getData();
     if (hb > kDcHeartbeatInterval.min and hb < kDcHeartbeatInterval.max) {
         heartbeatInterval = hb; //seconds
+        updateRegisterValue(cmd);
+
     } else {
         LOG(WARNING) << "HEARTBEAT_INTERVAL value out of range";
     }
@@ -156,10 +181,36 @@ PeriodicValue* EdgeDevice::getPeriodicSensorValue(){
 CommDataBuffer * EdgeDevice::getHeartBeat() {
     CommDataBuffer * hbPtr = nullptr;
     if(nextHBTimePoint < std::chrono::high_resolution_clock::now()) {
-        hbPtr = new HeartbeatBuffer(deviceId);
+        hbPtr = new HeartbeatBuffer(deviceId, registerMap);
         nextHBTimePoint = std::chrono::high_resolution_clock::now()
                 + std::chrono::seconds(heartbeatInterval);
         DLOG(INFO) << "Creating new heartbeat buffer";
     }
     return hbPtr;
+}
+
+void EdgeDevice::initializeRegisterMap() {
+    for (unsigned int x = 0; x < registerMap.size(); x++) {
+        registerMap[x] = 0;
+    }
+    registerMap[NPW_NUM_PACK] = kDcNpwNumPack.def;
+    registerMap[NPW_EXP_TIME] = kDcNpwExpiryTime.def;
+    registerMap[MAX_TIME_PERIODIC] = kDcMaxTimePeriodic.def;
+    registerMap[MIN_TIME_PERIODIC] = kDcMinTimePeriodic.def;
+    registerMap[ON_CHANG_THSH_PT] = kDcOnChangThshPt.def;
+    registerMap[ON_CHANG_THSH_TT] = kDcOnChangThshTt.def;
+    registerMap[SAMPLE_INTERVAL_NPW] = kDcSampleIntervalNpw.def;
+    registerMap[NUM_SAMPLES_1_AVG] = kDcNumSamples1stAvg.def;
+    registerMap[NUM_SAMPLES_2_AVG] = kDcNumSamples2ndAvg.def;
+    registerMap[START_SAMPLE_2_AVG] = kDcStartSample2ndAvg.def;
+    registerMap[NPW_THR_PT1] = kDcNpwPtThsh.def;
+    registerMap[NPW_THR_PT2] = kDcNpwPtThsh.def;
+    registerMap[NPW_THR_PT3] = kDcNpwPtThsh.def;
+    registerMap[NPW_THR_PT4] = kDcNpwPtThsh.def;
+    registerMap[NPW_SAMPLE_BEFORE] = kDcNpwSampleBefore.def;
+    registerMap[NPW_SAMPLE_AFTER] = kDcNpwSampleAfter.def;
+    registerMap[TEST_FLAG] = kDcTestFlag.def;
+    registerMap[REBOOT_TIME] = kDcRebootTime.def;
+    registerMap[HEARTBEAT_INTERVAL] = kDcHeartbeatInterval.def;
+    //TODO: Check for saved values in file and apply those if exist
 }
