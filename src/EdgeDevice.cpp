@@ -117,6 +117,13 @@ void EdgeDevice::runForever() {
     LOG(INFO) << "Entering edge device infinite loop.";
     while (keepRunning) {
         std::this_thread::sleep_for(std::chrono::seconds(5));
+        if (edgeDeviceRole != bvEdgeDevice and
+                nextHBTimePoint < std::chrono::high_resolution_clock::now()) {
+            //Send heart beat
+            DLOG(INFO) << "Sending Heartbeat.";
+            CommDataBuffer * hb = getHeartBeat();
+            commPtr->enqueueMessage(hb);
+        }
     }
     LOG(WARNING) << "keepRunning loop terminated";
 }
