@@ -194,6 +194,22 @@ PeriodicValue* EdgeDevice::getPeriodicSensorValue(){
 CommDataBuffer * EdgeDevice::getHeartBeat() {
     CommDataBuffer * hbPtr = nullptr;
     if(nextHBTimePoint < std::chrono::high_resolution_clock::now()) {
+        int noOfSuccessfulMsgs = 0;
+        int noOfFailedMsgs = 0;
+        uint64_t timeSpentInComm = 0;
+
+        if (edgeDeviceRole == gatewayEdgeDevice) {
+            LOG_IF(FATAL, modbusMaster == nullptr)<<
+            "modbusMaster is not nullptr in gatewayEdgeDecice";
+            modbusMaster->getCommunicationStats(noOfFailedMsgs, noOfSuccessfulMsgs,
+                    timeSpentInComm);
+
+            registerMap[COMM_FAILURE_COUNT] = noOfFailedMsgs;
+            registerMap[COMM_SUCCESS_COUNT] = noOfSuccessfulMsgs;
+            registerMap[AVERAGE_TRANS_TIME] = noOfSuccessfulMsgs == 0?0:
+            (int32_t)timeSpentInComm/noOfSuccessfulMsgs;
+        }
+
         hbPtr = new HeartbeatBuffer(deviceId, registerMap);
         nextHBTimePoint = std::chrono::high_resolution_clock::now()
                 + std::chrono::seconds(heartbeatInterval);
