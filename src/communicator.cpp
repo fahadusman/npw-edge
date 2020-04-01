@@ -7,6 +7,10 @@ communicator::communicator(EdgeDevice * d) {
     sendMessagesThreadLoopInterval = std::chrono::milliseconds(100);
     edgeDevicePtr = d;
     npwPacketsToBuffer = kDcNpwNumPack.def;
+
+    transferCount = 0;
+    failedTransferCount = 0;
+    communicationTime = std::chrono::milliseconds(0);
 }
 
 int communicator::enqueueMessage(CommDataBuffer * buff){
@@ -61,4 +65,26 @@ CommDataBuffer * communicator::getQueuedMessage() {
         LOG(ERROR) << "Exception in retrieving queued message " << e.what();
     }
     return commPtr;
+}
+
+//Add count and cumulative time for successful communication
+void communicator::addCommunicationTime(
+        std::chrono::duration<long int,std::ratio<1, 1000000000>> t) {
+    communicationTime += t;
+    transferCount++;
+}
+
+void communicator::incFailedTransferCount() {
+    failedTransferCount++;
+}
+
+void communicator::getCommunicationStats(int &failureCount, int &successCount,
+            uint64_t &totalDurationMs) {
+    failureCount = failedTransferCount;
+    successCount = transferCount;
+    totalDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>
+                            (communicationTime).count();
+    failedTransferCount = 0;
+    transferCount = 0;
+    communicationTime = std::chrono::milliseconds(0);
 }

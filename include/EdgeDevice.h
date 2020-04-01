@@ -9,13 +9,14 @@
 #define INCLUDE_EDGEDEVICE_H_
 
 #include <list>
+#include <array>
 
 #include "PressureSensor.h"
 #include "MqttHandler.h"
 #include "RadioCommunicator.h"
+#include "HeartbeatBuffer.h"
 
 class RadioCommunicator;
-
 /*
  *  An Edge device can have one of the three roles;
  *  * Block Valve site edge device that would communicate over
@@ -37,7 +38,7 @@ public:
     EdgeDevice(int devId, Role role);
     virtual ~EdgeDevice();
     void processIncomingCommand(CommandMsg * incomingCommand);
-    void setHeartbeatInterval(int32_t hb);
+    void setHeartbeatInterval(CommandMsg * cmd);
     void runForever();
     void addSensor(Sensor * sensorPtr);
     void setCommunicator(communicator * cPtr);
@@ -50,6 +51,8 @@ public:
     }
     bool sendSlaveCommand();
     CommDataBuffer * getHeartBeat();
+    bool updateRegisterValue(CommandMsg *incomingCommand);
+    int32_t getRegisterValue(CommandRegister c);
 protected:
     int deviceId;
     std::list<Sensor *> sensorsList;  //List of PTs and TTs
@@ -59,6 +62,9 @@ protected:
     RadioCommunicator * modbusMaster;
     Role edgeDeviceRole;
     std::chrono::time_point<std::chrono::high_resolution_clock> nextHBTimePoint;
+    std::chrono::time_point<std::chrono::high_resolution_clock> applicationStartTime;
+    std::array <int32_t, registerMapSize> registerMap;
+    void initializeRegisterMap();
 };
 
 #endif /* INCLUDE_EDGEDEVICE_H_ */

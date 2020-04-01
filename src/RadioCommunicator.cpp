@@ -74,7 +74,7 @@ void RadioCommunicator::connect() {
     modbusStream.SetStopBits(StopBits::STOP_BITS_1);
 }
 
-void RadioCommunicator::sendQueuedCommand() {
+bool RadioCommunicator::sendQueuedCommand() {
     CommandMsg* cmdPtr = getQueuedSlaveCommand();
     if (cmdPtr != nullptr) {
         if (sendModbusCommand(cmdPtr->getSlaveId(), cmdPtr->getCommand(),
@@ -82,20 +82,28 @@ void RadioCommunicator::sendQueuedCommand() {
             popQueuedSlaveCommand();
             delete cmdPtr;
             cmdPtr = nullptr;
+            return true;
         }
         else {
             LOG(WARNING) << "Failed to send modbus command";
         }
     }
+    return false;
 }
 
 void RadioCommunicator::modbusMasterThread() {
     std::string readRegistersCommand = ":01030000000280\r\n";
     auto slaveIt = modbusSlavesList.begin();
     std::string receiveBuffer = "";
+    std::chrono::time_point<std::chrono::high_resolution_clock>
+        t1 = std::chrono::high_resolution_clock::now(),
+        t2 = std::chrono::high_resolution_clock::now();
     while (not masterThreadDone) {
         std::this_thread::sleep_for(modbusMasterPollInterval);
-        sendQueuedCommand();
+        t1 = std::chrono::high_resolution_clock::now();
+        if (sendQueuedCommand()) {
+            continue;
+        }
 
         try {
             if (slaveIt == modbusSlavesList.end()) {
@@ -118,19 +126,28 @@ void RadioCommunicator::modbusMasterThread() {
                         + modbusResponseTimeout;
 
         receiveBuffer = "";
+        bool responseSuccess = false;
         while (std::chrono::high_resolution_clock::now() < expTime) {
             if (modbusStream.rdbuf()->in_avail() == 0) {
-                usleep(50000);
+                usleep(50000); //TODO: remove hard coded value
             } else if (receiveModbusAsciiMessage(receiveBuffer, expTime)) {
                 if (processIncomingMessage(receiveBuffer.c_str(),
                         receiveBuffer.length())) {
                     LOG(INFO) << "Incoming message processed successfully";
+                    responseSuccess = true;
                     break;
                 } else {
                     LOG(WARNING) << "message processing failed, msg: "
                             << receiveBuffer;
                 }
             }
+        }
+
+        t2 = std::chrono::high_resolution_clock::now();
+        if (responseSuccess) {
+            addCommunicationTime(t2-t1);
+        } else {
+            incFailedTransferCount();
         }
     }
 }
@@ -508,13 +525,12 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
             } else if ((BufferType)modbusMsg.data[0] == buffTypePeriodicValue) {
                 receivedData = new PeriodicValue(0, 0, "");
             } else if ((BufferType)modbusMsg.data[0] == buffTypeHeartBeat) {
-                receivedData = new HeartbeatBuffer(0);
+                receivedData = new HeartbeatBuffer();
             } else {
                 LOG(ERROR) << "Unknown buffer type, processIncomingMessage. "
                         << int(modbusMsg.data[0]);
                 return false;
             }
-
         }
 
         if (receivedData->deserialize(modbusMsg.data, modbusMsg.byteCount)) {

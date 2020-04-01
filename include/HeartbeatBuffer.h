@@ -10,7 +10,9 @@
 
 #include "CommDataBuffer.h"
 
-const int registerMapSize = 40;
+#include <array>
+
+const std::size_t registerMapSize = 50;
 
 class HeartbeatBuffer: public CommDataBuffer {
 public:
@@ -18,11 +20,13 @@ public:
     unsigned char * serialize(int & length);
     bool deserialize(const unsigned char *, const int & length);
 
-    HeartbeatBuffer(uint32_t devId);
+    HeartbeatBuffer(uint32_t devId,
+            std::array<int32_t, registerMapSize> regMap);
+    HeartbeatBuffer();
     virtual ~HeartbeatBuffer();
 private:
     uint32_t deviceId;
-    uint32_t registerMap[registerMapSize];
+    int32_t registerMap[registerMapSize];
 };
 
 #endif /* INCLUDE_HEARTBEATBUFFER_H_ */

@@ -37,6 +37,23 @@ enum CommandRegister {
     NPW_THR_PT3 = 21,  //  negative pressure drop threshold for detecting NPW for PT3
     NPW_THR_PT4 = 22,   //  negative pressure drop threshold for detecting NPW for PT4
     NPW_BUFF_ACK = 23, // Acknowledgment of successfully receiving an NPW buffer with bufferId so that sender removes it from transmission queue.
+
+    EDGE_START_TIME = 31,   //Time since start in seconds
+    EDGE_RAM = 32,   // Percentage of total RAM
+    EDGE_STORAGE = 33,   // Percentage of total persistent storage free
+    EDGE_CPU = 34,   // Average CPU Utilization since last HB
+    EDGE_CPU_TEMP = 35,   // Current CPU Temperature
+    EDGE_GPS_SYNC_STATUS = 36,   // 1 = synched, 0 = not synched
+    EDGE_GPS_SYNC_VAL = 37,   // GPS sync accuracy
+    EDGE_MW_COMM_STATUS = 38,   //
+    BAD_VAL_COUNT = 39, //  sensor bad values according to Tag BAD_VAL_THSH_PT since last HB
+    BAD_CRC_COUNT = 40,   //  bad crc values for sensors since last HB
+    NO_RSPNS_COUNT = 41,   //  no response count since last HB
+    FLAG_NPW_SUPPRESS = 42,   //  Do not sent NPW Buffers if this flag is set
+    COMM_FAILURE_COUNT = 43,      //  Successful message count since last HB
+    COMM_SUCCESS_COUNT = 44,      //  Successful message count since last HB
+    AVERAGE_TRANS_TIME = 45,      //  Average transmission time of one message since last HB
+
     INVALID_COMMAND
 };
 
