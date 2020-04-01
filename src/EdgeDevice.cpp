@@ -52,9 +52,11 @@ int32_t EdgeDevice::getRegisterValue(CommandRegister c) {
 void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
     if (edgeDeviceRole == gatewayEdgeDevice) {
         LOG(INFO) << "Gateway Edge device, going to enqueue command for modbus slave.";
-        if (false == modbusMaster->enqueueSlaveCommand(incomingCommand))
+        LOG_IF(FATAL, modbusMaster==nullptr);
+        if (nullptr == modbusMaster or
+                false == modbusMaster->enqueueSlaveCommand(incomingCommand))
         {
-            LOG(WARNING) << "Failed to enqueue slave command.";
+            LOG(ERROR) << "Failed to enqueue slave command.";
         }
         return;
     }
