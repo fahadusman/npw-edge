@@ -95,8 +95,12 @@ void RadioCommunicator::modbusMasterThread() {
     std::string readRegistersCommand = ":01030000000280\r\n";
     auto slaveIt = modbusSlavesList.begin();
     std::string receiveBuffer = "";
+    std::chrono::time_point<std::chrono::high_resolution_clock>
+        t1 = std::chrono::high_resolution_clock::now(),
+        t2 = std::chrono::high_resolution_clock::now();
     while (not masterThreadDone) {
         std::this_thread::sleep_for(modbusMasterPollInterval);
+        t1 = std::chrono::high_resolution_clock::now();
         if (sendQueuedCommand()) {
             continue;
         }
@@ -122,19 +126,28 @@ void RadioCommunicator::modbusMasterThread() {
                         + modbusResponseTimeout;
 
         receiveBuffer = "";
+        bool responseSuccess = false;
         while (std::chrono::high_resolution_clock::now() < expTime) {
             if (modbusStream.rdbuf()->in_avail() == 0) {
-                usleep(50000);
+                usleep(50000); //TODO: remove hard coded value
             } else if (receiveModbusAsciiMessage(receiveBuffer, expTime)) {
                 if (processIncomingMessage(receiveBuffer.c_str(),
                         receiveBuffer.length())) {
                     LOG(INFO) << "Incoming message processed successfully";
+                    responseSuccess = true;
                     break;
                 } else {
                     LOG(WARNING) << "message processing failed, msg: "
                             << receiveBuffer;
                 }
             }
+        }
+
+        t2 = std::chrono::high_resolution_clock::now();
+        if (responseSuccess) {
+            addCommunicationTime(t2-t1);
+        } else {
+            incFailedTransferCount();
         }
     }
 }

@@ -28,6 +28,13 @@ protected:
 
     int32_t npwPacketsToBuffer;
 
+    std::chrono::duration<long int, std::ratio<1, 1000000000>> communicationTime;
+    int transferCount;
+    int failedTransferCount;
+
+    void addCommunicationTime(
+            std::chrono::duration<long int, std::ratio<1, 1000000000>> t);
+    void incFailedTransferCount();
 public:
 	communicator(EdgeDevice * d);
 	virtual void sendMessage(const char * message, const unsigned int length) = 0;
@@ -41,6 +48,8 @@ public:
     void setNpwPacketsToBuffer(int32_t v);
     virtual bool removeMessageFromQueue(int32_t messageId);
     CommDataBuffer * getQueuedMessage();
+    void getCommunicationStats(int &failureCount, int &successCount,
+            uint64_t &totalDurationMs);
 };
 
 
