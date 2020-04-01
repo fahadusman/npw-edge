@@ -22,7 +22,11 @@ EdgeDevice::EdgeDevice(int devId, Role role) :
     heartbeatInterval = kDcHeartbeatInterval.def;
     keepRunning = true;
     nextHBTimePoint = std::chrono::high_resolution_clock::now();
+    applicationStartTime = std::chrono::high_resolution_clock::now();
     initializeRegisterMap();
+    registerMap[EDGE_START_TIME] =
+            std::chrono::duration_cast<std::chrono::seconds>(
+                    applicationStartTime.time_since_epoch()).count();
 }
 
 bool EdgeDevice::updateRegisterValue(CommandMsg *incomingCommand) {

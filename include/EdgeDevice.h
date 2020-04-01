@@ -62,6 +62,7 @@ protected:
     RadioCommunicator * modbusMaster;
     Role edgeDeviceRole;
     std::chrono::time_point<std::chrono::high_resolution_clock> nextHBTimePoint;
+    std::chrono::time_point<std::chrono::high_resolution_clock> applicationStartTime;
     std::array <int32_t, registerMapSize> registerMap;
     void initializeRegisterMap();
 };
