@@ -74,7 +74,7 @@ void RadioCommunicator::connect() {
     modbusStream.SetStopBits(StopBits::STOP_BITS_1);
 }
 
-void RadioCommunicator::sendQueuedCommand() {
+bool RadioCommunicator::sendQueuedCommand() {
     CommandMsg* cmdPtr = getQueuedSlaveCommand();
     if (cmdPtr != nullptr) {
         if (sendModbusCommand(cmdPtr->getSlaveId(), cmdPtr->getCommand(),
@@ -82,11 +82,13 @@ void RadioCommunicator::sendQueuedCommand() {
             popQueuedSlaveCommand();
             delete cmdPtr;
             cmdPtr = nullptr;
+            return true;
         }
         else {
             LOG(WARNING) << "Failed to send modbus command";
         }
     }
+    return false;
 }
 
 void RadioCommunicator::modbusMasterThread() {
@@ -95,7 +97,9 @@ void RadioCommunicator::modbusMasterThread() {
     std::string receiveBuffer = "";
     while (not masterThreadDone) {
         std::this_thread::sleep_for(modbusMasterPollInterval);
-        sendQueuedCommand();
+        if (sendQueuedCommand()) {
+            continue;
+        }
 
         try {
             if (slaveIt == modbusSlavesList.end()) {

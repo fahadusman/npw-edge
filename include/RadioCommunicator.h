@@ -94,7 +94,7 @@ protected:
     std::mutex commandQueueMutex;
     CommandMsg * getQueuedSlaveCommand();
     bool popQueuedSlaveCommand();
-    void sendQueuedCommand();
+    bool sendQueuedCommand();
 
     bool slaveThreadDone;
     bool masterThreadDone;
