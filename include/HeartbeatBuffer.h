@@ -12,7 +12,7 @@
 
 #include <array>
 
-const std::size_t registerMapSize = 40;
+const std::size_t registerMapSize = 50;
 
 class HeartbeatBuffer: public CommDataBuffer {
 public:
