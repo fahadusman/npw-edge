@@ -147,8 +147,8 @@ PressureSensor::~PressureSensor() {
 	return;
 }
 
-PressureSensor::PressureSensor(std::string portName, communicator * cPtr, EdgeDevice * ePtr) :
-        Sensor(cPtr, ePtr), sPort(portName, kDefaultBaudRate, kDefaultParity,
+PressureSensor::PressureSensor(std::string portName, communicator * cPtr, EdgeDevice * ePtr, std::string sensorId) :
+        Sensor(cPtr, ePtr, sensorId), sPort(portName, kDefaultBaudRate, kDefaultParity,
                 kDefaultBlocking) {
 	if (portName == ""){
 		LOG(WARNING) << "portName is null, using default port name";

@@ -22,7 +22,7 @@ public:
     virtual ~Sensor();
     virtual double readSensorValue() = 0;
     virtual void initializeSensor() = 0;
-    Sensor(communicator * cptr, EdgeDevice * ePtr);
+    Sensor(communicator * cptr, EdgeDevice * ePtr, std::string sensorId);
     virtual void enqueueCommand (CommandMsg *);
     CommandMsg * dequeueCommand();
     PeriodicValue * getCurrentValue();

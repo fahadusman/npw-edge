@@ -32,7 +32,8 @@ int main(int argc, char **argv) {
         modbusMasterPtr->connect();
         modbusMasterPtr->startModbusMaster();
     } else {
-        PressureSensor * sensorPtr = new PressureSensor("/dev/ttyUSB0", commPtr, &edgeDevice);
+        PressureSensor *sensorPtr = new PressureSensor("/dev/ttyUSB0", commPtr,
+                &edgeDevice, "PT1");
         sensorPtr->startNpwThread();
         edgeDevice.addSensor(sensorPtr);
     }

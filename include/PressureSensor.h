@@ -76,7 +76,7 @@ public:
 	void npwThread();
 	void startNpwThread();
 	void stopNpwThread();
-	PressureSensor(std::string portName, communicator * cPtr, EdgeDevice * ePtr);
+	PressureSensor(std::string portName, communicator * cPtr, EdgeDevice * ePtr, std::string sensorId);
 	virtual ~PressureSensor();
 };
 

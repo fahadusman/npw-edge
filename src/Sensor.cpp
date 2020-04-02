@@ -14,14 +14,14 @@
 
 #include "DevConfig.h"
 
-Sensor::Sensor(communicator *cptr, EdgeDevice *eptr) :
+Sensor::Sensor(communicator *cptr, EdgeDevice *eptr, std::string sensorId) :
         commPtr(cptr), edgeDevicePtr(eptr) {
     currentValue = 0;
     currentTime = 0;
     periodicValChangeThreshold = 0;
     periodicValMinInterval = kDcMinTimePeriodic.def;
     periodicValMaxInterval = kDcMaxTimePeriodic.def;
-    id = "defaultId"; //TODO: We need to come up with and identification hierarchy
+    id = (sensorId == "")?"defaultId":sensorId;
     enablePeriodicValues = false;
     return;
 }
