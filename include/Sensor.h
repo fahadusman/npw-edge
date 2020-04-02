@@ -39,6 +39,9 @@ protected:
     std::queue <CommandMsg *> incomingCommandQueue;
     std::mutex commandQueueMutex;
     EdgeDevice * edgeDevicePtr;
+    uint64_t sendPeriodicValue(uint64_t currentTime,
+            uint64_t previousPeriodicValueTransmitTime,
+            double & previousPeriodicVal, const double & currentValue);
 };
 
 #endif /* INCLUDE_SENSOR_H_ */
