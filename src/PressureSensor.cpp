@@ -190,6 +190,8 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr, EdgeDe
     updateBufferLengths();
 
 	npwBufferExpiryTime = edgeDevicePtr->getRegisterValue(NPW_EXP_TIME) * 60000; //min to ms
+
+	startNpwThread();
 }
 
 /*
