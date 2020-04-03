@@ -1,0 +1,12 @@
+[Unit]
+Description=Smart Edge device application for relaying sensor values and detecting negative pressure waves in oil pipeline
+Requires=Network.target
+After=Network.target
+
+[Service]
+Type=simple
+Environment=GLOG_logtostderr=1 GLOG_stderrthreshold=1
+ExecStart=/usr/sbin/NPWEdge
+
+[Install]
+WantedBy=multi-user.target
