@@ -10,17 +10,18 @@
 #include <mutex>
 #include <exception>
 #include <glog/logging.h>
+#include <math.h>
 
 #include "DevConfig.h"
 
-Sensor::Sensor(communicator *cptr, EdgeDevice *eptr) :
+Sensor::Sensor(communicator *cptr, EdgeDevice *eptr, std::string sensorId) :
         commPtr(cptr), edgeDevicePtr(eptr) {
     currentValue = 0;
     currentTime = 0;
     periodicValChangeThreshold = 0;
     periodicValMinInterval = kDcMinTimePeriodic.def;
     periodicValMaxInterval = kDcMaxTimePeriodic.def;
-    id = "defaultId"; //TODO: We need to come up with and identification hierarchy
+    id = (sensorId == "")?"defaultId":sensorId;
     enablePeriodicValues = false;
     return;
 }
@@ -73,4 +74,21 @@ CommandMsg * Sensor::dequeueCommand() {
 PeriodicValue * Sensor::getCurrentValue() {
     PeriodicValue * p = new PeriodicValue(currentValue, currentTime, id);
     return p;
+}
+
+uint64_t Sensor::sendPeriodicValue(uint64_t currentTime,
+        uint64_t previousPeriodicValueTransmitTime,
+        double & previousPeriodicVal, const double & currentValue) {
+    if (((currentTime >= previousPeriodicValueTransmitTime + periodicValMinInterval)
+            && (fabs(previousPeriodicVal - currentValue) >= periodicValChangeThreshold))
+            || currentTime >= previousPeriodicValueTransmitTime + periodicValMaxInterval) {
+
+        LOG_EVERY_N(INFO, 10) << "sending periodic value: " << currentValue;
+        CommDataBuffer* pValBuffPtr = new PeriodicValue(currentValue,
+                currentTime, id);
+        commPtr->enqueueMessage(pValBuffPtr);
+        previousPeriodicValueTransmitTime = currentTime;
+        previousPeriodicVal = currentValue;
+    }
+    return previousPeriodicValueTransmitTime;
 }

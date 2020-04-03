@@ -63,9 +63,6 @@ private:
 	uint64_t npwBufferExpiryTime;   //NPW Buffer Expiry time in ms.
 
 	uint32_t readSensorValueDummy();
-    uint64_t sendPeriodicValue(uint64_t currentTime,
-            uint64_t previousPeriodicValueTransmitTime,
-            double & previousPeriodicVal, const double & currentValue);
 
 	void fillCircularBufferWithDummyValues();
     void createNPWBuffer();
@@ -79,7 +76,7 @@ public:
 	void npwThread();
 	void startNpwThread();
 	void stopNpwThread();
-	PressureSensor(std::string portName, communicator * cPtr, EdgeDevice * ePtr);
+	PressureSensor(std::string portName, communicator * cPtr, EdgeDevice * ePtr, std::string sensorId);
 	virtual ~PressureSensor();
 };
 

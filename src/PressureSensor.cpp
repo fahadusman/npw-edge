@@ -147,8 +147,8 @@ PressureSensor::~PressureSensor() {
 	return;
 }
 
-PressureSensor::PressureSensor(std::string portName, communicator * cPtr, EdgeDevice * ePtr) :
-        Sensor(cPtr, ePtr), sPort(portName, kDefaultBaudRate, kDefaultParity,
+PressureSensor::PressureSensor(std::string portName, communicator * cPtr, EdgeDevice * ePtr, std::string sensorId) :
+        Sensor(cPtr, ePtr, sensorId), sPort(portName, kDefaultBaudRate, kDefaultParity,
                 kDefaultBlocking) {
 	if (portName == ""){
 		LOG(WARNING) << "portName is null, using default port name";
@@ -190,6 +190,8 @@ PressureSensor::PressureSensor(std::string portName, communicator * cPtr, EdgeDe
     updateBufferLengths();
 
 	npwBufferExpiryTime = edgeDevicePtr->getRegisterValue(NPW_EXP_TIME) * 60000; //min to ms
+
+	startNpwThread();
 }
 
 /*
@@ -251,23 +253,6 @@ void PressureSensor::updateNPWState(){
 		}
 	}
 	wasThresholdExceeded = isThresholdExceeded;
-}
-
-uint64_t PressureSensor::sendPeriodicValue(uint64_t currentTime,
-        uint64_t previousPeriodicValueTransmitTime,
-        double & previousPeriodicVal, const double & currentValue) {
-    if (((currentTime >= previousPeriodicValueTransmitTime + periodicValMinInterval)
-            && (fabs(previousPeriodicVal - currentValue) >= periodicValChangeThreshold))
-            || currentTime >= previousPeriodicValueTransmitTime + periodicValMaxInterval) {
-
-        LOG_EVERY_N(INFO, 10) << "sending periodic value: " << currentValue;
-        CommDataBuffer* pValBuffPtr = new PeriodicValue(currentValue,
-                currentTime, id);
-        commPtr->enqueueMessage(pValBuffPtr);
-        previousPeriodicValueTransmitTime = currentTime;
-        previousPeriodicVal = currentValue;
-    }
-    return previousPeriodicValueTransmitTime;
 }
 
 void PressureSensor::npwThread(){

@@ -22,7 +22,7 @@ public:
     virtual ~Sensor();
     virtual double readSensorValue() = 0;
     virtual void initializeSensor() = 0;
-    Sensor(communicator * cptr, EdgeDevice * ePtr);
+    Sensor(communicator * cptr, EdgeDevice * ePtr, std::string sensorId);
     virtual void enqueueCommand (CommandMsg *);
     CommandMsg * dequeueCommand();
     PeriodicValue * getCurrentValue();
@@ -39,6 +39,9 @@ protected:
     std::queue <CommandMsg *> incomingCommandQueue;
     std::mutex commandQueueMutex;
     EdgeDevice * edgeDevicePtr;
+    uint64_t sendPeriodicValue(uint64_t currentTime,
+            uint64_t previousPeriodicValueTransmitTime,
+            double & previousPeriodicVal, const double & currentValue);
 };
 
 #endif /* INCLUDE_SENSOR_H_ */
