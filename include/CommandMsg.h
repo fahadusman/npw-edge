@@ -31,12 +31,11 @@ enum CommandRegister {
     TEST_FLAG = 15, //  When value changes from False to True, a dummy NPW packet will be sent
     REBOOT_TIME = 16, //  For non-negative values, the edge device will be rebooted after this many seconds.
     HEARTBEAT_INTERVAL = 17,   //  Interval for Edge device Heartbeat
-    ACK_NPW_BUFF = 18,   //  Acknowledgment by server for receiving NPW buffer
+    ACK_NPW_BUFF = 18,   // Acknowledgment of successfully receiving an NPW buffer with bufferId so that sender removes it from transmission queue.
     NPW_THR_PT1 = 19,  //  negative pressure drop threshold for detecting NPW for PT1
     NPW_THR_PT2 = 20,  //  negative pressure drop threshold for detecting NPW for PT2
     NPW_THR_PT3 = 21,  //  negative pressure drop threshold for detecting NPW for PT3
     NPW_THR_PT4 = 22,   //  negative pressure drop threshold for detecting NPW for PT4
-    NPW_BUFF_ACK = 23, // Acknowledgment of successfully receiving an NPW buffer with bufferId so that sender removes it from transmission queue.
 
     EDGE_START_TIME = 31,   //Time since start in seconds
     EDGE_RAM = 32,   // Percentage of total RAM
