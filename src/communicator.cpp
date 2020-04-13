@@ -65,17 +65,24 @@ bool communicator::saveBufferToFile(CommDataBuffer *buff) {
     return ret;
 }
 
-int communicator::enqueueMessage(CommDataBuffer * buff){
+bool communicator::enqueueMessage(CommDataBuffer * buff){
     LOG(INFO) << "Going to insert in transmission queue with t: "
             << buff->getTimestamp() << ", id: " << buff->getBufferId()
             << "\t Queue size: "  << transmitQueue.size();
 
+    bool ret = false;
     //TODO: Remove the oldest message from Queue if queue size limit is reached
-    std::lock_guard<std::mutex> guard(transmitQueueMutex);
-    transmitQueue[buff->getBufferId()] = buff;
+    try {
+        std::lock_guard<std::mutex> guard(transmitQueueMutex);
+        transmitQueue[buff->getBufferId()] = buff;
+        ret = true;
+    } catch (const std::exception &e) {
+        LOG(ERROR) << "Error inserting message in transmit queue. " << e.what();
+        ret = false;
+    }
 
     saveBufferToFile(buff);
-    return 1;
+    return ret;
 }
 
 void communicator::setNpwPacketsToBuffer(int32_t v) {
