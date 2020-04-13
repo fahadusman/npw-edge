@@ -40,7 +40,7 @@ protected:
             std::chrono::duration<long int, std::ratio<1, 1000000000>> t);
     void incFailedTransferCount();
     bool loadStoredNpwBuffers();
-    void saveBufferToFile(CommDataBuffer *buff);
+    bool saveBufferToFile(CommDataBuffer *buff);
     void removeBufferFromDisk(uint64_t expTime);
 
     bool enableBufferPersistence;

@@ -22,15 +22,15 @@ communicator::communicator(EdgeDevice *d, bool bufferPersistence) :
     }
 }
 
-void communicator::saveBufferToFile(CommDataBuffer *buff) {
+bool communicator::saveBufferToFile(CommDataBuffer *buff) {
     if (not enableBufferPersistence) {
-        LOG(INFO) << "enableBufferPersistence is disabled, not storing buffer to disk";
-        return;
+        LOG(INFO) << "enableBufferPersistence is false, not storing buffer to disk";
+        return false;
     }
     fs::path filePath = queuedNpwBuffersDirPath
             / std::to_string(buff->getExpiryTime());
     std::ofstream npwBuffFile;
-    bool ret;
+    bool ret = false;
     try {
         npwBuffFile.open(filePath, std::fstream::binary | std::fstream::trunc);
         if (!npwBuffFile.is_open()) {
@@ -62,6 +62,7 @@ void communicator::saveBufferToFile(CommDataBuffer *buff) {
     }
     npwBuffFile.flush();
     npwBuffFile.close();
+    return ret;
 }
 
 int communicator::enqueueMessage(CommDataBuffer * buff){
