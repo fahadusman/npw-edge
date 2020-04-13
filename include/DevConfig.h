@@ -24,12 +24,12 @@ const DevConfig kDcNpwNumPack       { 1, 50, 5 },
         kDcNumSamples1stAvg    { 1, 10000, 150 },
         kDcNumSamples2ndAvg    { 1, 10000, 1000 },
         kDcStartSample2ndAvg   { 0, 500, 250 },
-        kDcNpwPtThsh          { 1, 2000, 4 },
+        kDcNpwPtThsh          { 1, 2000, 8 },
         kDcNpwSampleBefore    { 1, 1000, 150 },
         kDcNpwSampleAfter     { 1, 1000, 350 },
         kDcTestFlag            { 0, 1, 0 },
         kDcRebootTime          { -1, 10, -1 },
-        kDcHeartbeatInterval   { 10, 3600, 600 };
+        kDcHeartbeatInterval   { 10, 3600, 60 };
 
 
 

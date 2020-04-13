@@ -9,9 +9,12 @@
 #include <glog/logging.h>
 #include <HeartbeatBuffer.h>
 #include <chrono>
+#include <fstream>
 
 #include "DevConfig.h"
 #include "CommDataBuffer.h"
+
+const char * kRegMapFileName = "reg_map.bin";
 
 EdgeDevice::EdgeDevice(int devId, Role role) :
         deviceId(devId), edgeDeviceRole(role) {
@@ -27,12 +30,16 @@ EdgeDevice::EdgeDevice(int devId, Role role) :
     registerMap[EDGE_START_TIME] =
             std::chrono::duration_cast<std::chrono::seconds>(
                     applicationStartTime.time_since_epoch()).count();
+    saveRegisterMapToFile();
 }
 
 bool EdgeDevice::updateRegisterValue(CommandMsg *incomingCommand) {
     if (incomingCommand->getCommand() > UNINITIALIZED_CMD
             && incomingCommand->getCommand() < INVALID_COMMAND) {
         registerMap[incomingCommand->getCommand()] = incomingCommand->getData();
+        if (!saveRegisterMapToFile()) {
+            LOG(ERROR) << "Unable to save register map to file";
+        }
         return true;
     }
     LOG(FATAL) << "update register map, index out of bound";
@@ -69,7 +76,9 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         delete incomingCommand;
         break;
     case REBOOT_TIME:
-        //TODO: Implement reboot mechanism, for now we just exit the application
+        //just exit the application.
+        //In production, the application would run as a systemd service, and it
+        //would restart automatically after shutdown.
         keepRunning = false;
         delete incomingCommand;
         break;
@@ -155,7 +164,7 @@ void EdgeDevice::setModbusMaster(RadioCommunicator * modbusMasterPtr) {
 
 int EdgeDevice::sendMessage(CommDataBuffer * d) {
     if (commPtr == nullptr) {
-        LOG(FATAL) << "commPtr not set for Edge Device. Cannot send message.";
+        LOG(ERROR) << "commPtr not set for Edge Device. Cannot send message.";
         return 0;
     }
     return commPtr->enqueueMessage(d);
@@ -219,6 +228,11 @@ CommDataBuffer * EdgeDevice::getHeartBeat() {
 }
 
 void EdgeDevice::initializeRegisterMap() {
+    if (loadRegisterMapFromFile()) {
+        LOG(INFO) << "Loaded register map from file";
+        return;
+    }
+
     for (unsigned int x = 0; x < registerMap.size(); x++) {
         registerMap[x] = 0;
     }
@@ -241,5 +255,72 @@ void EdgeDevice::initializeRegisterMap() {
     registerMap[TEST_FLAG] = kDcTestFlag.def;
     registerMap[REBOOT_TIME] = kDcRebootTime.def;
     registerMap[HEARTBEAT_INTERVAL] = kDcHeartbeatInterval.def;
-    //TODO: Check for saved values in file and apply those if exist
+}
+
+bool EdgeDevice::loadRegisterMapFromFile() {
+    bool ret = false;
+    std::streampos begin, end;
+    std::ifstream regMapFile(kRegMapFileName, std::ios::binary);
+    if (regMapFile.is_open()) {
+        begin = regMapFile.tellg();
+        regMapFile.seekg(0, regMapFile.end);
+        end = regMapFile.tellg();
+        if (end - begin != sizeof(registerMap)) {
+            LOG(WARNING) << "Invalid size of data in input file: "
+                    << end - begin;
+        } else {
+            regMapFile.seekg(0, regMapFile.beg);
+            regMapFile.read((char*) &registerMap[0], sizeof(registerMap));
+            if (regMapFile) {
+                LOG(INFO) << "Successfully read register map from file.";
+                ret = true;
+            } else {
+                LOG(INFO)
+                        << "Unable to read complete register map, bytes count: "
+                        << regMapFile.gcount();
+            }
+        }
+    } else {
+        LOG(WARNING) << "Unable to open register map file.";
+    }
+
+    regMapFile.close();
+
+    return ret;
+}
+
+bool EdgeDevice::saveRegisterMapToFile() {
+    std::ofstream regMapFile;
+    bool ret = false;
+    try {
+
+        regMapFile.open(kRegMapFileName,
+                std::fstream::binary | std::fstream::trunc);
+        if (regMapFile.good()
+                and (regMapFile.rdstate() & std::ifstream::failbit) != 0)
+            LOG(ERROR) << "Error opening: " << kRegMapFileName;
+
+        if (not regMapFile.is_open()) {
+            std::ios_base::iostate rds = regMapFile.rdstate();
+            LOG(ERROR) << "Cannot open register map file: " << rds;
+            return false;
+        }
+
+        regMapFile.write((char *)&registerMap[0], sizeof(registerMap));
+        if (regMapFile.good()) {
+            LOG(INFO) << "Register Map saved to file ";
+            ret = true;
+        } else {
+            LOG(ERROR) << "Failed to save register map";
+        }
+
+    } catch (const std::exception &e) {
+        LOG(ERROR) << " Exception in saveRegisterMapToFile: " << e.what();
+        ret = false;
+    }
+
+    regMapFile.flush();
+    regMapFile.close();
+
+    return ret;
 }

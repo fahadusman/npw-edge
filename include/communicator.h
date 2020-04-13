@@ -13,8 +13,11 @@
 #include <map>
 #include <mutex>
 #include <thread>
+#include <experimental/filesystem>
 
 #include "glog/logging.h"
+
+namespace fs = std::experimental::filesystem;
 
 class EdgeDevice;
 
@@ -32,14 +35,21 @@ protected:
     int transferCount;
     int failedTransferCount;
 
+    fs::path queuedNpwBuffersDirPath;
     void addCommunicationTime(
             std::chrono::duration<long int, std::ratio<1, 1000000000>> t);
     void incFailedTransferCount();
+    bool loadStoredNpwBuffers();
+    bool saveBufferToFile(CommDataBuffer *buff);
+    void removeBufferFromDisk(uint64_t expTime);
+
+    bool enableBufferPersistence;
+
 public:
-	communicator(EdgeDevice * d);
+	communicator(EdgeDevice * d, bool bufferPersistence);
 	virtual void sendMessage(const char * message, const unsigned int length) = 0;
 	virtual bool processIncomingMessage(const char * message, const int & length) = 0;
-	virtual int enqueueMessage(CommDataBuffer * buff);
+	virtual bool enqueueMessage(CommDataBuffer * buff);
 	virtual ~communicator(){}
 	virtual void connect() = 0;
 	virtual void disconnect() = 0;

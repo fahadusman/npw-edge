@@ -28,7 +28,8 @@ link_directories(
 
 
 file(GLOB SOURCES
-	"./src/*.cpp"
+    "./src/*.cpp"
+    "./tests/*.cpp"
 )
 
 add_executable(
@@ -51,6 +52,7 @@ TARGET_LINK_LIBRARIES(
 	paho-mqtt3as
 	pthread
 	serial
+    stdc++fs
 )
 
 ######## Install targets ########

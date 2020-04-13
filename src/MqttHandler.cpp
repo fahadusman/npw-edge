@@ -14,7 +14,7 @@
 
 #include "CommandMsg.h"
 
-MqttCommunicator::MqttCommunicator(EdgeDevice * d) : communicator(d),
+MqttCommunicator::MqttCommunicator(EdgeDevice * d) : communicator(d, false),
         willmsg(MQTT_DFLT_TOPIC, "MQTT_DFLT_LWT_PAYLOAD", MQTT_DFLT_QOS, true), client(
                 MQTT_DFLT_SERVER_ADDRESS, MQTT_DFLT_CLIENT_ID), willOpts(
                 willmsg) {
@@ -82,16 +82,9 @@ void MqttCommunicator::sendQueuedMessagesThread() {
             LOG(WARNING) << "MQTT Client not connected...";
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-        CommDataBuffer * commPtr = NULL;
-        {
-            std::lock_guard<std::mutex> guard(transmitQueueMutex);
-            if (transmitQueue.size() > 0) {
-                commPtr = transmitQueue.begin()->second;
-                transmitQueue.erase(transmitQueue.begin());
-            }
-        }
+        CommDataBuffer * commPtr = getQueuedMessage();
 
-        if (commPtr != NULL) {
+        if (commPtr != nullptr) {
             uint64_t currentTime =
                     std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::system_clock::now().time_since_epoch()).count();
@@ -108,8 +101,8 @@ void MqttCommunicator::sendQueuedMessagesThread() {
                 std::string jsonMessage = commPtr->serializeJson();
                 sendMessage(jsonMessage.c_str(), jsonMessage.length());
             }
-            delete commPtr;
-            commPtr = NULL;
+            removeMessageFromQueue(commPtr->getBufferId());
+            commPtr = nullptr;
         }
         std::this_thread::sleep_for(sendMessagesThreadLoopInterval);
     }
