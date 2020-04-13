@@ -14,7 +14,6 @@ TemperatureSensor::TemperatureSensor(std::string portName, communicator *cPtr,
         Sensor(cPtr, ePtr, sensorId),
         sPort(portName, kDefaultBaudRate, kDefaultParity, kDefaultBlocking) {
 
-    // TODO Auto-generated constructor stub
     if (portName == ""){
         LOG(WARNING) << "portName is null, using default port name";
         portName = kDefaultPortName;

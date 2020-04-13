@@ -19,8 +19,8 @@
 //this function has to be called after adding a new value to the circular buffer
 //and before removing the older value.
 void PressureSensor::updateMovingAverages() {
-    DLOG_EVERY_N(INFO, 500) << "before calculateMovingAverage, firstAverage: "
-            << firstAverage << ", secondAverage: " << secondAverage;
+//    DLOG_EVERY_N(INFO, 500) << "before calculateMovingAverage, firstAverage: "
+//            << firstAverage << ", secondAverage: " << secondAverage;
 	try {
         if (sensorReadingCircularBuffer.size() < circularBufferLength) {
             LOG(WARNING)
@@ -64,9 +64,9 @@ void PressureSensor::updateMovingAverages() {
     catch (const std::exception & e) {
         LOG(ERROR) << "Exception: " << e.what();
     }
-    DLOG_EVERY_N(INFO, 500)
-    << "After calculateMovingAverage, firstAverage: " << firstAverage
-            << ", secondAverage: " << secondAverage;
+//    DLOG_EVERY_N(INFO, 500)
+//    << "After calculateMovingAverage, firstAverage: " << firstAverage
+//            << ", secondAverage: " << secondAverage;
 }
 
 NpwBuffer* PressureSensor::createNpwBuffer(){
@@ -225,7 +225,7 @@ void PressureSensor::createNPWBuffer() {
 void PressureSensor::updateNPWState(){
 	static bool wasThresholdExceeded = false;
 	if (circularBufferLength > sensorReadingCircularBuffer.size()) {
-	    LOG_EVERY_N(INFO, 50) << "Not enough values in Circular buffer yet, size: " << sensorReadingCircularBuffer.size();
+//	    LOG_EVERY_N(INFO, 50) << "Not enough values in Circular buffer yet, size: " << sensorReadingCircularBuffer.size();
 	    currentNpwState = noDropDetected;
 	    return;
 	}
@@ -233,8 +233,8 @@ void PressureSensor::updateNPWState(){
 	updateMovingAverages();
 
 	bool isThresholdExceeded = fabs(firstAverage - secondAverage) > npwDetectionthreshold;
-	LOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
-			"\tisThresholdExceeded: " << isThresholdExceeded << "\tDeltaP: " << firstAverage - secondAverage;
+//	LOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
+//			"\tisThresholdExceeded: " << isThresholdExceeded << "\tDeltaP: " << firstAverage - secondAverage;
 	if ((not wasThresholdExceeded) and isThresholdExceeded){
 		DLOG(INFO) << "pressure drop detected, DeltaP: " << firstAverage - secondAverage << "\tNPW State: " << currentNpwState;
 		switch (currentNpwState) {
@@ -485,11 +485,6 @@ void PressureSensor::processIncomingCommand() {
                     LOG(INFO) << "Received TEST_FLAG, force creating NPW Buffer";
                 }
                 break;
-            case ACK_NPW_BUFF:
-                LOG(INFO) << "Acknowledgment for NPW packet received: " << c->getData();
-//                TODO: Remove NPW Buffer from transmit queue.
-                break;
-
             default:
                 LOG(WARNING) << "Unhandled command received.";
             }

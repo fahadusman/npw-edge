@@ -53,6 +53,7 @@ enum CommandRegister {
     COMM_FAILURE_COUNT = 43,      //  Successful message count since last HB
     COMM_SUCCESS_COUNT = 44,      //  Successful message count since last HB
     AVERAGE_TRANS_TIME = 45,      //  Average transmission time of one message since last HB
+    QUEUED_NPW_BUFFERS = 46,    // Number of NPW Buffers queued for transmission
 
     INVALID_COMMAND
 };

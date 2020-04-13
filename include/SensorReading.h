@@ -30,7 +30,7 @@ public:
 	SensorReading(valueType v, __uint64_t t){
 		value = v;
 		timestampMS = t;
-		LOG_EVERY_N(INFO, 100) << "new sensor value, v: " << value << "\tt:" << timestampMS;
+		DLOG_EVERY_N(INFO, 2000) << "new sensor value, v: " << value << "\tt:" << timestampMS;
 	}
 	SensorReading(valueType v){
 		value = v;

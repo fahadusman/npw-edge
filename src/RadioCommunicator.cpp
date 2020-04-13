@@ -13,7 +13,7 @@
 
 RadioCommunicator::RadioCommunicator(EdgeDevice * d, const int & slaveAddress,
         ModbusModes mode, std::string radioPort) :
-        communicator(d) {
+        communicator(d, true) {
     modbusMode = modbusSlave;
     slaveThreadPtr = nullptr;
     masterThreadPtr = nullptr;
@@ -565,6 +565,7 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
 
         switch (modbusMsg.functionCode) {
         case WRITE_SINGLE_REGISTER:
+            //TODO: Handle commands specific to communicator
             if (edgeDevicePtr == NULL) {
                 LOG(FATAL) << "edgeDevicePtr is NULL";
                 return false;
@@ -738,6 +739,7 @@ bool RadioCommunicator::sendModbusCommand(uint8_t slaveAddress,
 
 bool RadioCommunicator::enqueueSlaveCommand(CommandMsg * cmd) {
     //TODO: If slaveId in the commandMsg is 0, then the command should be enqueued for each slave.
+    //TODO: If slaveId is not in modbusSlavesList, then discard the command.
     try {
         std::lock_guard<std::mutex> guard(commandQueueMutex);
         slaveCommandQueue.push(cmd);

@@ -126,4 +126,5 @@ public:
 char * binaryToHex(const unsigned char * binString, const int & len);
 unsigned char * hexToBinary(const char * hexString, int & len);
 
+bool radioCommTest();
 #endif /* RADIOCOMMUNICATOR_H_ */

@@ -113,7 +113,7 @@ unsigned char * NpwBuffer::serialize(int & length) {
     unsigned char * serialBuffer = nullptr;
     try {
         length = 1/*buffer type*/+ sizeof(bufferId) + sizeof(byteArrayLength) + byteArrayLength
-                + sizeof(timeStamp) + sensorId.length() + 1/*null char for sensorId*/;
+                + sizeof(timeStamp) + sizeof(expiryTime) + sensorId.length() + 1/*null char for sensorId*/;
 
         serialBuffer = new (std::nothrow) unsigned char [length];
         if (serialBuffer == nullptr) {
@@ -139,6 +139,9 @@ unsigned char * NpwBuffer::serialize(int & length) {
         std::memcpy(serialBuffer+i, &(timeStamp), sizeof(timeStamp));
         i+= sizeof(timeStamp);
 
+        std::memcpy(serialBuffer+i, &(expiryTime), sizeof(expiryTime));
+        i+= sizeof(expiryTime);
+
         std::memcpy(serialBuffer+i, sensorId.c_str(), sensorId.length());
         serialBuffer[i+sensorId.length()] = '\0';
         return serialBuffer;
@@ -157,7 +160,7 @@ unsigned char * NpwBuffer::serialize(int & length) {
 
 bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
 //    TODO: Determine length of byte array
-    if ((unsigned int) len < (byteArrayLength + sizeof(timeStamp))) {
+    if ((unsigned int) len < (byteArrayLength + sizeof(timeStamp) + sizeof(expiryTime))) {
         LOG(WARNING) << "Length of serialized buffer for NPW buffer value is too short: " << len;
         return false;
     }
@@ -189,6 +192,9 @@ bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
 
     std::memcpy(&(timeStamp), serialBuff+i, sizeof(timeStamp));
     i+= sizeof(timeStamp);
+
+    std::memcpy(&(expiryTime), serialBuff+i, sizeof(expiryTime));
+    i+= sizeof(expiryTime);
 
     sensorId.clear();
     sensorId.append((char *)(&serialBuff[i]), len-i);
