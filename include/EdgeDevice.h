@@ -65,6 +65,8 @@ protected:
     std::chrono::time_point<std::chrono::high_resolution_clock> applicationStartTime;
     std::array <int32_t, registerMapSize> registerMap;
     void initializeRegisterMap();
+    bool loadRegisterMapFromFile();
+    bool saveRegisterMapToFile();
 };
 
 #endif /* INCLUDE_EDGEDEVICE_H_ */

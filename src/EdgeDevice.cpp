@@ -9,9 +9,12 @@
 #include <glog/logging.h>
 #include <HeartbeatBuffer.h>
 #include <chrono>
+#include <fstream>
 
 #include "DevConfig.h"
 #include "CommDataBuffer.h"
+
+const char * kRegMapFileName = "reg_map.bin";
 
 EdgeDevice::EdgeDevice(int devId, Role role) :
         deviceId(devId), edgeDeviceRole(role) {
@@ -27,12 +30,16 @@ EdgeDevice::EdgeDevice(int devId, Role role) :
     registerMap[EDGE_START_TIME] =
             std::chrono::duration_cast<std::chrono::seconds>(
                     applicationStartTime.time_since_epoch()).count();
+    saveRegisterMapToFile();
 }
 
 bool EdgeDevice::updateRegisterValue(CommandMsg *incomingCommand) {
     if (incomingCommand->getCommand() > UNINITIALIZED_CMD
             && incomingCommand->getCommand() < INVALID_COMMAND) {
         registerMap[incomingCommand->getCommand()] = incomingCommand->getData();
+        if (!saveRegisterMapToFile()) {
+            LOG(ERROR) << "Unable to save register map to file";
+        }
         return true;
     }
     LOG(FATAL) << "update register map, index out of bound";
@@ -221,6 +228,11 @@ CommDataBuffer * EdgeDevice::getHeartBeat() {
 }
 
 void EdgeDevice::initializeRegisterMap() {
+    if (loadRegisterMapFromFile()) {
+        LOG(INFO) << "Loaded register map from file";
+        return;
+    }
+
     for (unsigned int x = 0; x < registerMap.size(); x++) {
         registerMap[x] = 0;
     }
