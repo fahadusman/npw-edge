@@ -1,11 +1,6 @@
-#include <iostream>
-
 #include <glog/logging.h>
 
 #include "EdgeDevice.h"
-#include "RadioCommunicator.h"
-#include "PeriodicValue.h"
-#include "TemperatureSensor.h"
 
 int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
