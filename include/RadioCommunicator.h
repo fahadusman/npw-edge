@@ -11,6 +11,7 @@
 #include <libserial/SerialStream.h>
 #include <string>
 #include <thread>
+#include "rapidjson/document.h"
 
 #include "communicator.h"
 #include "EdgeDevice.h"
@@ -18,7 +19,7 @@
 using namespace LibSerial;
 
 enum ModbusModes {
-    modbusMaster, modbusSlave
+    modbusModeMaster, modbusModeSlave
 };
 
 enum ModbusState {
@@ -95,6 +96,8 @@ protected:
     CommandMsg * getQueuedSlaveCommand();
     bool popQueuedSlaveCommand();
     bool sendQueuedCommand();
+    void initializeVariables(ModbusModes mode,
+            const std::string &radioPort, const int &slaveAddress);
 
     bool slaveThreadDone;
     bool masterThreadDone;
@@ -108,7 +111,8 @@ protected:
     std::string radioSerialPort;
 public:
     void transmitMessage();
-    RadioCommunicator(EdgeDevice *, const int & slaveAddress, ModbusModes mode, std::string radioPort);
+    RadioCommunicator(EdgeDevice*, ModbusModes mode,
+            const rapidjson::Value &communicatorObj);
     void connect() override;
     void subscribe() override;
     void sendMessage(const char * message, const unsigned int length) override;

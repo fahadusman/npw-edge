@@ -8,24 +8,49 @@
 #include <RadioCommunicator.h>
 
 #include <string>
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
 
 #include "HeartbeatBuffer.h"
 
-RadioCommunicator::RadioCommunicator(EdgeDevice * d, const int & slaveAddress,
-        ModbusModes mode, std::string radioPort) :
-        communicator(d, true) {
-    modbusMode = modbusSlave;
+void RadioCommunicator::initializeVariables(ModbusModes mode,
+        const std::string &radioPort, const int &slaveAddress) {
     slaveThreadPtr = nullptr;
     masterThreadPtr = nullptr;
     isModbusStreamConnected = false;
-    modbusSlaveAddress = slaveAddress;
     masterThreadDone = true;
     slaveThreadDone = true;
-    modbusMode = mode;
     modbusResponseTimeout = std::chrono::milliseconds(1000);
     modbusMasterPollInterval = std::chrono::milliseconds(3000);
     modbusTransmissionTimeout = std::chrono::milliseconds(2000);
+    modbusMode = mode;
     radioSerialPort = radioPort;
+    modbusSlaveAddress = slaveAddress;
+}
+
+RadioCommunicator::RadioCommunicator(EdgeDevice *d, ModbusModes mode,
+        const rapidjson::Value &communicatorObj) :
+        communicator(d, true) {
+    int slaveAddress = 0;
+    std::string radioPort = "";
+    try {
+        radioPort = communicatorObj["port"].GetString();
+        if (mode == modbusModeMaster) {
+            const rapidjson::Value & slavesList = communicatorObj["slave_ids"];
+            LOG_IF(FATAL, not slavesList.IsArray()) << "slave_ids is not a JSON Array";
+            for (unsigned int i = 0; i < slavesList.Size(); i++) {
+                addModbusSlave((uint8_t)(slavesList[i].GetInt()));
+            }
+        } else {
+            slaveAddress = communicatorObj["slave_address"].GetInt();
+        }
+        //TODO: modebus timeouts should also be configurable via JSON file.
+    } catch (const std::exception &e) {
+        LOG(FATAL) << "Got exception while parsing config,json file: "
+                << e.what();
+    }
+
+    initializeVariables(mode, radioPort, slaveAddress);
 }
 
 RadioCommunicator::~RadioCommunicator() {
@@ -517,7 +542,7 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
     ModbusMessage modbusMsg = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     bool ret = false;
 
-    if (modbusMode == modbusMaster) {
+    if (modbusMode == modbusModeMaster) {
         CommDataBuffer * receivedData = nullptr;
         if (parseModbusResponse(modbusMsg, message, length)) {
             if ((BufferType)modbusMsg.data[0] == buffTypeNpwBuffer) {
@@ -670,7 +695,7 @@ bool RadioCommunicator::addModbusSlave(uint8_t sId) {
     sprintf(mbSlave->modbus0x03Command+13, "%02X", lrc);
     mbSlave->modbus0x03Command[15] = '\r';
     LOG(INFO) << "addModbusSlave, sId: " << mbSlave->slaveId
-            << "0x03Command: " << mbSlave->modbus0x03Command;
+            << "\t0x03Command: " << mbSlave->modbus0x03Command;
     modbusSlavesList.push_back(mbSlave);
     return true;
 }

@@ -36,6 +36,7 @@ enum Role {
 class EdgeDevice {
 public:
     EdgeDevice(int devId, Role role);
+    EdgeDevice(const char * confFilePath);
     virtual ~EdgeDevice();
     void processIncomingCommand(CommandMsg * incomingCommand);
     void setHeartbeatInterval(CommandMsg * cmd);
@@ -67,6 +68,7 @@ protected:
     void initializeRegisterMap();
     bool loadRegisterMapFromFile();
     bool saveRegisterMapToFile();
+    char * readConfigFile(const char *confFilePath);
 };
 
 #endif /* INCLUDE_EDGEDEVICE_H_ */

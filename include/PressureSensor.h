@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include "rapidjson/document.h"
 
 #include "Sensor.h"
 #include "SensorReading.h"
@@ -76,7 +77,9 @@ public:
 	void npwThread();
 	void startNpwThread();
 	void stopNpwThread();
-	PressureSensor(std::string portName, communicator * cPtr, EdgeDevice * ePtr, std::string sensorId);
+    PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
+            const rapidjson::Value & pressureSensorObj);
+
 	virtual ~PressureSensor();
 };
 

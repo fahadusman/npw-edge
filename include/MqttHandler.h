@@ -16,8 +16,10 @@
 #include <cstring>
 #include "mqtt/client.h"
 #include "mqtt/message.h"
-#include "communicator.h"
 #include <glog/logging.h>
+#include "rapidjson/document.h"
+
+#include "communicator.h"
 
 const std::string MQTT_DFLT_SERVER_ADDRESS { "tcp://localhost:1883" };
 const std::string MQTT_DFLT_CLIENT_ID { "NPW_APP" };
@@ -80,7 +82,7 @@ private:
     unsigned int QoS;
     std::chrono::duration<int64_t> timeout;
 public:
-    MqttCommunicator(EdgeDevice *);
+    MqttCommunicator(EdgeDevice * e, rapidjson::Value &communicatorObj);
     void connect() override;
     void disconnect() override;
     void sendMessage(const char * message, const unsigned int length) override;

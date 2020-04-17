@@ -147,13 +147,11 @@ PressureSensor::~PressureSensor() {
 	return;
 }
 
-PressureSensor::PressureSensor(std::string portName, communicator * cPtr, EdgeDevice * ePtr, std::string sensorId) :
-        Sensor(cPtr, ePtr, sensorId), sPort(portName, kDefaultBaudRate, kDefaultParity,
-                kDefaultBlocking) {
-	if (portName == ""){
-		LOG(WARNING) << "portName is null, using default port name";
-		portName = kDefaultPortName;
-	}
+PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
+        const rapidjson::Value &pressureSensorObj) :
+        Sensor(cPtr, ePtr, pressureSensorObj["sensor_id"].GetString()), sPort(
+                pressureSensorObj["port"].GetString(), B115200,
+                kDefaultParity, kDefaultBlocking) {
 
 	if (not commPtr){
 	    LOG(FATAL) << "commPtr is null.";
