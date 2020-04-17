@@ -14,8 +14,10 @@
 
 #include "CommandMsg.h"
 
-MqttCommunicator::MqttCommunicator(EdgeDevice * d) : communicator(d, false),
-        willmsg(MQTT_DFLT_TOPIC, "MQTT_DFLT_LWT_PAYLOAD", MQTT_DFLT_QOS, true), client(
+MqttCommunicator::MqttCommunicator(EdgeDevice *d,
+        rapidjson::Value &communicatorObj) :
+        communicator(d, false), willmsg(MQTT_DFLT_TOPIC,
+                "MQTT_DFLT_LWT_PAYLOAD", MQTT_DFLT_QOS, true), client(
                 MQTT_DFLT_SERVER_ADDRESS, MQTT_DFLT_CLIENT_ID), willOpts(
                 willmsg) {
 
@@ -32,6 +34,17 @@ MqttCommunicator::MqttCommunicator(EdgeDevice * d) : communicator(d, false),
     timeout = MQTT_DFLT_TIMEOUT;
     sendMessagesThreadPtr = new std::thread(&MqttCommunicator::sendQueuedMessagesThread, this);
     commandTopic = DFLT_MQTT_CMD_TOPIC;
+
+    try {
+        publishTopic = communicatorObj["publish_topic"].GetString();
+        clientID = communicatorObj["client_id"].GetString();
+        QoS = communicatorObj["qos"].GetInt();
+        commandTopic = communicatorObj["command_topic"].GetString();
+        //TODO: Maybe handle modebus timeouts as well.
+    } catch (const std::exception &e) {
+        LOG(FATAL) << "Got exception while parsing config,json file: "
+                << e.what();
+    }
 }
 
 void MqttCommunicator::connect() {

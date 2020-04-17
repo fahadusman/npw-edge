@@ -8,6 +8,8 @@
 #ifndef TEMPERATURESENSOR_H_
 #define TEMPERATURESENSOR_H_
 
+#include "rapidjson/document.h"
+
 #include "Sensor.h"
 #include "SerialComPort.h"
 
@@ -21,8 +23,8 @@ protected:
     std::thread * tempSensorThreadPtr;
 
 public:
-    TemperatureSensor(std::string portName, communicator *cPtr,
-            EdgeDevice *ePtr, std::string sensorId);
+    TemperatureSensor(communicator *cPtr, EdgeDevice *ePtr,
+            rapidjson::Value &temperatureSensorObj);
     virtual ~TemperatureSensor();
     double readSensorValue();
     void initializeSensor();

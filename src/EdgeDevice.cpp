@@ -10,11 +10,127 @@
 #include <HeartbeatBuffer.h>
 #include <chrono>
 #include <fstream>
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+
 
 #include "DevConfig.h"
 #include "CommDataBuffer.h"
+#include "TemperatureSensor.h"
 
 const char * kRegMapFileName = "reg_map.bin";
+const char * kConfigFileName = "config.json";
+
+char * EdgeDevice::readConfigFile(const char *confFilePath) {
+    char *configFileReadBuffer = nullptr;
+    int fileLength;
+    std::ifstream configFile(confFilePath);
+    if (configFile.is_open()) {
+        configFile.seekg(0, configFile.end);
+        fileLength = configFile.tellg();
+        configFileReadBuffer = new (std::nothrow) char[fileLength+1]; //+1 for terminating null char
+        LOG_IF(FATAL, configFileReadBuffer == nullptr) << "Failed to allocate "
+                << "buffer to read config file, size: " << fileLength;
+        configFile.seekg(0, configFile.beg);
+        configFile.read(configFileReadBuffer, fileLength);
+        if (configFile.good()) {
+            configFileReadBuffer[fileLength] = '\0';
+            LOG(INFO) << "Successfully read device config file.";
+        } else {
+            LOG(FATAL)
+                    << "Unable to read complete register map, bytes count: "
+                    << configFile.gcount();
+        }
+    } else {
+        LOG(FATAL) << "Unable to open device configuration file.";
+    }
+    configFile.close();
+    return configFileReadBuffer;
+}
+
+EdgeDevice::EdgeDevice(const char *confFilePath) {
+    LOG(INFO) << "EdgeDevice constructor, confFilePath: " << confFilePath;
+    commPtr = nullptr;
+    modbusMaster = nullptr;
+
+    keepRunning = true;
+    nextHBTimePoint = std::chrono::high_resolution_clock::now();
+    applicationStartTime = std::chrono::high_resolution_clock::now();
+    initializeRegisterMap();
+    heartbeatInterval = registerMap[HEARTBEAT_INTERVAL];
+    registerMap[EDGE_START_TIME] =
+            std::chrono::duration_cast<std::chrono::seconds>(
+                    applicationStartTime.time_since_epoch()).count();
+    saveRegisterMapToFile();
+
+    try {
+        char *configFileReadBuffer = readConfigFile(confFilePath);
+        LOG(INFO) << configFileReadBuffer;
+
+        rapidjson::Document deviceConfigDoc;
+        deviceConfigDoc.Parse(configFileReadBuffer);
+
+        rapidjson::Value &edgeDeviceObj = deviceConfigDoc["edge_device"];
+        LOG(INFO) << edgeDeviceObj.IsObject();
+
+        deviceId = edgeDeviceObj["device_id"].GetInt();
+        std::string edgeRoleStr = edgeDeviceObj["role"].GetString();
+        if (edgeRoleStr == "bvEdgeDevice") {
+            edgeDeviceRole = bvEdgeDevice;
+        } else if (edgeRoleStr == "gatewayEdgeDevice") {
+            edgeDeviceRole = gatewayEdgeDevice;
+        } else if (edgeRoleStr == "stationEdgeDevice") {
+            edgeDeviceRole = stationEdgeDevice;
+        } else {
+            LOG(FATAL) << "Invalid value of edgeDeviceRole in config file";
+        }
+
+        rapidjson::Value &communicatorObj = edgeDeviceObj["communicator"];
+
+        std::string communicatorTypeStr = communicatorObj["type"].GetString();
+
+        communicator *commPtr = nullptr;
+        if (communicatorTypeStr == "radioCommunicator") {
+            commPtr = new RadioCommunicator(this, modbusModeSlave,
+                    communicatorObj);
+        } else if (communicatorTypeStr == "mqttCommunicator") {
+            commPtr = new MqttCommunicator(this, communicatorObj);
+        }
+
+        commPtr->connect();
+        commPtr->subscribe();
+        setCommunicator(commPtr);
+
+        if (edgeDeviceRole == gatewayEdgeDevice) {
+            rapidjson::Value &modbusMasterObj = edgeDeviceObj["modbus_master"];
+            RadioCommunicator *modbusMasterPtr = new RadioCommunicator(this,
+                    modbusModeMaster, modbusMasterObj);
+            setModbusMaster(modbusMasterPtr);
+            modbusMasterPtr->connect();
+            modbusMasterPtr->startModbusMaster();
+        } else {    //BV or Station edge devices
+            rapidjson::Value &sensorsArray = edgeDeviceObj["sensors"];
+            Sensor *sensorPtr = nullptr;
+            for (unsigned int i = 0; i < sensorsArray.Size(); i++) {
+                if (sensorsArray[i]["sensor_type"] == "PT") {
+                    sensorPtr = new PressureSensor(commPtr, this,
+                            sensorsArray[i]);
+                } else if (sensorsArray[i]["sensor_type"] == "TT") {
+                    sensorPtr = new TemperatureSensor(commPtr, this,
+                            sensorsArray[i]);
+                } else {
+                    LOG(FATAL) << "Unknown sensor type in JSON config file";
+                }
+                addSensor(sensorPtr);
+            }
+        }
+        delete configFileReadBuffer;
+    } catch (const std::exception &e) {
+        LOG(FATAL) << "Got exception while parsing config,json file: "
+                << e.what();
+    }
+}
 
 EdgeDevice::EdgeDevice(int devId, Role role) :
         deviceId(devId), edgeDeviceRole(role) {

@@ -9,15 +9,11 @@
 
 #include "EdgeDevice.h"
 
-TemperatureSensor::TemperatureSensor(std::string portName, communicator *cPtr,
-        EdgeDevice *ePtr, std::string sensorId) :
-        Sensor(cPtr, ePtr, sensorId),
-        sPort(portName, kDefaultBaudRate, kDefaultParity, kDefaultBlocking) {
-
-    if (portName == ""){
-        LOG(WARNING) << "portName is null, using default port name";
-        portName = kDefaultPortName;
-    }
+TemperatureSensor::TemperatureSensor(communicator *cPtr, EdgeDevice *ePtr,
+        rapidjson::Value &temperatureSensorObj) :
+        Sensor(cPtr, ePtr, temperatureSensorObj["sensor_id"].GetString()), sPort(
+                temperatureSensorObj["port"].GetString(), B9600,
+                kDefaultParity, kDefaultBlocking) {
 
     LOG_IF(FATAL, commPtr == nullptr) << "commPtr is null.";
 
@@ -27,7 +23,6 @@ TemperatureSensor::TemperatureSensor(std::string portName, communicator *cPtr,
 
     initializeSensor();
     recodringValues = false;
-    enablePeriodicValues = true;
     tempSensorThreadPtr = nullptr;
 
     startThread();
