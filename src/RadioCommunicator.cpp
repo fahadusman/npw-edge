@@ -386,7 +386,7 @@ bool RadioCommunicator::parseModbusCommand(ModbusMessage & modbusMsg,
 
         temp[0] = message[13];
         temp[1] = message[14];
-        temp[3] = '\0';
+        temp[2] = '\0';
         modbusMsg.errorCheck = std::stoi(temp, 0, 16);
 
         unsigned char lrc = LRC(message, 13);
