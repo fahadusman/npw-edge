@@ -37,7 +37,7 @@ enum CommandRegister {
     NPW_THR_PT3 = 21,  //  negative pressure drop threshold for detecting NPW for PT3
     NPW_THR_PT4 = 22,   //  negative pressure drop threshold for detecting NPW for PT4
 
-    EDGE_START_TIME = 31,   //Time since start in seconds
+    EDGE_START_TIME = 31,   //Epoch time of start-up in seconds
     EDGE_RAM = 32,   // Percentage of total RAM
     EDGE_STORAGE = 33,   // Percentage of total persistent storage free
     EDGE_CPU = 34,   // Average CPU Utilization since last HB
@@ -49,7 +49,7 @@ enum CommandRegister {
     BAD_CRC_COUNT = 40,   //  bad crc values for sensors since last HB
     NO_RSPNS_COUNT = 41,   //  no response count since last HB
     FLAG_NPW_SUPPRESS = 42,   //  Do not sent NPW Buffers if this flag is set
-    COMM_FAILURE_COUNT = 43,      //  Successful message count since last HB
+    COMM_FAILURE_COUNT = 43,      //  Failed message count since last HB
     COMM_SUCCESS_COUNT = 44,      //  Successful message count since last HB
     AVERAGE_TRANS_TIME = 45,      //  Average transmission time of one message since last HB
     QUEUED_NPW_BUFFERS = 46,    // Number of NPW Buffers queued for transmission
