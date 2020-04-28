@@ -450,7 +450,8 @@ bool RadioCommunicator::parseModbusResponse(ModbusMessage & modbusMsg,
 
         if (modbusMsg.slaveAddress != modbusSlaveAddress) {
             LOG(INFO) << "Discarding message, slave id ("
-                    << (int) modbusMsg.slaveAddress << ") not matched";
+                    << (int) modbusMsg.slaveAddress << ") not matched with "
+                    << (int) modbusSlaveAddress;
             return false;
         }
 
@@ -557,6 +558,9 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
                         << int(modbusMsg.data[0]);
                 return false;
             }
+        } else {
+            LOG(WARNING) << "failed to parse modbus response";
+            return false;
         }
 
         if (receivedData->deserialize(modbusMsg.data, modbusMsg.byteCount)) {
