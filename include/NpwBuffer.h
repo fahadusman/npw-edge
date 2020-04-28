@@ -26,7 +26,7 @@ public:
         return timeStamp;
     }
     NpwBuffer();
-    NpwBuffer(uint64_t ts, unsigned int readingListLen);
+    NpwBuffer(uint64_t ts, unsigned int readingListLen, std::string sId);
     unsigned char * createByteArray();
     void insertAt(const unsigned int position, readingType value);
 

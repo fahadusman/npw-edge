@@ -18,8 +18,9 @@ NpwBuffer::NpwBuffer() {
     byteArrayLength = 0;
 }
 
-NpwBuffer::NpwBuffer(uint64_t ts, unsigned int readingListLen) {
+NpwBuffer::NpwBuffer(uint64_t ts, unsigned int readingListLen, std::string sId) {
     readingListLength = readingListLen;
+    sensorId = sId;
     readingList = new (std::nothrow) readingType[readingListLen];
     LOG_IF(FATAL, readingList == nullptr) << "Unable to allocate memory for readingList";
     timeStamp = ts;
@@ -98,6 +99,8 @@ std::string NpwBuffer::serializeJson() {
     rapidjson::StringBuffer s;
     rapidjson::Writer<rapidjson::StringBuffer> writer(s);
     writer.StartObject();
+    writer.Key("sensor_id");
+    writer.String(sensorId.c_str());
     writer.Key("array");
     writer.StartArray();
     for (unsigned int i = 0; i < byteArrayLength; i++)

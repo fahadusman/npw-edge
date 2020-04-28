@@ -82,7 +82,7 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 	NpwBuffer * newNpwBufferPtr = new (std::nothrow)
 			NpwBuffer(
             sensorReadingCircularBuffer[startIndex]->timestampMS,
-            samplesCountBeforeDetection + samplesCountAfterDetection);
+            samplesCountBeforeDetection + samplesCountAfterDetection, id);
 	sensorReadingCircularBuffer[startIndex]->print();
 
 	uint64_t currentTime =
