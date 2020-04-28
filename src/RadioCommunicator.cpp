@@ -344,6 +344,7 @@ void RadioCommunicator::transmitMessage() {
                     << commPtr->getBufferId() << "\tt: "
                     << commPtr->getTimestamp() << "\tExp time: "
                     << commPtr->getExpiryTime();
+            this->removeMessageFromQueue(commPtr->getBufferId());
         } else {
             LOG(INFO) << "Sending Message with t: "
                     << commPtr->getTimestamp();
