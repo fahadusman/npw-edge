@@ -30,7 +30,7 @@ void RadioCommunicator::initializeVariables(ModbusModes mode,
 
 RadioCommunicator::RadioCommunicator(EdgeDevice *d, ModbusModes mode,
         const rapidjson::Value &communicatorObj) :
-        communicator(d, true) {
+        communicator(d, mode == modbusModeSlave) { //enable disk persistence for modbus slave only
     int slaveAddress = 0;
     std::string radioPort = "";
     try {
