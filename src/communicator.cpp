@@ -129,7 +129,8 @@ bool communicator::removeMessageFromQueue(int32_t messageId) {
         }
 
         // Also remove the buffer from disk
-        removeBufferFromDisk(expTime);
+        if (enableBufferPersistence)
+            removeBufferFromDisk(expTime);
 
     } catch (const std::exception & e) {
         LOG(ERROR) << "Exception in removing message from queue: "
