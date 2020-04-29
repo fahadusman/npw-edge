@@ -146,10 +146,25 @@ bool communicator::removeMessageFromQueue(int32_t messageId) {
 
 CommDataBuffer * communicator::getQueuedMessage() {
     CommDataBuffer * commPtr = nullptr;
+    uint64_t currentTimeMS = std::chrono::duration_cast<
+            std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
     try {
         std::lock_guard<std::mutex> guard(transmitQueueMutex);
-        if (transmitQueue.size() > 0) {
+        while (transmitQueue.size() > 0) {
             commPtr = transmitQueue.begin()->second;
+            if (commPtr->getExpiryTime() == 0 //expiryTime == 0 means, no expiry for this buffer
+                    or commPtr->getExpiryTime() > currentTimeMS) {
+                return commPtr;
+            } else {
+                LOG(INFO) << "Removing expired message from queue/disk: "
+                        << commPtr->getBufferId();
+                if (enableBufferPersistence)
+                    removeBufferFromDisk(commPtr->getExpiryTime());
+                transmitQueue.erase(commPtr->getBufferId());
+                delete commPtr;
+                commPtr = nullptr;
+            }
         }
     } catch (const std::exception & e) {
         LOG(ERROR) << "Exception in retrieving queued message " << e.what();
