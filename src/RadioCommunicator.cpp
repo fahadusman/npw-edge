@@ -547,6 +547,16 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
     if (modbusMode == modbusModeMaster) {
         CommDataBuffer * receivedData = nullptr;
         if (parseModbusResponse(modbusMsg, message, length)) {
+            if (modbusMsg.functionCode != 0x03) {
+                LOG(WARNING) << "Invalid fn code in modbus response. "
+                        << (int) modbusMsg.functionCode;
+                return false;
+            }
+            if (modbusMsg.data == nullptr) {
+                LOG(ERROR) << "modbusMsg.data is not initialized";
+                return false;
+            }
+
             if ((BufferType)modbusMsg.data[0] == buffTypeNpwBuffer) {
                 receivedData = new NpwBuffer();
             } else if ((BufferType)modbusMsg.data[0] == buffTypePeriodicValue) {
