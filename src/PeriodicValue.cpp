@@ -14,7 +14,7 @@ std::string PeriodicValue::serializeJson() {
     rapidjson::Writer<rapidjson::StringBuffer> writer(s);
 
     writer.StartObject();
-    writer.Key("id");
+    writer.Key("sensor_id");
     writer.String(sensorId.c_str());
     writer.Key("v");
     writer.Double(sensorValue);

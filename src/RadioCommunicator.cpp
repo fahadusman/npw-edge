@@ -30,7 +30,7 @@ void RadioCommunicator::initializeVariables(ModbusModes mode,
 
 RadioCommunicator::RadioCommunicator(EdgeDevice *d, ModbusModes mode,
         const rapidjson::Value &communicatorObj) :
-        communicator(d, true) {
+        communicator(d, mode == modbusModeSlave) { //enable disk persistence for modbus slave only
     int slaveAddress = 0;
     std::string radioPort = "";
     try {
@@ -344,6 +344,7 @@ void RadioCommunicator::transmitMessage() {
                     << commPtr->getBufferId() << "\tt: "
                     << commPtr->getTimestamp() << "\tExp time: "
                     << commPtr->getExpiryTime();
+            this->removeMessageFromQueue(commPtr->getBufferId());
         } else {
             LOG(INFO) << "Sending Message with t: "
                     << commPtr->getTimestamp();
@@ -386,7 +387,7 @@ bool RadioCommunicator::parseModbusCommand(ModbusMessage & modbusMsg,
 
         temp[0] = message[13];
         temp[1] = message[14];
-        temp[3] = '\0';
+        temp[2] = '\0';
         modbusMsg.errorCheck = std::stoi(temp, 0, 16);
 
         unsigned char lrc = LRC(message, 13);
@@ -449,7 +450,8 @@ bool RadioCommunicator::parseModbusResponse(ModbusMessage & modbusMsg,
 
         if (modbusMsg.slaveAddress != modbusSlaveAddress) {
             LOG(INFO) << "Discarding message, slave id ("
-                    << (int) modbusMsg.slaveAddress << ") not matched";
+                    << (int) modbusMsg.slaveAddress << ") not matched with "
+                    << (int) modbusSlaveAddress;
             return false;
         }
 
@@ -545,6 +547,16 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
     if (modbusMode == modbusModeMaster) {
         CommDataBuffer * receivedData = nullptr;
         if (parseModbusResponse(modbusMsg, message, length)) {
+            if (modbusMsg.functionCode != 0x03) {
+                LOG(WARNING) << "Invalid fn code in modbus response. "
+                        << (int) modbusMsg.functionCode;
+                return false;
+            }
+            if (modbusMsg.data == nullptr) {
+                LOG(ERROR) << "modbusMsg.data is not initialized";
+                return false;
+            }
+
             if ((BufferType)modbusMsg.data[0] == buffTypeNpwBuffer) {
                 receivedData = new NpwBuffer();
             } else if ((BufferType)modbusMsg.data[0] == buffTypePeriodicValue) {
@@ -556,6 +568,9 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
                         << int(modbusMsg.data[0]);
                 return false;
             }
+        } else {
+            LOG(WARNING) << "failed to parse modbus response";
+            return false;
         }
 
         if (receivedData->deserialize(modbusMsg.data, modbusMsg.byteCount)) {
