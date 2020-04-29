@@ -11,7 +11,7 @@ communicator::communicator(EdgeDevice *d, bool bufferPersistence) :
     sendMessagesThreadPtr = NULL;
     sendMessagesThreadLoopInterval = std::chrono::milliseconds(100);
     edgeDevicePtr = d;
-    npwPacketsToBuffer = kDcNpwNumPack.def;
+    npwPacketsToBuffer = d->getRegisterValue(NPW_NUM_PACK);
 
     transferCount = 0;
     failedTransferCount = 0;
@@ -71,8 +71,11 @@ bool communicator::enqueueMessage(CommDataBuffer * buff){
             << "\t Queue size: "  << transmitQueue.size();
 
     bool ret = false;
-    //TODO: Remove the oldest message from Queue if queue size limit is reached
     try {
+        while(transmitQueue.size() >= npwPacketsToBuffer) {
+            LOG(INFO) << "Queue size limit reached, removing packet from queue";
+            removeMessageFromQueue(transmitQueue.begin()->second->getBufferId());
+        }
         std::lock_guard<std::mutex> guard(transmitQueueMutex);
         transmitQueue[buff->getBufferId()] = buff;
         ret = true;
@@ -85,11 +88,13 @@ bool communicator::enqueueMessage(CommDataBuffer * buff){
     return ret;
 }
 
-void communicator::setNpwPacketsToBuffer(int32_t v) {
+bool communicator::setNpwPacketsToBuffer(int32_t v) {
     if (v > kDcNpwNumPack.min and v < kDcNpwNumPack.max) {
         npwPacketsToBuffer = v;
+        return true;
     } else {
         LOG(WARNING) << "NPW_EXP_TIME value out of range";
+        return false;
     }
 }
 
@@ -110,8 +115,7 @@ void communicator::removeBufferFromDisk(uint64_t expTime) {
 }
 
 bool communicator::removeMessageFromQueue(int32_t messageId) {
-    LOG(INFO) << "Message with ID: " << messageId
-            << " is delivered, removing from Queue";
+    LOG(INFO) << "Removing message from queue, Message ID: " << messageId;
     bool messageRemoved = false;
     uint64_t expTime = 0;
     try {

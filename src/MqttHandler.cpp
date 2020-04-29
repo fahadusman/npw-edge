@@ -143,10 +143,6 @@ bool MqttCommunicator::processIncomingMessage(const char * msg, const int & len)
             }
 
             switch (command) {
-            case NPW_NUM_PACK:
-                setNpwPacketsToBuffer(value);
-                break;
-            break;
             case ACK_NPW_BUFF:
                 removeMessageFromQueue(value);
                 break;

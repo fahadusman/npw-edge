@@ -202,6 +202,12 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         setHeartbeatInterval(incomingCommand);
         delete incomingCommand;
         break;
+    case NPW_NUM_PACK:
+        if (commPtr->setNpwPacketsToBuffer(incomingCommand->getData())) {
+            updateRegisterValue(incomingCommand);
+        }
+        delete incomingCommand;
+        break;
     case MAX_TIME_PERIODIC:
     case MIN_TIME_PERIODIC:
     case ON_CHANG_THSH_PT:
