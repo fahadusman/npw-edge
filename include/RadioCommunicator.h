@@ -109,6 +109,7 @@ protected:
 
 
     std::string radioSerialPort;
+    int commandMessageRetryLimit;
 public:
     void transmitMessage();
     RadioCommunicator(EdgeDevice*, ModbusModes mode,
