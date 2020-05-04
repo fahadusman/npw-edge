@@ -72,9 +72,10 @@ public:
     int32_t getData() {
         return data;
     }
-    int32_t getSlaveId() {
+    int32_t getDeviceId() {
         return deviceId;
     }
+    int retryCount;
 };
 
 #endif /* INCLUDE_COMMANDMSG_H_ */

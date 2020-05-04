@@ -26,6 +26,7 @@ void RadioCommunicator::initializeVariables(ModbusModes mode,
     modbusMode = mode;
     radioSerialPort = radioPort;
     modbusSlaveAddress = slaveAddress;
+    commandMessageRetryLimit = 3;
 }
 
 RadioCommunicator::RadioCommunicator(EdgeDevice *d, ModbusModes mode,
@@ -102,7 +103,22 @@ void RadioCommunicator::connect() {
 bool RadioCommunicator::sendQueuedCommand() {
     CommandMsg* cmdPtr = getQueuedSlaveCommand();
     if (cmdPtr != nullptr) {
-        if (sendModbusCommand(cmdPtr->getSlaveId(), cmdPtr->getCommand(),
+        bool slaveIdFound = false;
+        for (auto x:modbusSlavesList) {
+            if (x->slaveId == cmdPtr->getDeviceId()) {
+                slaveIdFound = true;
+                break;
+            }
+        }
+
+        if (not slaveIdFound) {
+            LOG(WARNING) << "Discarding command, slaveId not found in modbusSlavesList.";
+            popQueuedSlaveCommand();
+            delete cmdPtr;
+            return false;
+        }
+
+        if (sendModbusCommand(cmdPtr->getDeviceId(), cmdPtr->getCommand(),
                 cmdPtr->getData())) {
             popQueuedSlaveCommand();
             delete cmdPtr;
@@ -111,6 +127,11 @@ bool RadioCommunicator::sendQueuedCommand() {
         }
         else {
             LOG(WARNING) << "Failed to send modbus command";
+        }
+        if (++(cmdPtr->retryCount) >= commandMessageRetryLimit) {
+            LOG(WARNING) << "Discarding command, retry limit reached.";
+            popQueuedSlaveCommand();
+            delete cmdPtr;
         }
     }
     return false;
