@@ -121,7 +121,14 @@ EdgeDevice::EdgeDevice(const char *confFilePath) {
                             sensorsArray[i]);
                 } else {
                     LOG(FATAL) << "Unknown sensor type in JSON config file";
+                    delete configFileReadBuffer;
+                    return;
                 }
+                //enable pushing periodic values for station edge devices,
+                //for BV edge devices, periodic values would be read via polling
+                sensorPtr->enablePeriodicValues =
+                        edgeDeviceRole == stationEdgeDevice;
+
                 addSensor(sensorPtr);
             }
         }
