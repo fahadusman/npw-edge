@@ -341,13 +341,18 @@ uint8_t LRC(const char *nData, int wLength) {
  */
 std::string RadioCommunicator::binaryToModbusAsciiMessage(int serializedMsgLen,
         unsigned char* binaryData) {
-    std::string modbusResponse = ":0103";
+    std::string modbusResponse = ":";
+    char* tempHexStr = binaryToHex((unsigned char *)&modbusSlaveAddress, 1);
+    modbusResponse.append(tempHexStr);
+    delete tempHexStr;
+    modbusResponse.append("03");
     uint16_t size = serializedMsgLen;
-    char* tempHexStr = binaryToHex((unsigned char *)&size, 2);
+    tempHexStr = binaryToHex((unsigned char *)&size, 2);
     modbusResponse.append(tempHexStr);
     delete tempHexStr;
     tempHexStr = binaryToHex(binaryData, serializedMsgLen);
     modbusResponse.append(tempHexStr);
+    delete tempHexStr;
     unsigned char lrc = LRC(modbusResponse.c_str(), modbusResponse.length());
     tempHexStr = binaryToHex(&lrc, 1);
     modbusResponse.append(tempHexStr);
