@@ -25,11 +25,12 @@ Sensor::Sensor(communicator *cptr, EdgeDevice *eptr, std::string sensorId) :
     enablePeriodicValues = false;
     return;
 }
-
 void Sensor::enqueueCommand(CommandMsg * cmd){
     try {
+        CommandMsg * tempcmd = new CommandMsg;
+        *tempcmd = * cmd;
         std::lock_guard<std::mutex> guard(commandQueueMutex);
-        incomingCommandQueue.push(cmd);
+        incomingCommandQueue.push(tempcmd);
     } catch (std::exception & e) {
         LOG(ERROR) << "exception: " << e.what();
     }

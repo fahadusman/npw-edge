@@ -69,7 +69,7 @@ public:
 
 class MqttCommunicator: public communicator {
 private:
-    std::string address, clientID, publishTopic, persistDir, commandTopic;
+    std::string address, clientID, publishTopic, persistDir, commandTopic, serverAddress;
 
     mqtt::message willmsg;
     mqtt::async_client client; //(address, clientID);

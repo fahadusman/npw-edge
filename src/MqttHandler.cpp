@@ -7,7 +7,9 @@
 #include <EdgeDevice.h>
 #include "MqttHandler.h"
 
-#include "chrono"
+#include <chrono>
+#include <sstream>
+
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
@@ -36,11 +38,13 @@ MqttCommunicator::MqttCommunicator(EdgeDevice *d,
     commandTopic = DFLT_MQTT_CMD_TOPIC;
 
     try {
+        serverAddress = communicatorObj["server"].GetString();
         publishTopic = communicatorObj["publish_topic"].GetString();
         clientID = communicatorObj["client_id"].GetString();
         QoS = communicatorObj["qos"].GetInt();
         commandTopic = communicatorObj["command_topic"].GetString();
-        //TODO: Maybe handle modebus timeouts as well.
+
+
     } catch (const std::exception &e) {
         LOG(FATAL) << "Got exception while parsing config,json file: "
                 << e.what();
@@ -133,27 +137,31 @@ bool MqttCommunicator::processIncomingMessage(const char * msg, const int & len)
         if (doc.Parse(msg).HasParseError()) {
             LOG(ERROR) << "Invalid JSON message received: ";
             return false;
-        } else if (doc.HasMember(COMMAND_KEY) and doc[COMMAND_KEY].IsInt()
-                and doc.HasMember(VALUE_KEY) and doc[VALUE_KEY].IsInt()) {
-            CommandRegister command = static_cast<CommandRegister>(doc[COMMAND_KEY].GetInt());
-            int32_t value = doc[VALUE_KEY].GetInt();
-            uint8_t deviceId = 0;
-            if (doc.HasMember(DEVICEID_KEY) and doc[DEVICEID_KEY].IsInt()) {
-                deviceId = doc[DEVICEID_KEY].GetInt();
+        }
+
+//        {"timestamp":1579516307016,"values":[{"id":"PSI.Device1.MAX_TIME_PERIODIC","v":10,"q":true,"t":1579516306266}]}
+        if (doc.HasMember("values") and doc["values"].IsArray()) {
+            for (auto &cmdDoc:doc["values"].GetArray()){
+                if (cmdDoc.HasMember("id") and cmdDoc["id"].IsString()
+                        and cmdDoc.HasMember("v") and cmdDoc["v"].IsInt()) {
+                }
+                LOG(INFO) << "id: " << cmdDoc["id"].GetString() << "\tv: " << cmdDoc["v"].GetInt();
+                std::istringstream idStream(cmdDoc["id"].GetString());
+                std::string ch, dev, tag;
+                std::getline(idStream, ch, '.');
+                std::getline(idStream, dev, '.');
+                std::getline(idStream, tag, '.');
+
+                LOG(INFO) << "ch: " << ch << " dev: " << dev << " tag: " << tag;
+
+                edgeDevicePtr->processIncomingCommand(tag,
+                        (uint32_t) cmdDoc["v"].GetInt());
             }
 
-            switch (command) {
-            case ACK_NPW_BUFF:
-                removeMessageFromQueue(value);
-                break;
-            default:
-                LOG(INFO) << "Passing incoming command to edge device";
-                CommandMsg * cmd = new CommandMsg(command, value, deviceId);
-                edgeDevicePtr->processIncomingCommand(cmd);
-            }
         } else {
             LOG(WARNING) << "Message received on command topic is not properly formed.";
         }
+
     } catch (const std::exception & exc) {
         LOG(ERROR) << "STD Exception: " << exc.what();
         return false;

@@ -21,6 +21,7 @@ protected:
     SerialComPort sPort;
     bool recodringValues;
     std::thread * tempSensorThreadPtr;
+    void processIncomingCommand();
 
 public:
     TemperatureSensor(communicator *cPtr, EdgeDevice *ePtr,

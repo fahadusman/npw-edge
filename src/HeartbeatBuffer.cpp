@@ -19,7 +19,7 @@ std::string HeartbeatBuffer::serializeJson() {
 
     hbJsonWriter.StartObject();
     hbJsonWriter.Key("deviceId");
-    hbJsonWriter.Uint(deviceId);
+    hbJsonWriter.Int(deviceId);
     hbJsonWriter.Key("t");
     hbJsonWriter.Uint64(timeStamp);
     hbJsonWriter.Key("registerMap");
@@ -53,15 +53,15 @@ unsigned char * HeartbeatBuffer::serialize(int & length) {
         std::memcpy(serialBuffer+i, &(bufferId), sizeof(bufferId));
         i += sizeof(bufferId);
 
-        std::memcpy(serialBuffer+i, &(deviceId), sizeof(deviceId));
-        i += sizeof(deviceId);
-
         std::memcpy(serialBuffer+i, &(timeStamp), sizeof(timeStamp));
         i += sizeof(timeStamp);
 
         std::memcpy(serialBuffer+i, registerMap, sizeof(registerMap));
         i += sizeof(registerMap);
         //TODO: Add device stats and sensor and network health
+
+        std::memcpy(serialBuffer+i, &(deviceId), sizeof(deviceId));
+        i += sizeof(deviceId);
 
         return serialBuffer;
     }
@@ -98,14 +98,14 @@ bool HeartbeatBuffer::deserialize(const unsigned char * hbBuffer,
     std::memcpy(&(bufferId), hbBuffer+i, sizeof(bufferId));
     i+= sizeof(bufferId);
 
-    std::memcpy(&(deviceId), hbBuffer+i, sizeof(deviceId));
-    i += sizeof(deviceId);
-
     std::memcpy(&(timeStamp), hbBuffer+i, sizeof(timeStamp));
     i += sizeof(timeStamp);
 
     std::memcpy(registerMap, hbBuffer+i, sizeof(registerMap));
     i += sizeof(registerMap);
+
+    std::memcpy(&(deviceId), hbBuffer+i, sizeof(deviceId));
+    i += sizeof(deviceId);
 
     return true;
 }

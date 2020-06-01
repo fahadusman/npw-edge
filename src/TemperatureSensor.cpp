@@ -75,7 +75,7 @@ void TemperatureSensor::temperatureSensorThread() {
         }
 
         std::this_thread::sleep_for(loopSleepInterval);
-
+        processIncomingCommand();
     }
     DLOG(INFO) << "temperature sensor thread done.";
 }
@@ -98,4 +98,52 @@ void TemperatureSensor::stopThread(){
     tempSensorThreadPtr->join();
     delete tempSensorThreadPtr;
     tempSensorThreadPtr = nullptr;
+}
+
+void TemperatureSensor::processIncomingCommand() {
+    try {
+        std::lock_guard<std::mutex> guard(commandQueueMutex);
+        if (not incomingCommandQueue.empty()) {
+            CommandMsg *c = incomingCommandQueue.front();
+            LOG(INFO) << "Processing command: " << c->getCommand()
+                    << "\tData: " << c->getData();
+
+            switch (c->getCommand()) {
+            case MAX_TIME_PERIODIC:
+                if (c->getData() >= kDcMaxTimePeriodic.min
+                        and c->getData() <= kDcMaxTimePeriodic.max) {
+                    periodicValMaxInterval = c->getData() * 1000;
+                    edgeDevicePtr->updateRegisterValue(c);
+                } else
+                    LOG(WARNING) << "MAX_TIME_PERIODIC value out of range: "
+                            << c->getData();
+                break;
+            case MIN_TIME_PERIODIC:
+                if (c->getData() >= kDcMinTimePeriodic.min
+                        and c->getData() <= kDcMinTimePeriodic.max) {
+                    this->periodicValMinInterval = c->getData() * 1000;
+                    edgeDevicePtr->updateRegisterValue(c);
+                } else
+                    LOG(WARNING) << "MIN_TIME_PERIODIC value out of range: "
+                            << c->getData();
+                break;
+            case ON_CHANG_THSH_TT:
+                if (c->getData() >= kDcOnChangThshTt.min
+                        and c->getData() <= kDcOnChangThshTt.max) {
+                    this->periodicValChangeThreshold = c->getData();
+                    edgeDevicePtr->updateRegisterValue(c);
+                } else
+                    LOG(WARNING) << "ON_CHANG_THSH_TT value out of range: "
+                            << c->getData();
+                break;
+            default:
+                LOG(INFO) << "Command not applicable for TT. cmd: "
+                        << c->getCommand();
+            }
+            incomingCommandQueue.pop();
+            delete c;
+        }
+    } catch (const std::exception &e) {
+        LOG(ERROR) << "Exception: " << e.what();
+    }
 }

@@ -35,10 +35,10 @@ enum Role {
 
 class EdgeDevice {
 public:
-    EdgeDevice(int devId, Role role);
     EdgeDevice(const char * confFilePath);
     virtual ~EdgeDevice();
     void processIncomingCommand(CommandMsg * incomingCommand);
+    void processIncomingCommand(std::string registerName, uint32_t data);
     void setHeartbeatInterval(CommandMsg * cmd);
     void runForever();
     void addSensor(Sensor * sensorPtr);
@@ -54,7 +54,10 @@ public:
     CommDataBuffer * getHeartBeat();
     bool updateRegisterValue(CommandMsg *incomingCommand);
     int32_t getRegisterValue(CommandRegister c);
+    bool addConfigToConfigMqp(const std::string registerName,
+            uint8_t deviceId, CommandRegister cmdReg);
 protected:
+    std::string deviceName;
     int deviceId;
     std::list<Sensor *> sensorsList;  //List of PTs and TTs
     communicator * commPtr;
@@ -69,6 +72,10 @@ protected:
     bool loadRegisterMapFromFile();
     bool saveRegisterMapToFile();
     char * readConfigFile(const char *confFilePath);
+    void initializeConfigMap();
+
+    std::map <std::string, CommandMsg> configMap;
+
 };
 
 #endif /* INCLUDE_EDGEDEVICE_H_ */

@@ -1,18 +1,44 @@
 {
   "edge_device": {
-    "device_id": 2,
+    "device_id": 1,
+    "device_name": "MW-19",
     "role": "gatewayEdgeDevice",
     "communicator": {
       "type": "mqttCommunicator",
-      "publish_topic": "array",
-      "client_id":"gateway_1", 
+      "server": "tcp://localhost:1883",
+      "publish_topic": "MW-19",
+      "client_id": "gateway_MW-19",
       "qos": 1,
       "command_topic": "command_topic"
     },
     "modbus_master": {
-      "port": "/dev/pts/0",
-      "slave_ids": [1, 2, 5]
+      "port": "/dev/pts/1",
+      "slave_list": [
+        {
+          "device_id": 2,
+          "device_name": "BV-65",
+          "sensors": [
+            {
+              "sensor_type": "PT",
+              "sensor_id": "PT_65"
+            },
+            {
+              "sensor_type": "TT",
+              "sensor_id": "TS_65"
+            }
+          ]
+        },
+        {
+          "device_id": 3,
+          "device_name": "BV-66",
+          "sensors": [
+            {
+              "sensor_type": "PT",
+              "sensor_id": "PT_66"
+            }
+          ]
+        }
+      ]
     }
-    
   }
 }

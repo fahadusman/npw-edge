@@ -49,6 +49,30 @@ char * EdgeDevice::readConfigFile(const char *confFilePath) {
     return configFileReadBuffer;
 }
 
+void EdgeDevice::initializeConfigMap() {
+    configMap["UNINITIALIZED_CMD"] = UNINITIALIZED_CMD;
+    configMap["NPW_NUM_PACK"] = NPW_NUM_PACK;
+    configMap["NPW_EXP_TIME"] = NPW_EXP_TIME;
+    configMap["MAX_TIME_PERIODIC"] = MAX_TIME_PERIODIC;
+    configMap["MIN_TIME_PERIODIC"] = MIN_TIME_PERIODIC;
+    configMap["ON_CHANG_THSH_PT"] = ON_CHANG_THSH_PT;
+    configMap["ON_CHANG_THSH_TT"] = ON_CHANG_THSH_TT;
+    configMap["SAMPLE_INTERVAL_NPW"] = SAMPLE_INTERVAL_NPW;
+    configMap["NUM_SAMPLES_1_AVG"] = NUM_SAMPLES_1_AVG;
+    configMap["NUM_SAMPLES_2_AVG"] = NUM_SAMPLES_2_AVG;
+    configMap["START_SAMPLE_2_AVG"] = START_SAMPLE_2_AVG;
+    configMap["NPW_SAMPLE_BEFORE"] = NPW_SAMPLE_BEFORE;
+    configMap["NPW_SAMPLE_AFTER"] = NPW_SAMPLE_AFTER;
+    configMap["TEST_FLAG"] = TEST_FLAG;
+    configMap["REBOOT_TIME"] = REBOOT_TIME;
+    configMap["HEARTBEAT_INTERVAL"] = HEARTBEAT_INTERVAL;
+    configMap["ACK_NPW_BUFF"] = ACK_NPW_BUFF;
+    configMap["NPW_THR_PT1"] = NPW_THR_PT1;
+    configMap["NPW_THR_PT2"] = NPW_THR_PT2;
+    configMap["NPW_THR_PT3"] = NPW_THR_PT3;
+    configMap["NPW_THR_PT4"] = NPW_THR_PT4;
+}
+
 EdgeDevice::EdgeDevice(const char *confFilePath) {
     LOG(INFO) << "EdgeDevice constructor, confFilePath: " << confFilePath;
     commPtr = nullptr;
@@ -64,6 +88,7 @@ EdgeDevice::EdgeDevice(const char *confFilePath) {
                     applicationStartTime.time_since_epoch()).count();
     saveRegisterMapToFile();
 
+    initializeConfigMap();
     try {
         char *configFileReadBuffer = readConfigFile(confFilePath);
         LOG(INFO) << configFileReadBuffer;
@@ -75,6 +100,7 @@ EdgeDevice::EdgeDevice(const char *confFilePath) {
         LOG(INFO) << edgeDeviceObj.IsObject();
 
         deviceId = edgeDeviceObj["device_id"].GetInt();
+        deviceName = edgeDeviceObj["device_name"].GetString();
         std::string edgeRoleStr = edgeDeviceObj["role"].GetString();
         if (edgeRoleStr == "bvEdgeDevice") {
             edgeDeviceRole = bvEdgeDevice;
@@ -121,7 +147,14 @@ EdgeDevice::EdgeDevice(const char *confFilePath) {
                             sensorsArray[i]);
                 } else {
                     LOG(FATAL) << "Unknown sensor type in JSON config file";
+                    delete configFileReadBuffer;
+                    return;
                 }
+                //enable pushing periodic values for station edge devices,
+                //for BV edge devices, periodic values would be read via polling
+                sensorPtr->enablePeriodicValues =
+                        edgeDeviceRole == stationEdgeDevice;
+
                 addSensor(sensorPtr);
             }
         }
@@ -132,22 +165,6 @@ EdgeDevice::EdgeDevice(const char *confFilePath) {
     }
 }
 
-EdgeDevice::EdgeDevice(int devId, Role role) :
-        deviceId(devId), edgeDeviceRole(role) {
-    LOG(INFO) << "EdgeDevice constructor";
-    commPtr = nullptr;
-    modbusMaster = nullptr;
-
-    heartbeatInterval = kDcHeartbeatInterval.def;
-    keepRunning = true;
-    nextHBTimePoint = std::chrono::high_resolution_clock::now();
-    applicationStartTime = std::chrono::high_resolution_clock::now();
-    initializeRegisterMap();
-    registerMap[EDGE_START_TIME] =
-            std::chrono::duration_cast<std::chrono::seconds>(
-                    applicationStartTime.time_since_epoch()).count();
-    saveRegisterMapToFile();
-}
 
 bool EdgeDevice::updateRegisterValue(CommandMsg *incomingCommand) {
     if (incomingCommand->getCommand() > UNINITIALIZED_CMD
@@ -171,6 +188,16 @@ int32_t EdgeDevice::getRegisterValue(CommandRegister c) {
     }
     return 0;
 }
+void EdgeDevice::processIncomingCommand(std::string registerName, uint32_t data){
+    auto confIterator = configMap.find(registerName);
+    if (confIterator != configMap.end()) {
+        CommandMsg *cmd = new CommandMsg(confIterator->second, data);
+        processIncomingCommand(cmd);
+    } else {
+        LOG(WARNING) << "command not found in map, " << registerName;
+    }
+
+}
 
 void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
     if (edgeDeviceRole == gatewayEdgeDevice
@@ -185,7 +212,6 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         return;
     }
 
-    updateRegisterValue(incomingCommand);
 
     switch (incomingCommand->getCommand()){
     case UNINITIALIZED_CMD:
@@ -212,6 +238,7 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
     case MAX_TIME_PERIODIC:
     case MIN_TIME_PERIODIC:
     case ON_CHANG_THSH_PT:
+    case ON_CHANG_THSH_TT:
     case NPW_EXP_TIME:
     case TEST_FLAG:
 
@@ -228,6 +255,7 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         for (Sensor * sensorPtr : sensorsList) {
             sensorPtr->enqueueCommand(incomingCommand);
         }
+        delete incomingCommand;
         break;
     case ACK_NPW_BUFF:
         commPtr->removeMessageFromQueue(incomingCommand->getData());
@@ -446,4 +474,19 @@ bool EdgeDevice::saveRegisterMapToFile() {
     regMapFile.close();
 
     return ret;
+}
+
+bool EdgeDevice::addConfigToConfigMqp(const std::string registerName,
+        uint8_t deviceId, CommandRegister cmdReg) {
+    if (cmdReg < UNINITIALIZED_CMD or cmdReg >INVALID_COMMAND) {
+        LOG(WARNING) << "Unknown command received to add to map: " << cmdReg;
+        return false;
+    }
+    try {
+        configMap[registerName] = CommandMsg(cmdReg, 0, deviceId);
+    } catch (const std::exception &e) {
+        LOG(ERROR) << " Exception in adding configuration to map: " << e.what();
+        return false;
+    }
+    return true;
 }
