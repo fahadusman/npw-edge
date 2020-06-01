@@ -64,6 +64,7 @@ struct ModbusMessage {
 struct ModbusSlave {
     uint16_t slaveId;
     char modbus0x03Command[18]; //e.g. ":010300000002FA\r\n\0"
+    std::string slaveName;
 };
 
 const unsigned int kModbusResponseHdrLength = 11;
@@ -121,7 +122,7 @@ public:
     void disconnect() override;
     void sendQueuedMessagesThread() override;
     void startModbusMaster();
-    bool addModbusSlave(uint8_t slaveId);
+    bool addModbusSlave(uint8_t slaveId, std::string slaveName);
     bool sendModbusCommand(uint8_t slaveAddress, CommandRegister regAddress,
             uint16_t value);
     bool enqueueSlaveCommand(CommandMsg * cmd);

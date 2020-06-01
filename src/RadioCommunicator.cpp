@@ -37,10 +37,26 @@ RadioCommunicator::RadioCommunicator(EdgeDevice *d, ModbusModes mode,
     try {
         radioPort = communicatorObj["port"].GetString();
         if (mode == modbusModeMaster) {
-            const rapidjson::Value & slavesList = communicatorObj["slave_ids"];
+            const rapidjson::Value & slavesList = communicatorObj["slave_list"];
             LOG_IF(FATAL, not slavesList.IsArray()) << "slave_ids is not a JSON Array";
             for (unsigned int i = 0; i < slavesList.Size(); i++) {
-                addModbusSlave((uint8_t)(slavesList[i].GetInt()));
+                uint8_t deviceId = (uint8_t) (slavesList[i]["device_id"].GetInt());
+                addModbusSlave(deviceId,
+                        slavesList[i]["device_name"].GetString());
+                const rapidjson::Value & sensorsListObj = slavesList[i]["sensors"];
+                for (unsigned int j = 0; j < sensorsListObj.Size(); j++) {
+                    LOG(INFO) << "sensor type: "
+                            << sensorsListObj[j]["sensor_type"].GetString() << " sensor id: "
+                            << sensorsListObj[j]["sensor_id"].GetString();
+//                    add new configuration in map (register name = NPW_THR_ + sensor_id, device_id, NPW_THR_PT1+j
+                    if (std::string(sensorsListObj[j]["sensor_type"].GetString()) == "PT") {
+                        edgeDevicePtr->addConfigToConfigMqp(
+                            std::string("NPW_THR_")
+                                    + sensorsListObj[j]["sensor_id"].GetString(),
+                            deviceId, (CommandRegister)((int)NPW_THR_PT1 + j));
+                    }
+                }
+
             }
         } else {
             slaveAddress = communicatorObj["slave_address"].GetInt();
@@ -721,9 +737,10 @@ unsigned char * hexToBinary(const char * hexString, int & binaryBuffLen){
     return nullptr;
 }
 
-bool RadioCommunicator::addModbusSlave(uint8_t sId) {
+bool RadioCommunicator::addModbusSlave(uint8_t sId, std::string slaveName) {
     ModbusSlave * mbSlave = new ModbusSlave;
     mbSlave->slaveId = sId;
+    mbSlave->slaveName = slaveName;
     strncpy(mbSlave->modbus0x03Command, ":010300000002FA\r\n\0", 18);
     sprintf(mbSlave->modbus0x03Command+1, "%02X", sId);
     mbSlave->modbus0x03Command[3] = '0';
@@ -799,11 +816,19 @@ bool RadioCommunicator::sendModbusCommand(uint8_t slaveAddress,
 }
 
 bool RadioCommunicator::enqueueSlaveCommand(CommandMsg * cmd) {
-    //TODO: If slaveId in the commandMsg is 0, then the command should be enqueued for each slave.
     //TODO: If slaveId is not in modbusSlavesList, then discard the command.
     try {
         std::lock_guard<std::mutex> guard(commandQueueMutex);
-        slaveCommandQueue.push(cmd);
+        if (cmd->getDeviceId() == 0) {
+            for (auto slave : modbusSlavesList) {
+                CommandMsg *c = new CommandMsg(cmd->getCommand(),
+                        cmd->getData(), slave->slaveId);
+                slaveCommandQueue.push(c);
+            }
+            delete cmd;
+        } else {
+            slaveCommandQueue.push(cmd);
+        }
         return true;
     } catch (std::exception & e) {
         LOG(ERROR) << "exception: " << e.what();

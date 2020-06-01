@@ -9,6 +9,7 @@
 #define INCLUDE_COMMANDMSG_H_
 
 #include <cstdint>
+#include <map>
 
 #define COMMAND_KEY "command"
 #define VALUE_KEY "value"
@@ -60,12 +61,13 @@ enum CommandRegister {
 class CommandMsg {
 private:
     CommandRegister command; //this is same as modbus register address
-    int32_t data;
     uint8_t deviceId;
 public:
+    int32_t data;
     CommandMsg();
-    CommandMsg(CommandRegister cmd, uint32_t d);
+    CommandMsg(const CommandMsg & c, uint32_t d);
     CommandMsg(CommandRegister cmd, uint32_t d, uint8_t devId);
+    CommandMsg(CommandRegister cmd);
     CommandRegister getCommand() {
         return command;
     }
