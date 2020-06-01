@@ -38,6 +38,7 @@ MqttCommunicator::MqttCommunicator(EdgeDevice *d,
     commandTopic = DFLT_MQTT_CMD_TOPIC;
 
     try {
+        serverAddress = communicatorObj["server"].GetString();
         publishTopic = communicatorObj["publish_topic"].GetString();
         clientID = communicatorObj["client_id"].GetString();
         QoS = communicatorObj["qos"].GetInt();
