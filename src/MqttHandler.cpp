@@ -103,7 +103,8 @@ void MqttCommunicator::sendQueuedMessagesThread() {
     while (true){
         while (not isConnected) {
             LOG(WARNING) << "MQTT Client not connected...";
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            connect();
+            std::this_thread::sleep_for(std::chrono::seconds(5));
         }
         CommDataBuffer * commPtr = getQueuedMessage();
 
