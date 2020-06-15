@@ -141,21 +141,26 @@ bool MqttCommunicator::processIncomingMessage(const char * msg, const int & len)
 
 //        {"timestamp":1579516307016,"values":[{"id":"PSI.Device1.MAX_TIME_PERIODIC","v":10,"q":true,"t":1579516306266}]}
         if (doc.HasMember("values") and doc["values"].IsArray()) {
-            for (auto &cmdDoc:doc["values"].GetArray()){
+            for (auto &cmdDoc : doc["values"].GetArray()) {
                 if (cmdDoc.HasMember("id") and cmdDoc["id"].IsString()
                         and cmdDoc.HasMember("v") and cmdDoc["v"].IsInt()) {
+                    LOG(INFO) << "id: " << cmdDoc["id"].GetString()
+                            << "\tv: " << cmdDoc["v"].GetInt();
+                    std::istringstream idStream(cmdDoc["id"].GetString());
+                    std::string ch, dev, tag;
+                    std::getline(idStream, ch, '.');
+                    std::getline(idStream, dev, '.');
+                    std::getline(idStream, tag, '.');
+
+                    LOG(INFO) << "ch: " << ch << " dev: " << dev << " tag: " << tag;
+
+                    edgeDevicePtr->processIncomingCommand(tag,
+                            (uint32_t) cmdDoc["v"].GetInt());
+                } else {
+                    LOG(WARNING)
+                            << "Message received on command topic is not properly formed.";
                 }
-                LOG(INFO) << "id: " << cmdDoc["id"].GetString() << "\tv: " << cmdDoc["v"].GetInt();
-                std::istringstream idStream(cmdDoc["id"].GetString());
-                std::string ch, dev, tag;
-                std::getline(idStream, ch, '.');
-                std::getline(idStream, dev, '.');
-                std::getline(idStream, tag, '.');
 
-                LOG(INFO) << "ch: " << ch << " dev: " << dev << " tag: " << tag;
-
-                edgeDevicePtr->processIncomingCommand(tag,
-                        (uint32_t) cmdDoc["v"].GetInt());
             }
 
         } else {
