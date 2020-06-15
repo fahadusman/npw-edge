@@ -19,13 +19,12 @@
 MqttCommunicator::MqttCommunicator(EdgeDevice *d,
         rapidjson::Value &communicatorObj) :
         communicator(d, false), willmsg(MQTT_DFLT_TOPIC,
-                "MQTT_DFLT_LWT_PAYLOAD", MQTT_DFLT_QOS, true), client(
-                MQTT_DFLT_SERVER_ADDRESS, MQTT_DFLT_CLIENT_ID), willOpts(
-                willmsg) {
+                "MQTT_DFLT_LWT_PAYLOAD", MQTT_DFLT_QOS, true),
+                willOpts(willmsg) {
 
-    client.set_callback(cb);
     cb.setCommunicator(this);
     conopts.set_will(willOpts);
+    serverAddress = MQTT_DFLT_SERVER_ADDRESS;
     conntok = NULL;
     isConnected = false;
     publishTopic = MQTT_DFLT_TOPIC;
@@ -34,7 +33,6 @@ MqttCommunicator::MqttCommunicator(EdgeDevice *d,
     QoS = MQTT_DFLT_QOS;
     cleanSession = MQTT_DFLT_CLEAN_SESSION;
     timeout = MQTT_DFLT_TIMEOUT;
-    sendMessagesThreadPtr = new std::thread(&MqttCommunicator::sendQueuedMessagesThread, this);
     commandTopic = DFLT_MQTT_CMD_TOPIC;
 
     try {
@@ -49,14 +47,16 @@ MqttCommunicator::MqttCommunicator(EdgeDevice *d,
         LOG(FATAL) << "Got exception while parsing config,json file: "
                 << e.what();
     }
+    asyncClientPtr = new mqtt::async_client(serverAddress, clientID);
+    asyncClientPtr->set_callback(cb);
+    sendMessagesThreadPtr = new std::thread(&MqttCommunicator::sendQueuedMessagesThread, this);
 }
 
 void MqttCommunicator::connect() {
     while (not isConnected) {
         LOG(INFO) << "connecting to broker";
         try {
-            conntok = client.connect(conopts);
-            conntok->wait();
+            asyncClientPtr->connect(conopts)->wait();
             LOG(INFO) << "MQTT Client Connected: " << clientID;
             isConnected = true;
         } catch (const mqtt::exception& exc) {
@@ -74,16 +74,22 @@ void MqttCommunicator::sendMessage(const char * message,
     }
     LOG(INFO) << "Sending MQTT Message: " << message << "\ttopic: " << publishTopic
             << ", length: " << length;
-    mqtt::delivery_token_ptr pubtok;
-    pubtok = client.publish(publishTopic, message, length, QoS, cleanSession);
-    pubtok->wait_for(timeout);
+    try {
+        asyncClientPtr->publish(publishTopic, message, length, QoS,
+                cleanSession)->wait_for(timeout);
+    } catch (const mqtt::exception &exc) {
+        LOG(ERROR) << "MQTT Exception: " << exc.what();
+    }
 }
 
 void MqttCommunicator::disconnect() {
     if (isConnected) {
         LOG(INFO) << "disconnecting: " << this->clientID;
-        conntok = client.disconnect();
-        conntok->wait();
+        try {
+            asyncClientPtr->disconnect()->wait();
+        } catch (const mqtt::exception &exc) {
+            LOG(ERROR) << "MQTT Exception: " << exc.what();
+        }
         isConnected = false;
         LOG(INFO) << "successfully disconnected.: " << this->clientID;
     } else {
@@ -126,7 +132,7 @@ void MqttCommunicator::sendQueuedMessagesThread() {
 }
 
 void MqttCommunicator::subscribe(){
-    client.subscribe(commandTopic, QoS);
+    asyncClientPtr->subscribe(commandTopic, QoS);
     LOG(INFO) << "Subscribing to: " << commandTopic;
 }
 
@@ -203,6 +209,7 @@ void user_callback::connected(const std::string& cause) {
     connected_ = true;
     LOG(INFO) << "MQTT client connected: " << cause;
     commPtr->subscribe();
+    LOG(INFO) << "MQTT subscribe done";
 }
 
 void user_callback::setCommunicator(communicator* c) {
