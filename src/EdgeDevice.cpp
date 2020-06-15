@@ -124,8 +124,6 @@ EdgeDevice::EdgeDevice(const char *confFilePath) {
             commPtr = new MqttCommunicator(this, communicatorObj);
         }
 
-        commPtr->connect();
-        commPtr->subscribe();
         setCommunicator(commPtr);
 
         if (edgeDeviceRole == gatewayEdgeDevice) {
@@ -133,8 +131,6 @@ EdgeDevice::EdgeDevice(const char *confFilePath) {
             RadioCommunicator *modbusMasterPtr = new RadioCommunicator(this,
                     modbusModeMaster, modbusMasterObj);
             setModbusMaster(modbusMasterPtr);
-            modbusMasterPtr->connect();
-            modbusMasterPtr->startModbusMaster();
         } else {    //BV or Station edge devices
             rapidjson::Value &sensorsArray = edgeDeviceObj["sensors"];
             Sensor *sensorPtr = nullptr;
@@ -164,7 +160,6 @@ EdgeDevice::EdgeDevice(const char *confFilePath) {
                 << e.what();
     }
 }
-
 
 bool EdgeDevice::updateRegisterValue(CommandMsg *incomingCommand) {
     if (incomingCommand->getCommand() > UNINITIALIZED_CMD
