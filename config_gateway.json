@@ -9,7 +9,7 @@
       "publish_topic": "MW-19",
       "client_id": "gateway_MW-19",
       "qos": 1,
-      "command_topic": "command_topic"
+      "command_topic": "iotgateway"
     },
     "modbus_master": {
       "port": "/dev/pts/1",

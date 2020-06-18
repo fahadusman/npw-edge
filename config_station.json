@@ -9,7 +9,7 @@
       "publish_topic": "PS-5-MKT",
       "client_id":"Edge_PS-5-MKT",
       "qos": 1,
-      "command_topic": "command_topic"
+      "command_topic": "iotgateway"
     },
     "sensors": [
       {
