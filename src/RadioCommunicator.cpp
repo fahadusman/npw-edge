@@ -20,8 +20,8 @@ void RadioCommunicator::initializeVariables(ModbusModes mode,
     isModbusStreamConnected = false;
     masterThreadDone = true;
     slaveThreadDone = true;
-    modbusResponseTimeout = std::chrono::milliseconds(1000);
-    modbusMasterPollInterval = std::chrono::milliseconds(3000);
+    modbusResponseTimeout = std::chrono::milliseconds(4000);
+    modbusMasterPollInterval = std::chrono::milliseconds(5000);
     modbusTransmissionTimeout = std::chrono::milliseconds(2000);
     modbusMode = mode;
     radioSerialPort = radioPort;
@@ -263,7 +263,7 @@ bool RadioCommunicator::receiveModbusAsciiMessage(std::string& receiveBuffer,
             while (not modbusStream.IsDataAvailable()
                     and std::chrono::high_resolution_clock::now() < expTime) {
                 // Wait a brief period for more data to arrive.
-                LOG(INFO) << "packet started, but IsDataAvailable == false, waiting briefly";
+                LOG(INFO) << "packet started, but IsDataAvailable == false, waiting briefly. receiveBuffer.len: " << receiveBuffer.length();
                 usleep(50000);
             }
         }
