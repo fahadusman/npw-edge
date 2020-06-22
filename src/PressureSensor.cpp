@@ -16,6 +16,8 @@
 #include "PeriodicValue.h"
 #include "EdgeDevice.h"
 
+int PressureSensor::sensorCount = 0;
+
 //this function has to be called after adding a new value to the circular buffer
 //and before removing the older value.
 void PressureSensor::updateMovingAverages() {
@@ -188,6 +190,15 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
     updateBufferLengths();
 
 	npwBufferExpiryTime = edgeDevicePtr->getRegisterValue(NPW_EXP_TIME) * 60000; //min to ms
+
+    LOG(INFO) << "Going to add new config to map, Key: " << "NPW_THR_"
+            << pressureSensorObj["sensor_id"].GetString()
+            << "\tValue: " << (CommandRegister)((int)NPW_THR_PT1 + sensorCount);
+    edgeDevicePtr->addConfigToConfigMqp(
+        std::string("NPW_THR_")
+                + pressureSensorObj["sensor_id"].GetString(),
+        edgeDevicePtr->getDeviceId(), (CommandRegister)((int)NPW_THR_PT1 + sensorCount));
+    sensorCount++;
 
 	startNpwThread();
 }

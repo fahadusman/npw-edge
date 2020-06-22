@@ -73,6 +73,7 @@ private:
     int applyCommand(CommandMsg * cmd, int oldValue, const DevConfig & dc,
             bool resetNpwThread);
     void updateBufferLengths();
+    static int sensorCount;
 public:
 	void npwThread();
 	void startNpwThread();
