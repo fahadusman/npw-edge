@@ -72,7 +72,7 @@ private:
     std::string address, clientID, publishTopic, persistDir, commandTopic, serverAddress;
 
     mqtt::message willmsg;
-    mqtt::async_client client; //(address, clientID);
+    mqtt::async_client * asyncClientPtr;
     user_callback cb;
     mqtt::connect_options conopts;
     mqtt::will_options willOpts;

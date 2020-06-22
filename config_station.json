@@ -1,0 +1,22 @@
+{
+  "edge_device": {
+    "device_id": 1,
+    "device_name": "PS-5-MKT",
+    "role": "stationEdgeDevice",
+    "communicator": {
+      "type": "mqttCommunicator",
+      "server": "tcp://10.1.17.112:1883",
+      "publish_topic": "PS-5-MKT",
+      "client_id":"Edge_PS-5-MKT",
+      "qos": 1,
+      "command_topic": "iotgateway"
+    },
+    "sensors": [
+      {
+        "sensor_type": "PT",
+        "port": "/dev/ttyUSB0", 
+        "sensor_id": "PT_2003"
+      }
+    ]
+  }
+}

@@ -68,6 +68,12 @@ RadioCommunicator::RadioCommunicator(EdgeDevice *d, ModbusModes mode,
     }
 
     initializeVariables(mode, radioPort, slaveAddress);
+    connect();
+    if (modbusMode == modbusModeSlave) {
+        subscribe();
+    } else if (modbusMode == modbusModeMaster) {
+        startModbusMaster();
+    }
 }
 
 RadioCommunicator::~RadioCommunicator() {
