@@ -105,7 +105,7 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 	return newNpwBufferPtr;
 }
 
-uint32_t PressureSensor::readSensorValueDummy(){
+double PressureSensor::readSensorValueDummy(){
 	static int i = 0;
 	static unsigned int totalValues = sizeof (simulatedValues)/sizeof(int);
 	return (simulatedValues[i++ % totalValues])/100;

@@ -63,7 +63,7 @@ private:
 	unsigned int totalNPWsDetected;
 	uint64_t npwBufferExpiryTime;   //NPW Buffer Expiry time in ms.
 
-	uint32_t readSensorValueDummy();
+	double readSensorValueDummy();
 
 	void fillCircularBufferWithDummyValues();
     void createNPWBuffer();
