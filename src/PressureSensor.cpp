@@ -108,7 +108,7 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 double PressureSensor::readSensorValueDummy(){
 	static int i = 0;
 	static unsigned int totalValues = sizeof (simulatedValues)/sizeof(int);
-	return (simulatedValues[i++ % totalValues])/100;
+	return double(simulatedValues[i++ % totalValues])/100000;
 }
 
 // Returns a 32-bt integer scaled by KPTScalingFactor
@@ -131,7 +131,7 @@ double PressureSensor::readSensorValue(){
     resPtr[2] = response[3];
     resPtr[3] = response[2];
 
-	return double ((result + KPTOffset) * KPTScalingFactor);
+	return double (result);
 }
 
 void PressureSensor::initializeSensor(){
@@ -242,7 +242,8 @@ void PressureSensor::updateNPWState(){
 
 	updateMovingAverages();
 
-	bool isThresholdExceeded = fabs(firstAverage - secondAverage) > npwDetectionthreshold;
+	bool isThresholdExceeded = fabs(firstAverage - secondAverage) >
+	                                npwDetectionthreshold/KPTScalingFactor;
 //	LOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
 //			"\tisThresholdExceeded: " << isThresholdExceeded << "\tDeltaP: " << firstAverage - secondAverage;
 	if ((not wasThresholdExceeded) and isThresholdExceeded){
