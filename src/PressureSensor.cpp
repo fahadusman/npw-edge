@@ -180,7 +180,7 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
     firstAverage = -100.0;
     secondAverage = -100.0;
 
-	npwDetectionthreshold = edgeDevicePtr->getRegisterValue(NPW_THR_PT1); //TODO: Use correct value wrt PT
+	npwDetectionthreshold = edgeDevicePtr->getRegisterValue(CommandRegister(NPW_THR_PT1+sensorCount));
 	currentNpwState = noDropDetected;
 	totalNPWsDetected = 0;
 
@@ -199,6 +199,7 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
                 + pressureSensorObj["sensor_id"].GetString(),
         edgeDevicePtr->getDeviceId(), (CommandRegister)((int)NPW_THR_PT1 + sensorCount));
     sensorCount++;
+    LOG_IF(FATAL, sensorCount > 4) << "More than four PTs are not supported";
 
 	startNpwThread();
 }
