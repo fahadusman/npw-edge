@@ -395,8 +395,8 @@ int PressureSensor::applyCommand(CommandMsg * cmd, int oldValue,
         if (resetNpwThread) {
             clearNPWBufferAndState();
         }
-        return cmd->getData();
         edgeDevicePtr->updateRegisterValue(cmd);
+        return cmd->getData();
     }
     LOG(WARNING) << "Not applying newValue: " << cmd->getData()
             << ", and keeping oldValue: " << oldValue;
