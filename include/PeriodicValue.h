@@ -15,11 +15,13 @@
 class PeriodicValue: public CommDataBuffer {
 private:
     double sensorValue;
+    int sensorStatus;
 public:
-    PeriodicValue(double v, uint64_t t, std::string id){
+    PeriodicValue(double v, uint64_t t, std::string id, int s){
         sensorValue = v;
         timeStamp = t;
         sensorId = id;
+        sensorStatus = s;
     }
     std::string serializeJson() override;
     unsigned char * serialize(int & length) override;

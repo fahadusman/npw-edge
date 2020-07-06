@@ -30,7 +30,7 @@ public:
 protected:
     double currentValue;
     __uint64_t currentTime = 0;
-
+    int currentStatus;
     double periodicValChangeThreshold;
     unsigned int periodicValMinInterval;
     unsigned int periodicValMaxInterval;

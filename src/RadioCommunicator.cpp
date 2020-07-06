@@ -50,6 +50,9 @@ RadioCommunicator::RadioCommunicator(EdgeDevice *d, ModbusModes mode,
                             << sensorsListObj[j]["sensor_id"].GetString();
 //                    add new configuration in map (register name = NPW_THR_ + sensor_id, device_id, NPW_THR_PT1+j
                     if (std::string(sensorsListObj[j]["sensor_type"].GetString()) == "PT") {
+                        LOG(INFO) << "Going to add new config to map, Key: " << "NPW_THR_"
+                                << sensorsListObj[j]["sensor_id"].GetString()
+                                << "\tValue: " << (CommandRegister)((int)NPW_THR_PT1 + j);
                         edgeDevicePtr->addConfigToConfigMqp(
                             std::string("NPW_THR_")
                                     + sensorsListObj[j]["sensor_id"].GetString(),
@@ -608,7 +611,7 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
             if ((BufferType)modbusMsg.data[0] == buffTypeNpwBuffer) {
                 receivedData = new NpwBuffer();
             } else if ((BufferType)modbusMsg.data[0] == buffTypePeriodicValue) {
-                receivedData = new PeriodicValue(0, 0, "");
+                receivedData = new PeriodicValue(0, 0, "", 0);
             } else if ((BufferType)modbusMsg.data[0] == buffTypeHeartBeat) {
                 receivedData = new HeartbeatBuffer();
             } else {
