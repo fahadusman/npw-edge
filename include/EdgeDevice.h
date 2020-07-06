@@ -56,6 +56,7 @@ public:
     int32_t getRegisterValue(CommandRegister c);
     bool addConfigToConfigMqp(const std::string registerName,
             uint8_t deviceId, CommandRegister cmdReg);
+    int getDeviceId() { return deviceId; }
 protected:
     std::string deviceName;
     int deviceId;

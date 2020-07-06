@@ -16,6 +16,8 @@
 #include "PeriodicValue.h"
 #include "EdgeDevice.h"
 
+int PressureSensor::sensorCount = 0;
+
 //this function has to be called after adding a new value to the circular buffer
 //and before removing the older value.
 void PressureSensor::updateMovingAverages() {
@@ -103,10 +105,10 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 	return newNpwBufferPtr;
 }
 
-uint32_t PressureSensor::readSensorValueDummy(){
+double PressureSensor::readSensorValueDummy(){
 	static int i = 0;
 	static unsigned int totalValues = sizeof (simulatedValues)/sizeof(int);
-	return (simulatedValues[i++ % totalValues])/100;
+	return double(simulatedValues[i++ % totalValues])/100000;
 }
 
 // Returns a 32-bt integer scaled by KPTScalingFactor
@@ -129,7 +131,7 @@ double PressureSensor::readSensorValue(){
     resPtr[2] = response[3];
     resPtr[3] = response[2];
 
-	return double ((result + KPTOffset) * KPTScalingFactor);
+	return double (result);
 }
 
 void PressureSensor::initializeSensor(){
@@ -178,7 +180,7 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
     firstAverage = -100.0;
     secondAverage = -100.0;
 
-	npwDetectionthreshold = edgeDevicePtr->getRegisterValue(NPW_THR_PT1); //TODO: Use correct value wrt PT
+	npwDetectionthreshold = edgeDevicePtr->getRegisterValue(CommandRegister(NPW_THR_PT1+sensorCount));
 	currentNpwState = noDropDetected;
 	totalNPWsDetected = 0;
 
@@ -188,6 +190,16 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
     updateBufferLengths();
 
 	npwBufferExpiryTime = edgeDevicePtr->getRegisterValue(NPW_EXP_TIME) * 60000; //min to ms
+
+    LOG(INFO) << "Going to add new config to map, Key: " << "NPW_THR_"
+            << pressureSensorObj["sensor_id"].GetString()
+            << "\tValue: " << (CommandRegister)((int)NPW_THR_PT1 + sensorCount);
+    edgeDevicePtr->addConfigToConfigMqp(
+        std::string("NPW_THR_")
+                + pressureSensorObj["sensor_id"].GetString(),
+        edgeDevicePtr->getDeviceId(), (CommandRegister)((int)NPW_THR_PT1 + sensorCount));
+    sensorCount++;
+    LOG_IF(FATAL, sensorCount > 4) << "More than four PTs are not supported";
 
 	startNpwThread();
 }
@@ -230,7 +242,8 @@ void PressureSensor::updateNPWState(){
 
 	updateMovingAverages();
 
-	bool isThresholdExceeded = fabs(firstAverage - secondAverage) > npwDetectionthreshold;
+	bool isThresholdExceeded = fabs(firstAverage - secondAverage) >
+	                                npwDetectionthreshold/KPTScalingFactor;
 //	LOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
 //			"\tisThresholdExceeded: " << isThresholdExceeded << "\tDeltaP: " << firstAverage - secondAverage;
 	if ((not wasThresholdExceeded) and isThresholdExceeded){
@@ -384,8 +397,8 @@ int PressureSensor::applyCommand(CommandMsg * cmd, int oldValue,
         if (resetNpwThread) {
             clearNPWBufferAndState();
         }
-        return cmd->getData();
         edgeDevicePtr->updateRegisterValue(cmd);
+        return cmd->getData();
     }
     LOG(WARNING) << "Not applying newValue: " << cmd->getData()
             << ", and keeping oldValue: " << oldValue;

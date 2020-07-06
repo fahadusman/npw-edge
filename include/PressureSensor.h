@@ -23,13 +23,6 @@ const unsigned char kKellerInitCommand[] = {1, 48, 52, 0};
 const unsigned char kKellerStandardReadCommand[] = {1, 3, 0, 2, 0, 2, 101, 203};
 const unsigned char kKellerPropReadCommand[] = {1, 73, 1, 80, 214};
 
-const double KPTOffset = +1; // This is the initial offset applied to the value
-                             // obtained from PT to compensate for negative values
-                             // as they have to be transmitted as unsigned integers.
-const double KPTScalingFactor = 1000; // for -1 to 100 PSI pressure range, and uint16
-                             // it should be 648.
-
-
 enum NpwState {noDropDetected, firstDropDetected, secondDropDetected};
 
 class PressureSensor: public Sensor {
@@ -63,7 +56,7 @@ private:
 	unsigned int totalNPWsDetected;
 	uint64_t npwBufferExpiryTime;   //NPW Buffer Expiry time in ms.
 
-	uint32_t readSensorValueDummy();
+	double readSensorValueDummy();
 
 	void fillCircularBufferWithDummyValues();
     void createNPWBuffer();
@@ -73,6 +66,7 @@ private:
     int applyCommand(CommandMsg * cmd, int oldValue, const DevConfig & dc,
             bool resetNpwThread);
     void updateBufferLengths();
+    static int sensorCount;
 public:
 	void npwThread();
 	void startNpwThread();
