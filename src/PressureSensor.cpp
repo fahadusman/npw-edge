@@ -107,6 +107,7 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 
 double PressureSensor::readSensorValueDummy(){
 	static int i = 0;
+	currentStatus = 1;
 	static unsigned int totalValues = sizeof (simulatedValues)/sizeof(int);
 	return double(simulatedValues[i++ % totalValues])/100000;
 }
@@ -120,6 +121,7 @@ double PressureSensor::readSensorValue(){
 
     if(bytesRead != 9){
     	LOG(ERROR) << "Invalid number of bytes read from PT: " << bytesRead;
+        currentStatus = 0;
     	return -0.1;
     }
 
@@ -131,6 +133,7 @@ double PressureSensor::readSensorValue(){
     resPtr[2] = response[3];
     resPtr[3] = response[2];
 
+    currentStatus = 1;
 	return double (result);
 }
 
@@ -201,6 +204,7 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
     sensorCount++;
     LOG_IF(FATAL, sensorCount > 4) << "More than four PTs are not supported";
 
+    currentStatus = -1;
 	startNpwThread();
 }
 

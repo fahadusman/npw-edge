@@ -73,7 +73,7 @@ CommandMsg * Sensor::dequeueCommand() {
  * caller to delete it after consuming the value.
  */
 PeriodicValue * Sensor::getCurrentValue() {
-    PeriodicValue * p = new PeriodicValue(currentValue, currentTime, id);
+    PeriodicValue * p = new PeriodicValue(currentValue, currentTime, id, currentStatus);
     return p;
 }
 
@@ -86,7 +86,7 @@ uint64_t Sensor::sendPeriodicValue(uint64_t currentTime,
 
         LOG_EVERY_N(INFO, 10) << "sending periodic value: " << currentValue;
         CommDataBuffer* pValBuffPtr = new PeriodicValue(currentValue,
-                currentTime, id);
+                currentTime, id, currentStatus);
         commPtr->enqueueMessage(pValBuffPtr);
         previousPeriodicValueTransmitTime = currentTime;
         previousPeriodicVal = currentValue;

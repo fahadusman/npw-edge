@@ -608,7 +608,7 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
             if ((BufferType)modbusMsg.data[0] == buffTypeNpwBuffer) {
                 receivedData = new NpwBuffer();
             } else if ((BufferType)modbusMsg.data[0] == buffTypePeriodicValue) {
-                receivedData = new PeriodicValue(0, 0, "");
+                receivedData = new PeriodicValue(0, 0, "", 0);
             } else if ((BufferType)modbusMsg.data[0] == buffTypeHeartBeat) {
                 receivedData = new HeartbeatBuffer();
             } else {

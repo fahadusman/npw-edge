@@ -32,7 +32,7 @@ public:
 		timestampMS = t;
 		DLOG_EVERY_N(INFO, 2000) << "new sensor value, v: " << value << "\tt:" << timestampMS;
 	}
-	SensorReading(valueType v){
+	SensorReading(valueType v, __uint8_t s = 0){
 		value = v;
 		auto now = std::chrono::high_resolution_clock::now().time_since_epoch();
 		timestampMS = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();

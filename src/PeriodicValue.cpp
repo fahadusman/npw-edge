@@ -18,6 +18,8 @@ std::string PeriodicValue::serializeJson() {
     writer.Double(sensorValue);
     writer.Key(("t_" + sensorId).c_str());
     writer.Uint64(timeStamp);
+    writer.Key(("q_" + sensorId).c_str());
+    writer.Int(sensorStatus);
     writer.EndObject();
 
     return s.GetString();
@@ -33,7 +35,7 @@ unsigned char * PeriodicValue::serialize(int & length) {
     unsigned char * serialBuffer = nullptr;
     try {
         length = 1/*buffer type*/+ sizeof(bufferId) + sizeof(sensorValue)
-                + sizeof(timeStamp) + sensorId.length() + 1/*null char for sensorId*/;
+                + sizeof(timeStamp) + sizeof(sensorStatus) + sensorId.length() + 1/*null char for sensorId*/;
 
         serialBuffer = new (std::nothrow) unsigned char [length];
         if (serialBuffer == nullptr) {
@@ -54,8 +56,12 @@ unsigned char * PeriodicValue::serialize(int & length) {
         std::memcpy(serialBuffer+i, &(timeStamp), sizeof(timeStamp));
         i+= sizeof(timeStamp);
 
+        std::memcpy(serialBuffer+i, &(sensorStatus), sizeof(sensorStatus));
+        i+= sizeof(sensorStatus);
+
         std::memcpy(serialBuffer+i, sensorId.c_str(), sensorId.length());
         serialBuffer[i+sensorId.length()] = '\0';
+
         return serialBuffer;
     }
     catch (const std::exception & e) {
@@ -75,7 +81,9 @@ unsigned char * PeriodicValue::serialize(int & length) {
  * Returns true/false for success/failure respectively.
  */
 bool PeriodicValue::deserialize(const unsigned char * serialBuff, const int & len) {
-    if ((unsigned int) len <= sizeof(sensorValue) + sizeof(timeStamp)) {
+    unsigned int expectedLength = 1/*buffer type*/+ sizeof(bufferId) + sizeof(sensorValue)
+                        + sizeof(timeStamp) + sizeof(sensorStatus) + sensorId.length() + 1/*null char for sensorId*/;
+    if ((unsigned int) len < expectedLength) {
         LOG(WARNING) << "Length of serialized buffer for periodic value is too short: " << len;
         return false;
     }
@@ -89,6 +97,9 @@ bool PeriodicValue::deserialize(const unsigned char * serialBuff, const int & le
 
     std::memcpy(&(timeStamp), serialBuff+i, sizeof(timeStamp));
     i += sizeof(timeStamp);
+
+    std::memcpy(&(sensorStatus), serialBuff+i, sizeof(sensorStatus));
+    i += sizeof(sensorStatus);
 
     sensorId.clear();
     sensorId.append((char *)(&serialBuff[i]), len-i);

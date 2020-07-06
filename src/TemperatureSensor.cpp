@@ -38,10 +38,11 @@ double TemperatureSensor::readSensorValue() {
     int bytesRead = sPort.readBuffer(response, sizeof response);
 
     if(bytesRead != 7){
-        LOG(ERROR) << "Invalid number of bytes read from TT: " << bytesRead;
+        LOG_FIRST_N(ERROR, 5) << "Invalid number of bytes read from TT: " << bytesRead;
+        currentStatus = 0;
         return -0.1;
     }
-
+    currentStatus = 1;
     int16_t result = response[3] * 0xFF + response[4];
 
     return result/10;
