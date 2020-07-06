@@ -50,6 +50,9 @@ RadioCommunicator::RadioCommunicator(EdgeDevice *d, ModbusModes mode,
                             << sensorsListObj[j]["sensor_id"].GetString();
 //                    add new configuration in map (register name = NPW_THR_ + sensor_id, device_id, NPW_THR_PT1+j
                     if (std::string(sensorsListObj[j]["sensor_type"].GetString()) == "PT") {
+                        LOG(INFO) << "Going to add new config to map, Key: " << "NPW_THR_"
+                                << sensorsListObj[j]["sensor_id"].GetString()
+                                << "\tValue: " << (CommandRegister)((int)NPW_THR_PT1 + j);
                         edgeDevicePtr->addConfigToConfigMqp(
                             std::string("NPW_THR_")
                                     + sensorsListObj[j]["sensor_id"].GetString(),
