@@ -84,7 +84,7 @@ unsigned char * NpwBuffer::createByteArray() {
     byteArray[7] = decToBcd((timeStamp % 10) * 10 + npwTime->tm_wday + 1);
 
     for (unsigned int i = 0; i < readingListLength; i++) {
-        int currentVal = ((readingList[i] + KPTOffset) * KPTScalingFactor);
+        int currentVal = (readingList[i]);
         byteArray[2 * i + kHdrLen] = currentVal >> 8;
         byteArray[2 * i + kHdrLen + 1] = currentVal & 0xFF;
     }

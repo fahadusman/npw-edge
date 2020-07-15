@@ -99,7 +99,9 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 	}
 
 	for (int i = 0; startIndex + i < circularBufferLength; i++){
-		newNpwBufferPtr->insertAt(i, sensorReadingCircularBuffer[startIndex+i]->value);
+        newNpwBufferPtr->insertAt(i,
+                (sensorReadingCircularBuffer[startIndex + i]->value + KPTOffset)
+                        * KPTScalingFactor); //TODO: offset and scaling factor should be configurable via device commands
 	}
 
 	return newNpwBufferPtr;
