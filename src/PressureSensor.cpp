@@ -11,8 +11,8 @@
 #include <iostream>
 #include <new>
 #include <math.h>
+#include <fstream>
 
-#include "simulatedValues.h"
 #include "PeriodicValue.h"
 #include "EdgeDevice.h"
 
@@ -107,10 +107,32 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 	return newNpwBufferPtr;
 }
 
+std::vector<double> simulatedValues;
 double PressureSensor::readSensorValueDummy(){
 	static int i = 0;
 	currentStatus = 1;
-	static unsigned int totalValues = sizeof (simulatedValues)/sizeof(int);
+	if (simulatedValues.size() == 0) {
+        try {
+            std::ifstream infile("simulated_values.txt");
+            if (not infile) {
+                LOG(ERROR) << "Unable to open file for simulated values.";
+                currentStatus = 0;
+                return 0;
+            }
+            float tempVal;
+            while (infile >> tempVal) {
+                simulatedValues.push_back(tempVal);
+            }
+            LOG(INFO)
+                    << "initialized simulated values from file, total vaues read: "
+                    << simulatedValues.size();
+
+        } catch (const std::exception &e) {
+            LOG(ERROR) << "Exception: " << e.what();
+        }
+
+	}
+	static unsigned int totalValues = simulatedValues.size();
 	return double(simulatedValues[i++ % totalValues])/100000;
 }
 
