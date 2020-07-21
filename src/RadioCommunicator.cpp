@@ -118,7 +118,7 @@ void RadioCommunicator::connect() {
         }
     }
 
-    modbusStream.SetBaudRate(BaudRate::BAUD_9600);
+    modbusStream.SetBaudRate(BaudRate::BAUD_115200);
     modbusStream.SetCharacterSize(CharacterSize::CHAR_SIZE_8);
     modbusStream.SetFlowControl(FlowControl::FLOW_CONTROL_NONE) ;
     modbusStream.SetParity(Parity::PARITY_NONE) ;
