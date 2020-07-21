@@ -55,6 +55,9 @@ private:
     int remainingSamples;
 	unsigned int totalNPWsDetected;
 	uint64_t npwBufferExpiryTime;   //NPW Buffer Expiry time in ms.
+    float npwScalingFactor;
+    float npwScalingOffset;
+    bool suppressNPWBuffer;
 
 	double readSensorValueDummy();
 

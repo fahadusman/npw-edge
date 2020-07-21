@@ -71,6 +71,9 @@ void EdgeDevice::initializeConfigMap() {
     configMap["NPW_THR_PT2"] = NPW_THR_PT2;
     configMap["NPW_THR_PT3"] = NPW_THR_PT3;
     configMap["NPW_THR_PT4"] = NPW_THR_PT4;
+    configMap["SCALING_OFFSET_PT"] = SCALING_OFFSET_PT;
+    configMap["SCALING_FACTOR_PT"] = SCALING_FACTOR_PT;
+    configMap["FLAG_NPW_SUPPRESS"] = FLAG_NPW_SUPPRESS;
 }
 
 EdgeDevice::EdgeDevice(const char *confFilePath) {
@@ -183,6 +186,11 @@ int32_t EdgeDevice::getRegisterValue(CommandRegister c) {
     }
     return 0;
 }
+
+/*
+ * Receives a command name and value and converts it into a command object
+ * to pass it to the overloaded processIncomingCommand function.
+ */
 void EdgeDevice::processIncomingCommand(std::string registerName, uint32_t data){
     auto confIterator = configMap.find(registerName);
     if (confIterator != configMap.end()) {
@@ -245,6 +253,9 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
     case NPW_THR_PT2:
     case NPW_THR_PT3:
     case NPW_THR_PT4:
+    case SCALING_FACTOR_PT:
+    case SCALING_OFFSET_PT:
+    case FLAG_NPW_SUPPRESS:
     case NPW_SAMPLE_BEFORE:
     case NPW_SAMPLE_AFTER:
         for (Sensor * sensorPtr : sensorsList) {
@@ -401,6 +412,9 @@ void EdgeDevice::initializeRegisterMap() {
     registerMap[TEST_FLAG] = kDcTestFlag.def;
     registerMap[REBOOT_TIME] = kDcRebootTime.def;
     registerMap[HEARTBEAT_INTERVAL] = kDcHeartbeatInterval.def;
+    registerMap[SCALING_FACTOR_PT] = kDcNPWScaingFactor.def;
+    registerMap[SCALING_OFFSET_PT] = kDcNPWScaingOffset.def;
+    registerMap[FLAG_NPW_SUPPRESS] = kDcFlagNPWSuppress.def;
 }
 
 bool EdgeDevice::loadRegisterMapFromFile() {

@@ -100,8 +100,8 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 
 	for (int i = 0; startIndex + i < circularBufferLength; i++){
         newNpwBufferPtr->insertAt(i,
-                (sensorReadingCircularBuffer[startIndex + i]->value + KPTOffset)
-                        * KPTScalingFactor); //TODO: offset and scaling factor should be configurable via device commands
+                (sensorReadingCircularBuffer[startIndex + i]->value + npwScalingOffset)
+                        * npwScalingFactor);
 	}
 
 	return newNpwBufferPtr;
@@ -228,6 +228,9 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
     sensorCount++;
     LOG_IF(FATAL, sensorCount > 4) << "More than four PTs are not supported";
 
+    npwScalingFactor = edgeDevicePtr->getRegisterValue(SCALING_FACTOR_PT);
+    npwScalingOffset = edgeDevicePtr->getRegisterValue(SCALING_OFFSET_PT);
+    suppressNPWBuffer = edgeDevicePtr->getRegisterValue(FLAG_NPW_SUPPRESS);
     currentStatus = -1;
 	startNpwThread();
 }
@@ -321,7 +324,9 @@ void PressureSensor::npwThread(){
                     currentValue);
 		}
 
-		updateNPWState();
+		if (not suppressNPWBuffer){
+		    updateNPWState();
+		}
 
 		while (sensorReadingCircularBuffer.size() > circularBufferLength){
 			LOG_FIRST_N(INFO, 10) << "Circular Buffer full.";
@@ -524,6 +529,16 @@ void PressureSensor::processIncomingCommand() {
                     LOG(INFO) << "Received TEST_FLAG, force creating NPW Buffer";
                 }
                 break;
+            case SCALING_FACTOR_PT:
+                npwScalingFactor = applyCommand(c, npwScalingFactor, kDcNPWScaingFactor, true);
+                break;
+            case SCALING_OFFSET_PT:
+                npwScalingOffset = applyCommand(c, npwScalingOffset, kDcNPWScaingOffset, true);
+                break;
+            case FLAG_NPW_SUPPRESS:
+                suppressNPWBuffer = applyCommand(c, suppressNPWBuffer, kDcFlagNPWSuppress, false);
+                break;
+
             default:
                 LOG(WARNING) << "Unhandled command received.";
             }
