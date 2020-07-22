@@ -12,6 +12,7 @@
 #include "rapidjson/stringbuffer.h"
 
 #include "HeartbeatBuffer.h"
+std::map<int, std::string> HeartbeatBuffer::deviceNameMap;
 
 void RadioCommunicator::initializeVariables(ModbusModes mode,
         const std::string &radioPort, const int &slaveAddress) {
@@ -41,6 +42,7 @@ RadioCommunicator::RadioCommunicator(EdgeDevice *d, ModbusModes mode,
             LOG_IF(FATAL, not slavesList.IsArray()) << "slave_ids is not a JSON Array";
             for (unsigned int i = 0; i < slavesList.Size(); i++) {
                 uint8_t deviceId = (uint8_t) (slavesList[i]["device_id"].GetInt());
+                HeartbeatBuffer::deviceNameMap[deviceId] = slavesList[i]["device_name"].GetString();
                 addModbusSlave(deviceId,
                         slavesList[i]["device_name"].GetString());
                 const rapidjson::Value & sensorsListObj = slavesList[i]["sensors"];

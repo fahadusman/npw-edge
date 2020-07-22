@@ -376,7 +376,7 @@ CommDataBuffer * EdgeDevice::getHeartBeat() {
             (int32_t)timeSpentInComm/noOfSuccessfulMsgs;
         }
 
-        hbPtr = new HeartbeatBuffer(deviceId, registerMap);
+        hbPtr = new HeartbeatBuffer(deviceId, registerMap, deviceName);
         nextHBTimePoint = std::chrono::high_resolution_clock::now()
                 + std::chrono::seconds(heartbeatInterval);
         DLOG(INFO) << "Creating new heartbeat buffer";

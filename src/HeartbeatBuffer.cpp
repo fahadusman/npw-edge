@@ -18,11 +18,10 @@ std::string HeartbeatBuffer::serializeJson() {
     rapidjson::Writer<rapidjson::StringBuffer> hbJsonWriter(hbStringBuffer);
 
     hbJsonWriter.StartObject();
-    hbJsonWriter.Key("deviceId");
-    hbJsonWriter.Int(deviceId);
-    hbJsonWriter.Key("t");
+
+    hbJsonWriter.Key(("t_hb_" + deviceName).c_str());
     hbJsonWriter.Uint64(timeStamp);
-    hbJsonWriter.Key("registerMap");
+    hbJsonWriter.Key(("registerMap_" + deviceName).c_str());
     hbJsonWriter.StartArray();
     for (unsigned int i = 0; i < registerMapSize; i++) {
         hbJsonWriter.Int64(registerMap[i]);
@@ -107,12 +106,21 @@ bool HeartbeatBuffer::deserialize(const unsigned char * hbBuffer,
     std::memcpy(&(deviceId), hbBuffer+i, sizeof(deviceId));
     i += sizeof(deviceId);
 
+    if (deviceNameMap.find(deviceId) != deviceNameMap.end()) {
+        deviceName = deviceNameMap[deviceId];
+    } else {
+        LOG(WARNING) << "Failed to look up device name in map, deviceId: "
+                << deviceId;
+        deviceName = "InvalidDeviceName";
+    }
+
     return true;
 }
 
 HeartbeatBuffer::HeartbeatBuffer(uint32_t devId,
-        std::array<int32_t, registerMapSize> regMap) :
-        deviceId(devId) {
+        std::array<int32_t, registerMapSize> regMap,
+        std::string devName) :
+        deviceId(devId), deviceName(devName) {
     for (unsigned int i = 0; i < registerMapSize; i++) {
         registerMap[i] = regMap[i];
     }
@@ -127,6 +135,7 @@ HeartbeatBuffer::HeartbeatBuffer() {
         registerMap[i] = 0;
     }
 }
+
 HeartbeatBuffer::~HeartbeatBuffer() {
 }
 
