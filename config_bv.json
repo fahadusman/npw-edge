@@ -6,7 +6,11 @@
     "communicator": {
       "type": "radioCommunicator",
       "slave_address": 2,
-      "port": "/dev/pts/0"
+      "port": "/dev/ttyM0",
+      "baud_rate": 115200,
+      "response_timeout": 4000,
+      "poll_interval": 5000,
+      "transmission_timeout": 2000
     },
     "sensors": [
       {

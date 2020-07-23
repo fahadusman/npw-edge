@@ -21,9 +21,6 @@ void RadioCommunicator::initializeVariables(ModbusModes mode,
     isModbusStreamConnected = false;
     masterThreadDone = true;
     slaveThreadDone = true;
-    modbusResponseTimeout = std::chrono::milliseconds(4000);
-    modbusMasterPollInterval = std::chrono::milliseconds(5000);
-    modbusTransmissionTimeout = std::chrono::milliseconds(2000);
     modbusMode = mode;
     radioSerialPort = radioPort;
     modbusSlaveAddress = slaveAddress;
@@ -35,8 +32,36 @@ RadioCommunicator::RadioCommunicator(EdgeDevice *d, ModbusModes mode,
         communicator(d, mode == modbusModeSlave) { //enable disk persistence for modbus slave only
     int slaveAddress = 0;
     std::string radioPort = "";
+    baudRate = BaudRate::BAUD_115200;
     try {
         radioPort = communicatorObj["port"].GetString();
+        //TODO: baud_rate, response_timeout, poll_interval, transmission_timeout
+        int32_t bRate = communicatorObj["baud_rate"].GetInt();
+        switch (bRate) {
+        case 9600:
+            baudRate = BaudRate::BAUD_9600;
+            break;
+        case 38400:
+            baudRate = BaudRate::BAUD_38400;
+            break;
+        case 115200:
+            baudRate = BaudRate::BAUD_115200;
+            break;
+        default:
+            baudRate = BaudRate::BAUD_115200;
+            LOG(FATAL) << "Unsupported baud rate in config file: " << bRate;
+
+        }
+
+        modbusResponseTimeout = std::chrono::milliseconds(1)
+                * communicatorObj["response_timeout"].GetInt();
+
+        modbusMasterPollInterval = std::chrono::milliseconds(1)
+                * communicatorObj["poll_interval"].GetInt();
+
+        modbusTransmissionTimeout = std::chrono::milliseconds(1)
+                * communicatorObj["transmission_timeout"].GetInt();
+
         if (mode == modbusModeMaster) {
             const rapidjson::Value & slavesList = communicatorObj["slave_list"];
             LOG_IF(FATAL, not slavesList.IsArray()) << "slave_ids is not a JSON Array";
@@ -66,7 +91,6 @@ RadioCommunicator::RadioCommunicator(EdgeDevice *d, ModbusModes mode,
         } else {
             slaveAddress = communicatorObj["slave_address"].GetInt();
         }
-        //TODO: modebus timeouts should also be configurable via JSON file.
     } catch (const std::exception &e) {
         LOG(FATAL) << "Got exception while parsing config,json file: "
                 << e.what();
@@ -120,7 +144,7 @@ void RadioCommunicator::connect() {
         }
     }
 
-    modbusStream.SetBaudRate(BaudRate::BAUD_115200);
+    modbusStream.SetBaudRate(baudRate);
     modbusStream.SetCharacterSize(CharacterSize::CHAR_SIZE_8);
     modbusStream.SetFlowControl(FlowControl::FLOW_CONTROL_NONE) ;
     modbusStream.SetParity(Parity::PARITY_NONE) ;
