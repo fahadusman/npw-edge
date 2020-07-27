@@ -12,7 +12,11 @@
       "command_topic": "iotgateway"
     },
     "modbus_master": {
-      "port": "/dev/pts/1",
+      "port": "/dev/ttyM0",
+      "baud_rate": 115200,
+      "response_timeout": 4000,
+      "poll_interval": 5000,
+      "transmission_timeout": 2000,
       "slave_list": [
         {
           "device_id": 2,

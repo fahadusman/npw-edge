@@ -11,8 +11,8 @@
 #include <iostream>
 #include <new>
 #include <math.h>
+#include <fstream>
 
-#include "simulatedValues.h"
 #include "PeriodicValue.h"
 #include "EdgeDevice.h"
 
@@ -99,16 +99,40 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 	}
 
 	for (int i = 0; startIndex + i < circularBufferLength; i++){
-		newNpwBufferPtr->insertAt(i, sensorReadingCircularBuffer[startIndex+i]->value);
+        newNpwBufferPtr->insertAt(i,
+                (sensorReadingCircularBuffer[startIndex + i]->value + npwScalingOffset)
+                        * npwScalingFactor);
 	}
 
 	return newNpwBufferPtr;
 }
 
+std::vector<double> simulatedValues;
 double PressureSensor::readSensorValueDummy(){
 	static int i = 0;
 	currentStatus = 1;
-	static unsigned int totalValues = sizeof (simulatedValues)/sizeof(int);
+	if (simulatedValues.size() == 0) {
+        try {
+            std::ifstream infile("simulated_values.txt");
+            if (not infile) {
+                LOG(ERROR) << "Unable to open file for simulated values.";
+                currentStatus = 0;
+                return 0;
+            }
+            float tempVal;
+            while (infile >> tempVal) {
+                simulatedValues.push_back(tempVal);
+            }
+            LOG(INFO)
+                    << "initialized simulated values from file, total vaues read: "
+                    << simulatedValues.size();
+
+        } catch (const std::exception &e) {
+            LOG(ERROR) << "Exception: " << e.what();
+        }
+
+	}
+	static unsigned int totalValues = simulatedValues.size();
 	return double(simulatedValues[i++ % totalValues])/100000;
 }
 
@@ -204,6 +228,9 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
     sensorCount++;
     LOG_IF(FATAL, sensorCount > 4) << "More than four PTs are not supported";
 
+    npwScalingFactor = edgeDevicePtr->getRegisterValue(SCALING_FACTOR_PT);
+    npwScalingOffset = edgeDevicePtr->getRegisterValue(SCALING_OFFSET_PT);
+    suppressNPWBuffer = edgeDevicePtr->getRegisterValue(FLAG_NPW_SUPPRESS);
     currentStatus = -1;
 	startNpwThread();
 }
@@ -297,7 +324,9 @@ void PressureSensor::npwThread(){
                     currentValue);
 		}
 
-		updateNPWState();
+		if (not suppressNPWBuffer){
+		    updateNPWState();
+		}
 
 		while (sensorReadingCircularBuffer.size() > circularBufferLength){
 			LOG_FIRST_N(INFO, 10) << "Circular Buffer full.";
@@ -500,6 +529,16 @@ void PressureSensor::processIncomingCommand() {
                     LOG(INFO) << "Received TEST_FLAG, force creating NPW Buffer";
                 }
                 break;
+            case SCALING_FACTOR_PT:
+                npwScalingFactor = applyCommand(c, npwScalingFactor, kDcNPWScaingFactor, true);
+                break;
+            case SCALING_OFFSET_PT:
+                npwScalingOffset = applyCommand(c, npwScalingOffset, kDcNPWScaingOffset, true);
+                break;
+            case FLAG_NPW_SUPPRESS:
+                suppressNPWBuffer = applyCommand(c, suppressNPWBuffer, kDcFlagNPWSuppress, false);
+                break;
+
             default:
                 LOG(WARNING) << "Unhandled command received.";
             }

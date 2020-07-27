@@ -103,7 +103,7 @@ protected:
     bool slaveThreadDone;
     bool masterThreadDone;
 
-//    std::chrono::duration<int, > modbusTimeout;
+    BaudRate baudRate;
     std::chrono::milliseconds modbusResponseTimeout;
     std::chrono::milliseconds modbusMasterPollInterval;
     std::chrono::milliseconds modbusTransmissionTimeout;

@@ -11,6 +11,7 @@
 #include "CommDataBuffer.h"
 
 #include <array>
+#include <map>
 
 const std::size_t registerMapSize = 50;
 
@@ -21,12 +22,15 @@ public:
     bool deserialize(const unsigned char *, const int & length);
 
     HeartbeatBuffer(uint32_t devId,
-            std::array<int32_t, registerMapSize> regMap);
+            std::array<int32_t, registerMapSize> regMap,
+            std::string devName);
     HeartbeatBuffer();
     virtual ~HeartbeatBuffer();
+    static std::map<int, std::string> deviceNameMap;
 private:
     uint32_t deviceId;
     int32_t registerMap[registerMapSize];
+    std::string deviceName;
 };
 
 #endif /* INCLUDE_HEARTBEATBUFFER_H_ */
