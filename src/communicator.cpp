@@ -214,7 +214,7 @@ bool communicator::loadStoredNpwBuffers(){
             for(auto npwFile:npwDirIterator) {
                 LOG(INFO) << "got: " << npwFile.path().filename();
                 try {
-                    bufferExpTime = std::stoul(npwFile.path().filename());
+                    bufferExpTime = std::stoull(npwFile.path().filename());
                     if (bufferExpTime < currentTimeMS) {
                         LOG(INFO) << "buffer in file: " << npwFile.path() << "is expired, discarding it";
                         if (not fs::remove(npwFile)) {
