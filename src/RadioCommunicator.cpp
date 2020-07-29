@@ -346,12 +346,27 @@ void RadioCommunicator::disconnect() {
 void RadioCommunicator::sendMessage(const char * message,
         const unsigned int length) {
     LOG(INFO) << "radio::sendMessage, len: " << length;
+    int burstSize = 1000;
+    int remainingData = length;
+    int bytesWritten = 0;
+    int currentChunkSize = 0;
     if (not isModbusStreamConnected) {
         connect(); //block till a connection is established
     }
     try {
-        modbusStream.write(message, length);
-        modbusStream.DrainWriteBuffer();
+        do {
+            currentChunkSize =
+                    remainingData <= burstSize ? remainingData : burstSize;
+            modbusStream.write(message+bytesWritten, currentChunkSize);
+            modbusStream.DrainWriteBuffer();
+            remainingData -= currentChunkSize;
+            bytesWritten += currentChunkSize;
+            LOG(INFO) << "Writing, currentChunkSize: "  << currentChunkSize;
+            if (remainingData > 0) {
+                usleep(50000);
+            }
+
+        } while (remainingData > 0);
     } catch (const std::exception & e) {
         LOG(ERROR) << "Got exception in sending serial message: " << e.what();
         modbusStream.Close();
