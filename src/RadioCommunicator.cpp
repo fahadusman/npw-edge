@@ -53,14 +53,14 @@ RadioCommunicator::RadioCommunicator(EdgeDevice *d, ModbusModes mode,
 
         }
 
-        modbusResponseTimeout = std::chrono::milliseconds(1)
-                * communicatorObj["response_timeout"].GetInt();
+        modbusResponseTimeout = std::chrono::milliseconds(
+                communicatorObj["response_timeout"].GetInt());
 
-        modbusMasterPollInterval = std::chrono::milliseconds(1)
-                * communicatorObj["poll_interval"].GetInt();
+        modbusMasterPollInterval = std::chrono::milliseconds(
+                communicatorObj["poll_interval"].GetInt());
 
-        modbusTransmissionTimeout = std::chrono::milliseconds(1)
-                * communicatorObj["transmission_timeout"].GetInt();
+        modbusTransmissionTimeout = std::chrono::milliseconds(
+                communicatorObj["transmission_timeout"].GetInt());
 
         if (mode == modbusModeMaster) {
             const rapidjson::Value & slavesList = communicatorObj["slave_list"];
@@ -193,11 +193,19 @@ void RadioCommunicator::modbusMasterThread() {
     auto slaveIt = modbusSlavesList.begin();
     std::string receiveBuffer = "";
     std::chrono::time_point<std::chrono::high_resolution_clock>
-        t1 = std::chrono::high_resolution_clock::now(),
-        t2 = std::chrono::high_resolution_clock::now();
+        commStartTime = std::chrono::high_resolution_clock::now(),
+        commEndTime = std::chrono::high_resolution_clock::now(),
+        nextPollTime = std::chrono::high_resolution_clock::now();
     while (not masterThreadDone) {
-        std::this_thread::sleep_for(modbusMasterPollInterval);
-        t1 = std::chrono::high_resolution_clock::now();
+        std::this_thread::sleep_until(nextPollTime);
+        nextPollTime += modbusMasterPollInterval;
+
+        nextPollTime =
+                nextPollTime > std::chrono::high_resolution_clock::now() ?
+                        nextPollTime :
+                        std::chrono::high_resolution_clock::now();
+
+        commStartTime = std::chrono::high_resolution_clock::now();
         if (sendQueuedCommand()) {
             continue;
         }
@@ -240,9 +248,9 @@ void RadioCommunicator::modbusMasterThread() {
             }
         }
 
-        t2 = std::chrono::high_resolution_clock::now();
+        commEndTime = std::chrono::high_resolution_clock::now();
         if (responseSuccess) {
-            addCommunicationTime(t2-t1);
+            addCommunicationTime(commEndTime-commStartTime);
         } else {
             incFailedTransferCount();
         }
