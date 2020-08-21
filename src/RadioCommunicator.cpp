@@ -53,14 +53,14 @@ RadioCommunicator::RadioCommunicator(EdgeDevice *d, ModbusModes mode,
 
         }
 
-        modbusResponseTimeout = std::chrono::milliseconds(1)
-                * communicatorObj["response_timeout"].GetInt();
+        modbusResponseTimeout = std::chrono::milliseconds(
+                communicatorObj["response_timeout"].GetInt());
 
-        modbusMasterPollInterval = std::chrono::milliseconds(1)
-                * communicatorObj["poll_interval"].GetInt();
+        modbusMasterPollInterval = std::chrono::milliseconds(
+                communicatorObj["poll_interval"].GetInt());
 
-        modbusTransmissionTimeout = std::chrono::milliseconds(1)
-                * communicatorObj["transmission_timeout"].GetInt();
+        modbusTransmissionTimeout = std::chrono::milliseconds(
+                communicatorObj["transmission_timeout"].GetInt());
 
         if (mode == modbusModeMaster) {
             const rapidjson::Value & slavesList = communicatorObj["slave_list"];
