@@ -231,6 +231,7 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
     npwScalingFactor = edgeDevicePtr->getRegisterValue(SCALING_FACTOR_PT);
     npwScalingOffset = edgeDevicePtr->getRegisterValue(SCALING_OFFSET_PT);
     suppressNPWBuffer = edgeDevicePtr->getRegisterValue(FLAG_NPW_SUPPRESS);
+    samplesCountPeriodicAverage = edgeDevicePtr->getRegisterValue(NUM_SAMPLES_PT_PERIODIC);
     currentStatus = -1;
 	startNpwThread();
 }
@@ -538,6 +539,9 @@ void PressureSensor::processIncomingCommand() {
             case FLAG_NPW_SUPPRESS:
                 suppressNPWBuffer = applyCommand(c, suppressNPWBuffer, kDcFlagNPWSuppress, false);
                 break;
+            case NUM_SAMPLES_PT_PERIODIC:
+                samplesCountPeriodicAverage = applyCommand(c, samplesCountPeriodicAverage, kDcNumSamplesPeriodicAvg, false);
+                break;
 
             default:
                 LOG(WARNING) << "Unhandled command received.";
@@ -567,7 +571,6 @@ void PressureSensor::clearNPWBufferAndState() {
     } catch (const std::exception & e) {
         LOG(ERROR) << "exception: " << e.what();
     }
-
 }
 
 void PressureSensor::updateBufferLengths() {
@@ -580,4 +583,21 @@ void PressureSensor::updateBufferLengths() {
 
     LOG(INFO) << "updatedCircularBufferLength: "
             << circularBufferLength;
+}
+
+PeriodicValue* PressureSensor::getCurrentValue() {
+    PeriodicValue *p = nullptr;
+    if (sensorReadingCircularBuffer.size() < samplesCountPeriodicAverage) {
+        p = new PeriodicValue(currentValue, currentTime, id, currentStatus);
+        return p;
+    }
+    float tempSum = 0;
+    for (unsigned int i = sensorReadingCircularBuffer.size()
+            - samplesCountPeriodicAverage;
+            i < sensorReadingCircularBuffer.size(); i++) {
+        tempSum += sensorReadingCircularBuffer[i]->value;
+    }
+    p = new PeriodicValue(tempSum / samplesCountPeriodicAverage, currentTime,
+            id, currentStatus);
+    return p;
 }

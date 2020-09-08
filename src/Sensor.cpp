@@ -85,8 +85,7 @@ uint64_t Sensor::sendPeriodicValue(uint64_t currentTime,
             || currentTime >= previousPeriodicValueTransmitTime + periodicValMaxInterval) {
 
         LOG_EVERY_N(INFO, 10) << "sending periodic value: " << currentValue;
-        CommDataBuffer* pValBuffPtr = new PeriodicValue(currentValue,
-                currentTime, id, currentStatus);
+        CommDataBuffer* pValBuffPtr = getCurrentValue();
         commPtr->enqueueMessage(pValBuffPtr);
         previousPeriodicValueTransmitTime = currentTime;
         previousPeriodicVal = currentValue;

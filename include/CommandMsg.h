@@ -40,6 +40,7 @@ enum CommandRegister {
     SCALING_OFFSET_PT = 23,  // Scaling offset for pressure values in NPW byte array    all PTs
     SCALING_FACTOR_PT = 24,  // Scaling factor for pressure values in NPW byte array    all PTs
     FLAG_NPW_SUPPRESS = 25,  // Suppress Leak Detection Alarm Flag. Do not create/send NPW buffers if this flag is set
+    NUM_SAMPLES_PT_PERIODIC = 26, //Periodic values would be averaged over the most recent N samples
 
     EDGE_START_TIME = 31,   //Epoch time of start-up in seconds
     EDGE_RAM = 32,   // Percentage of total RAM
