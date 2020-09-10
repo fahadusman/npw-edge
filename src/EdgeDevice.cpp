@@ -74,6 +74,7 @@ void EdgeDevice::initializeConfigMap() {
     configMap["SCALING_OFFSET_PT"] = SCALING_OFFSET_PT;
     configMap["SCALING_FACTOR_PT"] = SCALING_FACTOR_PT;
     configMap["FLAG_NPW_SUPPRESS"] = FLAG_NPW_SUPPRESS;
+    configMap["NUM_SAMPLES_PT_PERIODIC"] = NUM_SAMPLES_PT_PERIODIC;
 }
 
 EdgeDevice::EdgeDevice(const char *confFilePath) {
@@ -256,6 +257,7 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
     case SCALING_FACTOR_PT:
     case SCALING_OFFSET_PT:
     case FLAG_NPW_SUPPRESS:
+    case NUM_SAMPLES_PT_PERIODIC:
     case NPW_SAMPLE_BEFORE:
     case NPW_SAMPLE_AFTER:
         for (Sensor * sensorPtr : sensorsList) {
@@ -415,6 +417,7 @@ void EdgeDevice::initializeRegisterMap() {
     registerMap[SCALING_FACTOR_PT] = kDcNPWScaingFactor.def;
     registerMap[SCALING_OFFSET_PT] = kDcNPWScaingOffset.def;
     registerMap[FLAG_NPW_SUPPRESS] = kDcFlagNPWSuppress.def;
+    registerMap[NUM_SAMPLES_PT_PERIODIC] = kDcNumSamplesPeriodicAvg.def;
 }
 
 bool EdgeDevice::loadRegisterMapFromFile() {

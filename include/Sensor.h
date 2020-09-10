@@ -25,7 +25,7 @@ public:
     Sensor(communicator * cptr, EdgeDevice * ePtr, std::string sensorId);
     virtual void enqueueCommand (CommandMsg *);
     CommandMsg * dequeueCommand();
-    PeriodicValue * getCurrentValue();
+    virtual PeriodicValue * getCurrentValue();
     bool enablePeriodicValues;
 protected:
     double currentValue;
