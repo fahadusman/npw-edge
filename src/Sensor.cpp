@@ -23,6 +23,7 @@ Sensor::Sensor(communicator *cptr, EdgeDevice *eptr, std::string sensorId) :
     periodicValMaxInterval = kDcMaxTimePeriodic.def;
     id = (sensorId == "")?"defaultId":sensorId;
     enablePeriodicValues = false;
+    currentStatus = 0;
     return;
 }
 void Sensor::enqueueCommand(CommandMsg * cmd){
