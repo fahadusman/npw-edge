@@ -70,13 +70,15 @@ private:
             bool resetNpwThread);
     void updateBufferLengths();
     static int sensorCount;
+    unsigned int samplesCountPeriodicAverage;
+
 public:
 	void npwThread();
 	void startNpwThread();
 	void stopNpwThread();
     PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
             const rapidjson::Value & pressureSensorObj);
-
+    PeriodicValue * getCurrentValue();
 	virtual ~PressureSensor();
 };
 
