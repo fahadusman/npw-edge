@@ -1,21 +1,21 @@
 {
   "edge_device": {
     "device_id": 2,
-    "device_name": "BV-65",
+    "device_name": "BV65",
     "role": "bvEdgeDevice",
     "communicator": {
       "type": "radioCommunicator",
       "slave_address": 2,
       "port": "/dev/ttyM0",
       "baud_rate": 115200,
-      "response_timeout": 4000,
-      "poll_interval": 5000,
-      "transmission_timeout": 2000
+      "response_timeout": 3000,
+      "poll_interval": 3000,
+      "transmission_timeout": 3000
     },
     "sensors": [
       {
         "sensor_type": "PT",
-        "port": "/dev/ttyUSB0", 
+        "port": "/dev/ttyM1", 
         "sensor_id": "PT_65"
       },
       {

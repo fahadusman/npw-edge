@@ -1,26 +1,26 @@
 {
   "edge_device": {
     "device_id": 1,
-    "device_name": "MW-19",
+    "device_name": "MW19",
     "role": "gatewayEdgeDevice",
     "communicator": {
       "type": "mqttCommunicator",
       "server": "tcp://localhost:1883",
-      "publish_topic": "MW-19",
-      "client_id": "gateway_MW-19",
+      "publish_topic": "MW19",
+      "client_id": "gateway_MW19",
       "qos": 1,
       "command_topic": "iotgateway"
     },
     "modbus_master": {
       "port": "/dev/ttyM0",
       "baud_rate": 115200,
-      "response_timeout": 4000,
-      "poll_interval": 5000,
-      "transmission_timeout": 2000,
+      "response_timeout": 3000,
+      "poll_interval": 3000,
+      "transmission_timeout": 3000,
       "slave_list": [
         {
           "device_id": 2,
-          "device_name": "BV-65",
+          "device_name": "BV65",
           "sensors": [
             {
               "sensor_type": "PT",
@@ -34,7 +34,7 @@
         },
         {
           "device_id": 3,
-          "device_name": "BV-66",
+          "device_name": "BV66",
           "sensors": [
             {
               "sensor_type": "PT",
