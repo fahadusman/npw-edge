@@ -13,11 +13,6 @@
 #include "CommDataBuffer.h"
 
 const unsigned int kHdrLen = 8;
-const double KPTOffset = 0; // This is the initial offset applied to the value
-                             // obtained from PT to compensate for negative values
-                             // as they have to be transmitted as unsigned integers.
-const double KPTScalingFactor = 1000; // for -1 to 100 PSI pressure range, and uint16
-                             // it should be 648.
 
 typedef double readingType;
 

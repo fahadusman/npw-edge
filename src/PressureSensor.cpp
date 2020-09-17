@@ -34,10 +34,10 @@ void PressureSensor::updateMovingAverages() {
 	    if (firstAverage == -100 and secondAverage == -100) {
 	        readingType firstSum = 0, secondSum = 0;
             for (unsigned int i = firstAverageStart; i < firstAverageEnd; i++) {
-                firstSum += sensorReadingCircularBuffer[i]->value;
+                firstSum += sensorReadingCircularBuffer[sensorReadingCircularBuffer.size() - 1 - i]->value;
             }
             for (unsigned int i = secondAverageStart; i < secondAverageEnd; i++) {
-                secondSum += sensorReadingCircularBuffer[i]->value;
+                secondSum += sensorReadingCircularBuffer[sensorReadingCircularBuffer.size() - 1 - i]->value;
             }
 
             firstAverage = firstSum/(firstAverageEnd - firstAverageStart);
@@ -48,20 +48,20 @@ void PressureSensor::updateMovingAverages() {
             return;
 
 	    }
-        firstAverage = (firstAverage * (firstAverageEnd - firstAverageStart + 1)
+        firstAverage = (firstAverage * (firstAverageEnd - firstAverageStart)
                 + sensorReadingCircularBuffer[sensorReadingCircularBuffer.size()
                         - 1 - firstAverageStart]->value
                 - sensorReadingCircularBuffer[sensorReadingCircularBuffer.size()
                         - 1 - firstAverageEnd]->value)
-                / (firstAverageEnd - firstAverageStart + 1);
+                / (firstAverageEnd - firstAverageStart);
 
         secondAverage = (secondAverage
-                * (secondAverageEnd - secondAverageStart + 1)
+                * (secondAverageEnd - secondAverageStart)
                 + sensorReadingCircularBuffer[sensorReadingCircularBuffer.size()
                         - 1 - secondAverageStart]->value
                 - sensorReadingCircularBuffer[sensorReadingCircularBuffer.size()
                         - 1 - secondAverageEnd]->value)
-                / (secondAverageEnd - secondAverageStart + 1);
+                / (secondAverageEnd - secondAverageStart);
     }
     catch (const std::exception & e) {
         LOG(ERROR) << "Exception: " << e.what();
@@ -124,7 +124,7 @@ double PressureSensor::readSensorValueDummy(){
                 simulatedValues.push_back(tempVal);
             }
             LOG(INFO)
-                    << "initialized simulated values from file, total vaues read: "
+                    << "initialized simulated values from file, total values read: "
                     << simulatedValues.size();
 
         } catch (const std::exception &e) {
@@ -132,8 +132,9 @@ double PressureSensor::readSensorValueDummy(){
         }
 
 	}
+	LOG_IF(FATAL, simulatedValues.size() == 0) << "Zero simulated values read from file";
 	static unsigned int totalValues = simulatedValues.size();
-	return double(simulatedValues[i++ % totalValues])/100000;
+	return double(simulatedValues[i++ % totalValues]);
 }
 
 // Returns a 32-bt integer scaled by KPTScalingFactor
@@ -274,8 +275,8 @@ void PressureSensor::updateNPWState(){
 
 	updateMovingAverages();
 
-	bool isThresholdExceeded = fabs(firstAverage - secondAverage) >
-	                                npwDetectionthreshold/KPTScalingFactor;
+    bool isThresholdExceeded = fabs(firstAverage - secondAverage)
+            > (npwDetectionthreshold + npwScalingOffset) / npwScalingFactor;
 //	LOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
 //			"\tisThresholdExceeded: " << isThresholdExceeded << "\tDeltaP: " << firstAverage - secondAverage;
 	if ((not wasThresholdExceeded) and isThresholdExceeded){
