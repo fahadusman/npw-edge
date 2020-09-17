@@ -50,13 +50,16 @@ private:
 	readingType secondAverage;
 	readingType npwDetectionthreshold;
 
-	NpwState currentNpwState;
+    NpwState currentNpwState;
     unsigned int samplesCountBeforeDetection, samplesCountAfterDetection; //Number of sample to buffer before/after NPW detection
     int remainingSamples;
-	unsigned int totalNPWsDetected;
-	uint64_t npwBufferExpiryTime;   //NPW Buffer Expiry time in ms.
-    float npwScalingFactor;
-    float npwScalingOffset;
+    unsigned int totalNPWsDetected;
+    uint64_t npwBufferExpiryTime;   //NPW Buffer Expiry time in ms.
+    float npwScalingFactor;     //for -1 to 100 PSI pressure range, and uint16
+                                // it should be 648.
+    float npwScalingOffset;     //This is the initial offset applied to the value
+                                // obtained from PT to compensate for negative values
+                                // as they have to be transmitted as unsigned integers.
     bool suppressNPWBuffer;
 
 	double readSensorValueDummy();
