@@ -1,7 +1,7 @@
 [Unit]
 Description=Smart Edge device application for relaying sensor values and detecting negative pressure waves in oil pipeline
-Requires=Network.target
-After=Network.target
+Requires=network.target
+After=network.target
 
 [Service]
 Type=simple
