@@ -145,7 +145,7 @@ double PressureSensor::readSensorValue(){
     int bytesRead = sPort.readBuffer(response, sizeof response);
 
     if(bytesRead != 9){
-    	LOG(ERROR) << "Invalid number of bytes read from PT: " << bytesRead;
+    	LOG_EVERY_N(ERROR, 250) << "Invalid number of bytes read from PT: " << bytesRead;
         currentStatus = 0;
     	return -0.1;
     }
@@ -313,8 +313,8 @@ void PressureSensor::npwThread(){
 
 		createNPWBuffer();
 
-//		currentValue = readSensorValue();
-		currentValue = readSensorValueDummy();
+		currentValue = readSensorValue();
+//		currentValue = readSensorValueDummy();
 		LOG_EVERY_N(INFO, 1000) << "currentValue: " << currentValue;
 		currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTimePoint.time_since_epoch()).count();
 		sensorReadingPtr = new SensorReading<double> (currentValue, currentTime);
