@@ -100,7 +100,7 @@ std::string NpwBuffer::serializeJson() {
     rapidjson::StringBuffer s;
     rapidjson::Writer<rapidjson::StringBuffer> writer(s);
     writer.StartObject();
-    writer.Key(("NPW_Array_" + sensorId).c_str());
+    writer.Key(("NPW_array_" + sensorId).c_str());
     writer.StartArray();
     for (unsigned int i = 0; i < byteArrayLength; i++)
         writer.Uint(byteArray[i]);
