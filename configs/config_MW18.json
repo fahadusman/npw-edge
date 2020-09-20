@@ -1,13 +1,13 @@
 {
   "edge_device": {
-    "device_id": 1,
-    "device_name": "MW19",
+    "device_id": 6,
+    "device_name": "MW18",
     "role": "gatewayEdgeDevice",
     "communicator": {
       "type": "mqttCommunicator",
-      "server": "tcp://localhost:1883",
-      "publish_topic": "MW19",
-      "client_id": "gateway_MW19",
+      "server": "tcp://192.168.20.23:1883",
+      "publish_topic": "MW18",
+      "client_id": "gateway_MW18",
       "qos": 1,
       "command_topic": "iotgateway"
     },
@@ -19,26 +19,22 @@
       "transmission_timeout": 3000,
       "slave_list": [
         {
-          "device_id": 2,
-          "device_name": "BV65",
+          "device_id": 7,
+          "device_name": "BV63",
           "sensors": [
             {
               "sensor_type": "PT",
-              "sensor_id": "PT_65"
-            },
-            {
-              "sensor_type": "TT",
-              "sensor_id": "TS_65"
+              "sensor_id": "PT_63"
             }
           ]
         },
         {
-          "device_id": 3,
-          "device_name": "BV66",
+          "device_id": 8,
+          "device_name": "BV64",
           "sensors": [
             {
               "sensor_type": "PT",
-              "sensor_id": "PT_66"
+              "sensor_id": "PT_64"
             }
           ]
         }
