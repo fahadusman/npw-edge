@@ -1,13 +1,13 @@
 {
   "edge_device": {
-    "device_id": 1,
-    "device_name": "MKT",
+    "device_id": 2,
+    "device_name": "KBS",
     "role": "stationEdgeDevice",
     "communicator": {
       "type": "mqttCommunicator",
-      "server": "tcp://localhost:1883",
-      "publish_topic": "MKT",
-      "client_id":"Edge_MKT",
+      "server": "tcp://192.168.20.23:1883",
+      "publish_topic": "KBS",
+      "client_id":"Edge_KBS",
       "qos": 1,
       "command_topic": "iotgateway"
     },
@@ -15,12 +15,12 @@
       {
         "sensor_type": "PT",
         "port": "/dev/ttyM0",
-        "sensor_id": "PT_2003"
+        "sensor_id": "PT_3025"
       },
       {
         "sensor_type": "PT",
         "port": "/dev/ttyM1",
-        "sensor_id": "PT_2004"
+        "sensor_id": "PT_3010"
       }
     ]
   }

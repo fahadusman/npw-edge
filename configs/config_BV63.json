@@ -1,0 +1,23 @@
+{
+  "edge_device": {
+    "device_id": 7,
+    "device_name": "BV63",
+    "role": "bvEdgeDevice",
+    "communicator": {
+      "type": "radioCommunicator",
+      "slave_address": 7,
+      "port": "/dev/ttyM0",
+      "baud_rate": 115200,
+      "response_timeout": 3000,
+      "poll_interval": 3000,
+      "transmission_timeout": 3000
+    },
+    "sensors": [
+      {
+        "sensor_type": "PT",
+        "port": "/dev/ttyM1",
+        "sensor_id": "PT_63"
+      }
+    ]
+  }
+}
