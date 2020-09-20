@@ -52,7 +52,7 @@ SerialComPort::~SerialComPort(){
 //returns the number of bytes read
 ssize_t SerialComPort::readBuffer(unsigned char * buff, int len){
 	if(device < 0){
-		LOG(ERROR) << "invalid device: " << device;
+	    LOG_EVERY_N(ERROR, 50) << "invalid device: " << device;
 		return -1;
 	}
 	return read(device, buff, len);
@@ -61,7 +61,7 @@ ssize_t SerialComPort::readBuffer(unsigned char * buff, int len){
 
 ssize_t SerialComPort::writeBuffer(const unsigned char * buff, int len){
 	if(device < 0){
-		LOG(ERROR) << "invalid device: " << device;
+	    LOG_EVERY_N(ERROR, 50) << "invalid device: " << device;
 		return -1;
 	}
 	int res = write(device, buff, len);
@@ -103,8 +103,7 @@ int SerialComPort::setInterfaceAttributes(){
     memset (&tty, 0, sizeof tty);
     if (tcgetattr (device, &tty) != 0)
     {
-//                error_message ("error %d from tcgetattr", errno);
-    	LOG(ERROR) << "error " << errno << "from tcgetattr";
+    	LOG(ERROR) << "error: " << errno << " from tcgetattr";
 		return 0;
     }
     originalTtyAttributes = tty;
