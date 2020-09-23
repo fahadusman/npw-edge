@@ -57,7 +57,6 @@ void TemperatureSensor::temperatureSensorThread() {
     DLOG(INFO) << "starting TT thread\n";
     __uint64_t previousPeriodicValueTransmitTime = 0;
     double previousPeriodicVal = 0;
-    double currentValue = 0;
     std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint =
             std::chrono::high_resolution_clock::now();
 
@@ -68,6 +67,10 @@ void TemperatureSensor::temperatureSensorThread() {
         currentValue = readSensorValue();
         currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
                 currentTimePoint.time_since_epoch()).count();
+
+        if (currentStatus == 0) {
+            currentValue = previousPeriodicVal;
+        }
 
         if (enablePeriodicValues) {
             previousPeriodicValueTransmitTime = sendPeriodicValue(currentTime,
