@@ -68,6 +68,10 @@ void TemperatureSensor::temperatureSensorThread() {
         currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
                 currentTimePoint.time_since_epoch()).count();
 
+        if (currentStatus == 0) {
+            currentValue = previousPeriodicVal;
+        }
+
         if (enablePeriodicValues) {
             previousPeriodicValueTransmitTime = sendPeriodicValue(currentTime,
                     previousPeriodicValueTransmitTime, previousPeriodicVal,
