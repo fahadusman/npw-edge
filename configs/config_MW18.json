@@ -14,7 +14,7 @@
     "modbus_master": {
       "port": "/dev/ttyM0",
       "baud_rate": 38400,
-      "response_timeout": 3000,
+      "response_timeout": 5000,
       "poll_interval": 3000,
       "transmission_timeout": 3000,
       "slave_list": [
