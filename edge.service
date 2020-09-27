@@ -6,6 +6,8 @@ After=network.target
 [Service]
 Type=simple
 Environment=GLOG_logtostderr=1 GLOG_stderrthreshold=1
+ExecStartPre=/sbin/mx-uart-ctl -p 0 -m 0
+ExecStartPre=/sbin/mx-uart-ctl -p 1 -m 1
 ExecStart=/usr/sbin/NPWEdge
 
 [Install]

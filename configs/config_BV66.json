@@ -7,7 +7,7 @@
       "type": "radioCommunicator",
       "slave_address": 11,
       "port": "/dev/ttyM0",
-      "baud_rate": 115200,
+      "baud_rate": 38400,
       "response_timeout": 3000,
       "poll_interval": 3000,
       "transmission_timeout": 3000
