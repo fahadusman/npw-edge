@@ -44,9 +44,8 @@ double TemperatureSensor::readSensorValue() {
         return -0.1;
     }
     currentStatus = 1;
-    int16_t result = response[3] * 0xFF + response[4];
-
-    return result/10;
+    double result = response[3] * 0xFF + response[4];
+    return result/10.0;
 }
 
 void TemperatureSensor::initializeSensor(){
