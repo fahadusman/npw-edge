@@ -35,6 +35,7 @@ TemperatureSensor::~TemperatureSensor() {
 double TemperatureSensor::readSensorValue() {
     sPort.writeBuffer(kRKReadCommand, sizeof kRKReadCommand);
     unsigned char response[10];
+    usleep(5000);
     int bytesRead = sPort.readBuffer(response, sizeof response);
 
     if(bytesRead != 7){
