@@ -73,7 +73,7 @@ unsigned char * NpwBuffer::createByteArray() {
     time_t time_after_duration = std::chrono::system_clock::to_time_t(
             tp_after_duration);
 
-    std::tm* npwTime = std::localtime(&time_after_duration);
+    std::tm* npwTime = std::gmtime(&time_after_duration);
 
     byteArray[0] = decToBcd(npwTime->tm_year % 100);
     byteArray[1] = decToBcd(npwTime->tm_mon + 1);
