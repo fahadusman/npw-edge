@@ -13,8 +13,7 @@
 #include "Sensor.h"
 #include "SerialComPort.h"
 
-const unsigned char kRKInitCommand[] = {1, 3, 0, 0, 0, 1, 132, 16};
-const unsigned char kRKReadCommand[] = {1, 3, 0, 0, 0, 1, 132, 16};
+const unsigned char kRKReadCommand[] = {1, 3, 0, 0, 0, 1, 132, 10};
 
 class TemperatureSensor: public Sensor {
 protected:
