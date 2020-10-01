@@ -30,7 +30,7 @@ const DevConfig kDcNpwNumPack       { 1, 50, 5 },
         kDcTestFlag            { 0, 1, 0 },
         kDcRebootTime          { -1, 10, -1 },
         kDcHeartbeatInterval   { 10, 3600, 300 },
-        kDcNPWScaingFactor     {0, 10000, 1000},
+        kDcNPWScaingFactor     {1, 10000, 500},
         kDcNPWScaingOffset     {-100, 100, 0},
         kDcFlagNPWSuppress     { 0, 1, 0 },
         kDcNumSamplesPeriodicAvg {1, 200, 3};
