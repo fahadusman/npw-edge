@@ -76,6 +76,7 @@ protected:
     bool saveRegisterMapToFile();
     char * readConfigFile(const char *confFilePath);
     void initializeConfigMap();
+    void updateTimezoneOffset(CommandMsg *incomingCommand);
 
     std::map <std::string, CommandMsg> configMap;
 

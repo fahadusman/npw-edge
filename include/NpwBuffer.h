@@ -22,6 +22,7 @@ private:
     unsigned int readingListLength;
     unsigned int byteArrayLength;
 public:
+    static int32_t npwTimezoneOffset;
     uint64_t getTimestamp() {
         return timeStamp;
     }

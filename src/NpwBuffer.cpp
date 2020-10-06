@@ -69,7 +69,7 @@ unsigned char * NpwBuffer::createByteArray() {
 
     const auto durationSinceEpoch = std::chrono::milliseconds(timeStamp);
     const std::chrono::time_point<std::chrono::system_clock> tp_after_duration(
-            durationSinceEpoch);
+            durationSinceEpoch  + std::chrono::seconds(npwTimezoneOffset));
     time_t time_after_duration = std::chrono::system_clock::to_time_t(
             tp_after_duration);
 
@@ -208,3 +208,5 @@ NpwBuffer::~NpwBuffer() {
         delete readingList;
     }
 }
+
+int32_t NpwBuffer::npwTimezoneOffset = 0;
