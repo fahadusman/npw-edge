@@ -115,7 +115,7 @@ double PressureSensor::readSensorValueDummy(){
         try {
             std::ifstream infile("simulated_values.txt");
             if (not infile) {
-                LOG(ERROR) << "Unable to open file for simulated values.";
+                LOG(FATAL) << "Unable to open file for simulated values.";
                 currentStatus = 0;
                 return 0;
             }
@@ -290,7 +290,6 @@ void PressureSensor::updateNPWState(){
 			currentNpwState = secondDropDetected;
 			break;
 		case secondDropDetected:
-			DLOG(INFO) << "Ignoring pressure drop, 2nd drop already detected.";
 			break;
 		default:
 			LOG(FATAL) << "Invalid currentNpwState: " << currentNpwState;
@@ -331,7 +330,7 @@ void PressureSensor::npwThread(){
 		}
 
 		while (sensorReadingCircularBuffer.size() > circularBufferLength){
-			LOG_FIRST_N(INFO, 10) << "Circular Buffer full.";
+			LOG_FIRST_N(INFO, 1) << "Circular Buffer filled.";
 			sensorReadingPtr = sensorReadingCircularBuffer.front();
 			sensorReadingCircularBuffer.erase(sensorReadingCircularBuffer.begin());	//remove the front element
 			delete sensorReadingPtr;

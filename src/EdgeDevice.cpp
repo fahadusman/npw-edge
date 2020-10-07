@@ -18,6 +18,7 @@
 #include "DevConfig.h"
 #include "CommDataBuffer.h"
 #include "TemperatureSensor.h"
+#include "NpwBuffer.h"
 
 const char * kRegMapFileName = "reg_map.bin";
 const char * kConfigFileName = "config.json";
@@ -75,6 +76,7 @@ void EdgeDevice::initializeConfigMap() {
     configMap["SCALING_FACTOR_PT"] = SCALING_FACTOR_PT;
     configMap["FLAG_NPW_SUPPRESS"] = FLAG_NPW_SUPPRESS;
     configMap["NUM_SAMPLES_PT_PERIODIC"] = NUM_SAMPLES_PT_PERIODIC;
+    configMap["TIMEZONE_OFFSET"] = TIMEZONE_OFFSET;
 }
 
 EdgeDevice::EdgeDevice(const char *confFilePath) {
@@ -90,6 +92,7 @@ EdgeDevice::EdgeDevice(const char *confFilePath) {
     registerMap[EDGE_START_TIME] =
             std::chrono::duration_cast<std::chrono::seconds>(
                     applicationStartTime.time_since_epoch()).count();
+    NpwBuffer::npwTimezoneOffset = registerMap[TIMEZONE_OFFSET];
     saveRegisterMapToFile();
 
     initializeConfigMap();
@@ -199,8 +202,21 @@ void EdgeDevice::processIncomingCommand(std::string registerName, uint32_t data)
         processIncomingCommand(cmd);
     } else {
         LOG(WARNING) << "command not found in map, " << registerName;
+//                    command = INVALID_COMMAND;
     }
+}
 
+void EdgeDevice::updateTimezoneOffset(CommandMsg *incomingCommand) {
+    if (incomingCommand->data > kDcTimezoneOffset.min
+            && incomingCommand->data < kDcTimezoneOffset.max) {
+        LOG(INFO) << "Setting new timezone offset: "
+                << incomingCommand->data;
+        NpwBuffer::npwTimezoneOffset = incomingCommand->data;
+        updateRegisterValue(incomingCommand);
+    } else {
+        LOG(WARNING) << "Discarding invalid value of timezone offset: "
+                << incomingCommand->data;
+    }
 }
 
 void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
@@ -237,6 +253,10 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         if (commPtr->setNpwPacketsToBuffer(incomingCommand->getData())) {
             updateRegisterValue(incomingCommand);
         }
+        delete incomingCommand;
+        break;
+    case TIMEZONE_OFFSET:
+        updateTimezoneOffset(incomingCommand);
         delete incomingCommand;
         break;
     case MAX_TIME_PERIODIC:
@@ -418,6 +438,7 @@ void EdgeDevice::initializeRegisterMap() {
     registerMap[SCALING_OFFSET_PT] = kDcNPWScaingOffset.def;
     registerMap[FLAG_NPW_SUPPRESS] = kDcFlagNPWSuppress.def;
     registerMap[NUM_SAMPLES_PT_PERIODIC] = kDcNumSamplesPeriodicAvg.def;
+    registerMap[TIMEZONE_OFFSET] = kDcTimezoneOffset.def;
 }
 
 bool EdgeDevice::loadRegisterMapFromFile() {
