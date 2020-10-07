@@ -36,7 +36,7 @@ public:
 		value = v;
 		auto now = std::chrono::high_resolution_clock::now().time_since_epoch();
 		timestampMS = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
-		LOG_FIRST_N(INFO, 50) << "new sensor value: " << value << "\t" << timestampMS << "\t" << now.count();
+		LOG_FIRST_N(INFO, 10) << "new sensor value: " << value << "\t" << timestampMS << "\t" << now.count();
 	}
 
 };

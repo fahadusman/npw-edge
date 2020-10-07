@@ -24,7 +24,7 @@ communicator::communicator(EdgeDevice *d, bool bufferPersistence) :
 
 bool communicator::saveBufferToFile(CommDataBuffer *buff) {
     if (not enableBufferPersistence) {
-        LOG(INFO) << "enableBufferPersistence is false, not storing buffer to disk";
+        LOG_EVERY_N(INFO, 100) << "enableBufferPersistence is false, not storing buffer to disk";
         return false;
     }
     fs::path filePath = queuedNpwBuffersDirPath
@@ -66,7 +66,7 @@ bool communicator::saveBufferToFile(CommDataBuffer *buff) {
 }
 
 bool communicator::enqueueMessage(CommDataBuffer * buff){
-    LOG(INFO) << "Going to insert in transmission queue with t: "
+    LOG_EVERY_N(INFO, 100) << "Going to insert in transmission queue with t: "
             << buff->getTimestamp() << ", id: " << buff->getBufferId()
             << "\t Queue size: "  << transmitQueue.size();
 
@@ -115,7 +115,7 @@ void communicator::removeBufferFromDisk(uint64_t expTime) {
 }
 
 bool communicator::removeMessageFromQueue(int32_t messageId) {
-    LOG(INFO) << "Removing message from queue, Message ID: " << messageId;
+    LOG_EVERY_N(INFO, 100) << "Removing message from queue, Message ID: " << messageId;
     bool messageRemoved = false;
     uint64_t expTime = 0;
     try {

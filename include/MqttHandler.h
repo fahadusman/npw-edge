@@ -42,14 +42,16 @@ class user_callback: public virtual mqtt::callback {
 
     void connection_lost(const std::string& cause) override {
         connected_ = false;
-        std::cout << "\nConnection lost" << std::endl;
+        commPtr->disconnect(); //TODO: Maybe disconnect is not required here
+        LOG(WARNING) << "\nConnection lost" << std::endl;
         if (!cause.empty())
-            std::cout << "\tcause: " << cause << std::endl;
+            LOG(WARNING) << "\tcause: " << cause << std::endl;
     }
 
     void delivery_complete(mqtt::delivery_token_ptr tok) override {
-        std::cout << "\n\t[Delivery complete for token: "
+        LOG_EVERY_N (INFO, 100) << "\n\t[Delivery complete for token: "
                 << (tok ? tok->get_message_id() : -1) << "]" << std::endl;
+//        TODO: remove from transmit queue if it was inserted there
     }
     void connected(const std::string& cause) override;
 

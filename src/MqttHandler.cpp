@@ -120,8 +120,6 @@ void MqttCommunicator::sendQueuedMessagesThread() {
                         << "\tt: " << commPtr->getTimestamp()
                         << "\tExp time: " << commPtr->getExpiryTime();
             } else {
-                LOG(INFO) << "Sending Message with t: "
-                        << commPtr->getTimestamp();
                 std::string jsonMessage = commPtr->serializeJson();
                 sendMessage(jsonMessage.c_str(), jsonMessage.length());
             }
