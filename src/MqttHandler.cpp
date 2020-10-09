@@ -26,7 +26,6 @@ MqttCommunicator::MqttCommunicator(EdgeDevice *d,
     conopts.set_will(willOpts);
     serverAddress = MQTT_DFLT_SERVER_ADDRESS;
     conntok = NULL;
-    isConnected = false;
     publishTopic = MQTT_DFLT_TOPIC;
     clientID = MQTT_DFLT_CLIENT_ID;
     persistDir = MQTT_DFLT_PERSIST_DIR;
@@ -53,12 +52,12 @@ MqttCommunicator::MqttCommunicator(EdgeDevice *d,
 }
 
 void MqttCommunicator::connect() {
-    while (not isConnected) {
+//    static bool initialConnection = true;
+    while (not isConnected()) {
         LOG(INFO) << "connecting to broker";
         try {
             asyncClientPtr->connect(conopts)->wait();
             LOG(INFO) << "MQTT Client Connected: " << clientID;
-            isConnected = true;
         } catch (const mqtt::exception& exc) {
             LOG(ERROR) << "MQTT Exception: " << exc.what();
         }
@@ -68,7 +67,7 @@ void MqttCommunicator::connect() {
 
 void MqttCommunicator::sendMessage(const char * message,
         const unsigned int length) {
-    if (not isConnected) {
+    if (not isConnected()) {
         LOG(ERROR) << "sendMessage: Mqtt client is not connected.";
         return;
     }
@@ -83,14 +82,13 @@ void MqttCommunicator::sendMessage(const char * message,
 }
 
 void MqttCommunicator::disconnect() {
-    if (isConnected) {
+    if (isConnected()) {
         LOG(INFO) << "disconnecting: " << this->clientID;
         try {
             asyncClientPtr->disconnect()->wait();
         } catch (const mqtt::exception &exc) {
             LOG(ERROR) << "MQTT Exception: " << exc.what();
         }
-        isConnected = false;
         LOG(INFO) << "successfully disconnected.: " << this->clientID;
     } else {
         LOG(WARNING) << "disconnect called for: " << clientID
@@ -101,7 +99,7 @@ void MqttCommunicator::disconnect() {
 void MqttCommunicator::sendQueuedMessagesThread() {
     LOG(INFO) << "starting MqttCommunicator Thread";
     while (true){
-        while (not isConnected) {
+        while (not isConnected()) {
             LOG(WARNING) << "MQTT Client not connected...";
             connect();
             std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -198,7 +196,7 @@ void user_callback::message_arrived(mqtt::const_message_ptr msg) {
 }
 
 MqttCommunicator::~MqttCommunicator() {
-    if (isConnected) {
+    if (isConnected()) {
         disconnect();
     }
     return;

@@ -42,7 +42,8 @@ class user_callback: public virtual mqtt::callback {
 
     void connection_lost(const std::string& cause) override {
         connected_ = false;
-        commPtr->disconnect(); //TODO: Maybe disconnect is not required here
+
+        commPtr->disconnect();
         LOG(WARNING) << "\nConnection lost" << std::endl;
         if (!cause.empty())
             LOG(WARNING) << "\tcause: " << cause << std::endl;
@@ -57,11 +58,11 @@ class user_callback: public virtual mqtt::callback {
 
 	void message_arrived(mqtt::const_message_ptr msg) override;
 
+
+public:
     bool isConnected() {
         return connected_;
     }
-
-public:
     user_callback() {
         connected_ = false;
         commPtr = NULL;
@@ -79,7 +80,9 @@ private:
     mqtt::connect_options conopts;
     mqtt::will_options willOpts;
     mqtt::token_ptr conntok;
-    bool isConnected;
+    bool isConnected() {
+        return cb.isConnected();
+    }
     bool cleanSession;
     unsigned int QoS;
     std::chrono::duration<int64_t> timeout;
