@@ -1,0 +1,4 @@
+# Absolute paths of config files on Moxa Edge device
+/etc/udev/rules.d/99-usb-serial.rules #Only for Moxa UC-8112 (That uses Jackson Labs card)
+/etc/default/gpsd
+/etc/chrony/chrony.conf
