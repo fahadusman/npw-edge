@@ -411,7 +411,7 @@ void PressureSensor::fillCircularBufferWithDummyValues(){
 }
 
 void PressureSensor::updateReadingInterval(const int newInterval) {
-    if ((const unsigned int) newInterval != readingIntervalMs
+    if (newInterval != (int) readingIntervalMs
             and newInterval >= kDcSampleIntervalNpw.min
             and newInterval <= kDcSampleIntervalNpw.max
             and newInterval % 10 == 0) {

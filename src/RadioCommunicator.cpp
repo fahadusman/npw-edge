@@ -266,9 +266,9 @@ bool RadioCommunicator::receiveModbusAsciiMessage(std::string& receiveBuffer,
     while (modbusStream.IsDataAvailable()) {
         data_byte = modbusStream.get();
         if (data_byte == ':') {
+            LOG_FIRST_N(INFO, 20) << "packet started.";
             packetStarted = true;
             receiveBuffer = ":";
-            LOG(INFO) << "packet started.";
             continue;
         }
         if (packetStarted) {
@@ -353,7 +353,6 @@ void RadioCommunicator::disconnect() {
 
 void RadioCommunicator::sendMessage(const char * message,
         const unsigned int length) {
-    LOG(INFO) << "radio::sendMessage, len: " << length;
     int burstSize = 1000;
     int remainingData = length;
     int bytesWritten = 0;
@@ -369,8 +368,9 @@ void RadioCommunicator::sendMessage(const char * message,
             modbusStream.DrainWriteBuffer();
             remainingData -= currentChunkSize;
             bytesWritten += currentChunkSize;
-            LOG(INFO) << "Writing, currentChunkSize: "  << currentChunkSize;
             if (remainingData > 0) {
+                LOG(INFO) << "Writing, currentChunkSize: "
+                        << currentChunkSize << "remaining: " << remainingData;
                 usleep(50000);
             }
 
@@ -430,8 +430,6 @@ void RadioCommunicator::transmitMessage() {
 
     if (commPtr == nullptr) {
         commPtr = edgeDevicePtr->getPeriodicSensorValue();
-        LOG_IF(INFO, (commPtr != nullptr))
-            << "no message in queue, sending current periodic value";
     }
 
     if (commPtr != nullptr) {
@@ -451,22 +449,11 @@ void RadioCommunicator::transmitMessage() {
             int serializedMsgLen = 0;
             serializedMessage = commPtr->serialize(serializedMsgLen);
             if (serializedMessage != nullptr && serializedMsgLen > 0) {
-//                char* asciiMessage = binaryToHex(serializedMessage,
-//                        serializedMsgLen);
-//                if (asciiMessage == nullptr) {
-//                    LOG(ERROR)
-//                            << "Unable to convert binary buffer to ascii, discarding message, id: "
-//                            << commPtr->getBufferId();
-//                    delete serializedMessage;
-//                    delete commPtr;
-//                } else {
                 std::string modbusResponse = binaryToModbusAsciiMessage(
                         serializedMsgLen, serializedMessage);
-                LOG(INFO) << "modbus response len: " << modbusResponse.length();
 
                 sendMessage(modbusResponse.c_str(),
                         modbusResponse.length());
-//                }
                 delete serializedMessage;
             }
         }
@@ -530,8 +517,6 @@ bool RadioCommunicator::parseModbusCommand(ModbusMessage & modbusMsg,
         } else {
             modbusMsg.writeData = std::stoi(temp, 0, 16);
         }
-
-        modbusMsg.print();
     } catch (const std::exception &e) {
         LOG(WARNING) << "Error parsing Modbus command message: " << e.what();
         return false;
@@ -633,7 +618,7 @@ bool RadioCommunicator::parseModbusResponse(ModbusMessage & modbusMsg,
 
 bool RadioCommunicator::processIncomingMessage(const char * message,
         const int & length) {
-    LOG(INFO) << "radio::processIncomingMessage: " << message << "len: "
+    LOG_FIRST_N(INFO, 10) << "radio::processIncomingMessage: " << message << "len: "
             << length;
 //    TODO: Verify checksum
     if (strlen(message) < 16 or length < 16) {
