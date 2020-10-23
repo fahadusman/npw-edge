@@ -10,6 +10,7 @@ Fork this repository and submit pull requests for your changes.
 3. pthread
 4. [Lib Serial](https://github.com/crayzeewulf/libserial/)
 5. [RapidJSON](https://github.com/Tencent/rapidjson.git)
+6. [libmodbus](https://github.com/stephane/libmodbus)
 
 ## Maintainers
 1. Fahad Usman <fahad.usman@intechww.com>

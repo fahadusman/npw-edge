@@ -9,6 +9,8 @@
  */
 
 #include <queue>
+#include <modbus/modbus.h>
+#include "rapidjson/document.h"
 
 #include "communicator.h"
 #include "CommandMsg.h"
@@ -17,17 +19,29 @@
 class communicator;
 class EdgeDevice;
 
+enum SensorDataType {sdtInt16 = 0, sdtFloat};
+
 class Sensor {
 public:
     virtual ~Sensor();
-    virtual double readSensorValue() = 0;
-    virtual void initializeSensor() = 0;
+    virtual double readSensorValue();
+    virtual void initializeSensor();
+    void disconnectSensor();
     Sensor(communicator * cptr, EdgeDevice * ePtr, std::string sensorId);
     virtual void enqueueCommand (CommandMsg *);
     CommandMsg * dequeueCommand();
     virtual PeriodicValue * getCurrentValue();
     bool enablePeriodicValues;
 protected:
+    modbus_t * sensorModbusCtx;
+    std::string sensorPort;
+    int64_t sensorBaudRate;
+    double sensorScalingFactor;
+    int sensorModbusSlaveId;
+    int sensorModbusRegAddr;
+    int sensorModbusNb;
+    SensorDataType dataType;
+
     double currentValue;
     __uint64_t currentTime = 0;
     int currentStatus;
@@ -42,6 +56,7 @@ protected:
     uint64_t sendPeriodicValue(uint64_t currentTime,
             uint64_t previousPeriodicValueTransmitTime,
             double & previousPeriodicVal, const double & currentValue);
+    void parseSensorJsonObj(const rapidjson::Value & sensorObj);
 };
 
 #endif /* INCLUDE_SENSOR_H_ */
