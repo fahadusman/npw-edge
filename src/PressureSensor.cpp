@@ -137,51 +137,14 @@ double PressureSensor::readSensorValueDummy(){
 	return double(simulatedValues[i++ % totalValues]);
 }
 
-// Returns a 32-bt integer scaled by KPTScalingFactor
-
-double PressureSensor::readSensorValue(){
-    sPort.writeBuffer(kKellerPropReadCommand, sizeof kKellerPropReadCommand);
-    unsigned char response[10];
-    int bytesRead = sPort.readBuffer(response, sizeof response);
-
-    if(bytesRead != 9){
-    	LOG_EVERY_N(ERROR, 250) << "Invalid number of bytes read from PT: " << bytesRead;
-        currentStatus = 0;
-    	return -0.1;
-    }
-
-    float result = 0.0;
-    unsigned char * resPtr= reinterpret_cast<unsigned char*>(&result);
-
-    resPtr[0] = response[5];
-    resPtr[1] = response[4];
-    resPtr[2] = response[3];
-    resPtr[3] = response[2];
-
-    currentStatus = 1;
-	return double (result);
-}
-
-void PressureSensor::initializeSensor(){
-	LOG(INFO) << "About to write init command.";
-    int res = sPort.writeBuffer(kKellerInitCommand, 4);
-    DLOG(INFO) << "sPort.writeBuffer returned: " << res;
-    unsigned char response[10] = {0};
-    int r = sPort.readBuffer(response, sizeof response);
-    DLOG(INFO) << "initializeSensor, bytesRead: " << r;
-}
-
 PressureSensor::~PressureSensor() {
-	// disconnect from sensor and close the socket
     stopNpwThread();
 	return;
 }
 
 PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
         const rapidjson::Value &pressureSensorObj) :
-        Sensor(cPtr, ePtr, pressureSensorObj["sensor_id"].GetString()), sPort(
-                pressureSensorObj["port"].GetString(), B115200,
-                kDefaultParity, kDefaultBlocking) {
+        Sensor(cPtr, ePtr, pressureSensorObj["sensor_id"].GetString()) {
 
 	if (not commPtr){
 	    LOG(FATAL) << "commPtr is null.";
@@ -196,7 +159,8 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
 	recodringValues = false;
     npwBufferLength = edgeDevicePtr->getRegisterValue(NPW_SAMPLE_BEFORE)
             + edgeDevicePtr->getRegisterValue(NPW_SAMPLE_AFTER);
-	initializeSensor();
+
+    parseSensorJsonObj(pressureSensorObj);
 
 	//The start and end of averages is index from the most recent value in the circular buffer
 	firstAverageStart 	= 0;	//first average starts at the most recent value.
@@ -314,7 +278,10 @@ void PressureSensor::npwThread(){
 
 		currentValue = readSensorValue();
 //		currentValue = readSensorValueDummy();
-		LOG_EVERY_N(INFO, 1000) << "currentValue: " << currentValue;
+		DLOG_EVERY_N(INFO, 1000) << "PressureSensor - id: " << id
+                << ", v: " << currentValue << ", q: " << currentStatus
+                << ", t: " << currentTime;
+
 		currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTimePoint.time_since_epoch()).count();
 		sensorReadingPtr = new SensorReading<double> (currentValue, currentTime);
 		sensorReadingCircularBuffer.push_back(sensorReadingPtr);

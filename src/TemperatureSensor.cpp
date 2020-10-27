@@ -11,9 +11,7 @@
 
 TemperatureSensor::TemperatureSensor(communicator *cPtr, EdgeDevice *ePtr,
         rapidjson::Value &temperatureSensorObj) :
-        Sensor(cPtr, ePtr, temperatureSensorObj["sensor_id"].GetString()), sPort(
-                temperatureSensorObj["port"].GetString(), B9600,
-                kDefaultParity, kDefaultBlocking) {
+        Sensor(cPtr, ePtr, temperatureSensorObj["sensor_id"].GetString()) {
 
     LOG_IF(FATAL, commPtr == nullptr) << "commPtr is null.";
 
@@ -21,7 +19,7 @@ TemperatureSensor::TemperatureSensor(communicator *cPtr, EdgeDevice *ePtr,
     periodicValMaxInterval = edgeDevicePtr->getRegisterValue(MAX_TIME_PERIODIC) * 1000;
     periodicValChangeThreshold = edgeDevicePtr->getRegisterValue(ON_CHANG_THSH_TT);
 
-    initializeSensor();
+    this->parseSensorJsonObj(temperatureSensorObj);
     recodringValues = false;
     tempSensorThreadPtr = nullptr;
 
@@ -30,27 +28,6 @@ TemperatureSensor::TemperatureSensor(communicator *cPtr, EdgeDevice *ePtr,
 
 TemperatureSensor::~TemperatureSensor() {
 
-}
-
-double TemperatureSensor::readSensorValue() {
-    sPort.writeBuffer(kRKReadCommand, sizeof kRKReadCommand);
-    unsigned char response[10];
-    usleep(5000);
-    int bytesRead = sPort.readBuffer(response, sizeof response);
-
-    if(bytesRead != 7){
-        LOG_FIRST_N(ERROR, 5) << "Invalid number of bytes read from TT: " << bytesRead;
-        currentStatus = 0;
-        return -0.1;
-    }
-    currentStatus = 1;
-    double result = response[3] * 0xFF + response[4];
-    return result/10.0;
-}
-
-void TemperatureSensor::initializeSensor(){
-    LOG(INFO) << "Initialize TT, id: " << this->id;
-    return;
 }
 
 void TemperatureSensor::temperatureSensorThread() {
@@ -77,6 +54,10 @@ void TemperatureSensor::temperatureSensorThread() {
                     previousPeriodicValueTransmitTime, previousPeriodicVal,
                     currentValue);
         }
+
+        DLOG_EVERY_N(INFO, 10) << "TemperatureSensor - id: " << id
+                << ", v: " << currentValue << ", q: " << currentStatus
+                << ", t: " << currentTime;
 
         std::this_thread::sleep_for(loopSleepInterval);
         processIncomingCommand();

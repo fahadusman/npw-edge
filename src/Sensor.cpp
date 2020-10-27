@@ -24,6 +24,14 @@ Sensor::Sensor(communicator *cptr, EdgeDevice *eptr, std::string sensorId) :
     id = (sensorId == "")?"defaultId":sensorId;
     enablePeriodicValues = false;
     currentStatus = 0;
+    sensorModbusCtx = nullptr;
+    sensorPort = "";
+    sensorBaudRate = 115200;
+    sensorScalingFactor = 1;
+    sensorModbusSlaveId = 1;
+    sensorModbusRegAddr = 2;
+    sensorModbusNb = 2;
+    dataType = sdtFloat;
     return;
 }
 void Sensor::enqueueCommand(CommandMsg * cmd){
@@ -38,17 +46,19 @@ void Sensor::enqueueCommand(CommandMsg * cmd){
 }
 
 Sensor::~Sensor() {
-    // disconnect from sensor and close the socket
-    try{
+    if (sensorModbusCtx != nullptr) {
+        disconnectSensor();
+    }
+
+    try {
         std::lock_guard<std::mutex> guard(commandQueueMutex);
-        while (not incomingCommandQueue.empty()){
-            CommandMsg * c = incomingCommandQueue.front();
+        while (not incomingCommandQueue.empty()) {
+            CommandMsg *c = incomingCommandQueue.front();
             LOG(INFO) << "Deleting command: " << c->getCommand();
             delete c;
             incomingCommandQueue.pop();
         }
-    }
-    catch (const std::exception & e) {
+    } catch (const std::exception &e) {
         LOG(ERROR) << "Exception: " << e.what();
     }
 }
@@ -92,4 +102,94 @@ uint64_t Sensor::sendPeriodicValue(uint64_t currentTime,
         previousPeriodicVal = currentValue;
     }
     return previousPeriodicValueTransmitTime;
+}
+
+void Sensor::parseSensorJsonObj(const rapidjson::Value & sensorObj) {
+    try {
+        sensorPort = sensorObj["port"].GetString();
+        id = sensorObj["sensor_id"].GetString();
+        sensorBaudRate = sensorObj["baud_rate"].GetInt64();
+        sensorScalingFactor = sensorObj["sensor_scaling_factor"].GetFloat();
+        std::string dataTypeStr = sensorObj["sensor_data_type"].GetString();
+        if (dataTypeStr == "int16") {
+            dataType = sdtInt16;
+        } else {
+            dataType = sdtFloat;
+        }
+        sensorModbusSlaveId = sensorObj["modbus_slave_id"].GetInt();
+        sensorModbusRegAddr = sensorObj["modbus_reg_addr"].GetInt();
+        sensorModbusNb = sensorObj["modbus_nb"].GetInt();
+
+    } catch (std::exception & e) {
+        LOG(FATAL) << "exception: " << e.what();
+    }
+
+}
+
+void Sensor::initializeSensor() {
+    while (sensorModbusCtx == nullptr) {
+        sensorModbusCtx = modbus_new_rtu(sensorPort.c_str(), sensorBaudRate, 'N', 8, 1);
+        if (sensorModbusCtx == nullptr) {
+            LOG(ERROR) << "Unable to create the libmodbus context, port: "
+                    << sensorPort;
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+            continue;
+        }
+        modbus_set_slave(sensorModbusCtx, sensorModbusSlaveId);
+        if (modbus_connect(sensorModbusCtx) == -1) {
+            LOG(ERROR) << "Modbus Connection failed, id: " << id
+                    << ", port: " << sensorPort
+                    << ", Error: " << modbus_strerror(errno);
+
+            modbus_free(sensorModbusCtx);
+            sensorModbusCtx = nullptr;
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+            continue;
+        }
+    }
+    LOG(INFO) << "Initialized sensor: " << id;
+}
+
+double Sensor::readSensorValue(){
+    int rc;
+    uint16_t tabReg[16];
+    LOG_IF(FATAL, sensorModbusNb > 16) << "Number registers to read is too large";
+
+    if (sensorModbusCtx == nullptr) {
+        initializeSensor();
+    }
+    rc = modbus_read_registers(sensorModbusCtx, sensorModbusRegAddr, sensorModbusNb, tabReg);
+    if (rc == -1) {
+        LOG_EVERY_N(ERROR, 2) << "Failed to read from PT, id:(" << id
+                << ") Error: " << modbus_strerror(errno);
+        currentStatus = 0;
+        disconnectSensor();
+        return currentValue; //return previous current value
+    }
+
+    if (dataType == sdtInt16) {
+        currentValue = int16_t(tabReg[0]) * sensorScalingFactor;
+    } else {
+        float result = 0.0;
+        unsigned char * resultPtr= reinterpret_cast<unsigned char*>(&result);
+        unsigned char * responsePtr= reinterpret_cast<unsigned char*>(tabReg);
+
+
+        resultPtr[0] = responsePtr[2];
+        resultPtr[1] = responsePtr[3];
+        resultPtr[2] = responsePtr[0];
+        resultPtr[3] = responsePtr[1];
+
+        currentValue = result * sensorScalingFactor;
+    }
+
+    currentStatus = 1;
+    return currentValue;
+}
+
+void Sensor::disconnectSensor() {
+    LOG(INFO) << "Disconnecting modbus sensor, " << id;
+    modbus_close(sensorModbusCtx);
+    modbus_free(sensorModbusCtx);
+    sensorModbusCtx = nullptr;
 }

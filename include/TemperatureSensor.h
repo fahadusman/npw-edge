@@ -26,8 +26,6 @@ public:
     TemperatureSensor(communicator *cPtr, EdgeDevice *ePtr,
             rapidjson::Value &temperatureSensorObj);
     virtual ~TemperatureSensor();
-    double readSensorValue();
-    void initializeSensor();
     void temperatureSensorThread();
     void startThread();
     void stopThread();

@@ -53,6 +53,7 @@ TARGET_LINK_LIBRARIES(
 	pthread
 	serial
     stdc++fs
+    modbus
 )
 
 ######## Install targets ########

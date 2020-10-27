@@ -18,22 +18,14 @@
 #include "DevConfig.h"
 #include "SerialComPort.h"
 
-//const char * kDefaultPTPortName = "/dev/ttyM0";
-const unsigned char kKellerInitCommand[] = {1, 48, 52, 0};
-const unsigned char kKellerStandardReadCommand[] = {1, 3, 0, 2, 0, 2, 101, 203};
-const unsigned char kKellerPropReadCommand[] = {1, 73, 1, 80, 214};
-
 enum NpwState {noDropDetected, firstDropDetected, secondDropDetected};
 
 class PressureSensor: public Sensor {
 private:
-	SerialComPort sPort;
 	size_t npwBufferLength; //Number of samples in NPW buffer
 	std::vector<SensorReading<readingType> *> sensorReadingCircularBuffer;
 	unsigned int readingIntervalMs;
 	bool recodringValues;
-	double readSensorValue();
-	void initializeSensor();
 	std::thread * npwThreadPtr;
 	NpwBuffer * createNpwBuffer();
 	void updateMovingAverages();
