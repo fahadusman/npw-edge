@@ -244,7 +244,7 @@ void PressureSensor::updateNPWState(){
 //	LOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
 //			"\tisThresholdExceeded: " << isThresholdExceeded << "\tDeltaP: " << firstAverage - secondAverage;
 	if ((not wasThresholdExceeded) and isThresholdExceeded){
-		DLOG(INFO) << "pressure drop detected, DeltaP: " << firstAverage - secondAverage << "\tNPW State: " << currentNpwState;
+		LOG(INFO) << "pressure drop detected, DeltaP: " << firstAverage - secondAverage << "\tNPW State: " << currentNpwState;
 		switch (currentNpwState) {
 		case noDropDetected:
 			currentNpwState = firstDropDetected;
@@ -263,7 +263,7 @@ void PressureSensor::updateNPWState(){
 }
 
 void PressureSensor::npwThread(){
-	DLOG(INFO) << "starting npw thread\n";
+	LOG(INFO) << "starting npw thread\n";
 	__uint64_t previousPeriodicValueTransmitTime = 0;
 	double previousPeriodicVal = 0;
 	SensorReading<double> * sensorReadingPtr = NULL;
@@ -278,7 +278,7 @@ void PressureSensor::npwThread(){
 
 		currentValue = readSensorValue();
 //		currentValue = readSensorValueDummy();
-		DLOG_EVERY_N(INFO, 1000) << "PressureSensor - id: " << id
+		LOG_EVERY_N(INFO, 1000) << "PressureSensor - id: " << id
                 << ", v: " << currentValue << ", q: " << currentStatus
                 << ", t: " << currentTime;
 
@@ -316,11 +316,11 @@ void PressureSensor::npwThread(){
 		std::this_thread::sleep_until(wakeupTime);
 	}
 
-	DLOG(INFO) << "npwThread done";
+	LOG(INFO) << "npwThread done";
 }
 
 void PressureSensor::startNpwThread(){
-	DLOG(INFO) << "PressureSensor::startNpwThread()";
+	LOG(INFO) << "PressureSensor::startNpwThread()";
 	if (npwThreadPtr != NULL) {
 	    LOG(INFO) << "Stopping previous NPW Thread before starting new one.";
 	    stopNpwThread();
@@ -374,7 +374,7 @@ void PressureSensor::fillCircularBufferWithDummyValues(){
 	}
 	secondAverage = secondSum/(secondAverageEnd-secondAverageStart);
 
-	DLOG(INFO) << "firstAverage: " << firstAverage << "\tsecondAverage: " << secondAverage;
+	LOG(INFO) << "firstAverage: " << firstAverage << "\tsecondAverage: " << secondAverage;
 }
 
 void PressureSensor::updateReadingInterval(const int newInterval) {
