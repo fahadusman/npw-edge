@@ -31,7 +31,7 @@ TemperatureSensor::~TemperatureSensor() {
 }
 
 void TemperatureSensor::temperatureSensorThread() {
-    DLOG(INFO) << "starting TT thread\n";
+    LOG(INFO) << "starting TT thread\n";
     __uint64_t previousPeriodicValueTransmitTime = 0;
     double previousPeriodicVal = 0;
     std::chrono::time_point<std::chrono::high_resolution_clock> currentTimePoint =
@@ -55,18 +55,18 @@ void TemperatureSensor::temperatureSensorThread() {
                     currentValue);
         }
 
-        DLOG_EVERY_N(INFO, 10) << "TemperatureSensor - id: " << id
+        LOG_EVERY_N(INFO, 10) << "TemperatureSensor - id: " << id
                 << ", v: " << currentValue << ", q: " << currentStatus
                 << ", t: " << currentTime;
 
         std::this_thread::sleep_for(loopSleepInterval);
         processIncomingCommand();
     }
-    DLOG(INFO) << "temperature sensor thread done.";
+    LOG(INFO) << "temperature sensor thread done.";
 }
 
 void TemperatureSensor::startThread(){
-    DLOG(INFO) << "PressureSensor::startNpwThread()";
+    LOG(INFO) << "TemperatureSensor::startThread()";
     if (tempSensorThreadPtr != nullptr) {
         LOG(INFO) << "Stopping previous thread before starting new one.";
         stopThread();
@@ -78,7 +78,7 @@ void TemperatureSensor::startThread(){
 }
 
 void TemperatureSensor::stopThread(){
-    LOG(INFO) << "PressureSensor::stopThread()";
+    LOG(INFO) << "TemperatureSensor::stopThread()";
     recodringValues = false;
     tempSensorThreadPtr->join();
     delete tempSensorThreadPtr;
