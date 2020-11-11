@@ -143,7 +143,11 @@ bool MqttCommunicator::processIncomingMessage(const char * msg, const int & len)
         }
 
 //        {"timestamp":1579516307016,"values":[{"id":"PSI.Device1.MAX_TIME_PERIODIC","v":10,"q":true,"t":1579516306266}]}
-        if (doc.HasMember("values") and doc["values"].IsArray()) {
+        if (doc.HasMember("values") and doc["values"].IsArray()
+                and doc["values"].Size() < 2) { //TODO: Remove this check for size of commands array, this is temporarily
+                                                // added because of a weird behavior of Kepware that it publishes garbage
+                                                // values for all the commands and normally when we publish legitimate
+                                                // commands, they are always published as a single command in the array.
             for (auto &cmdDoc : doc["values"].GetArray()) {
                 if (cmdDoc.HasMember("id") and cmdDoc["id"].IsString()
                         and cmdDoc.HasMember("v") and cmdDoc["v"].IsInt()) {
