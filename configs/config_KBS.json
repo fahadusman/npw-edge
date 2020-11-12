@@ -27,7 +27,7 @@
         "sensor_type": "PT",
         "port": "/dev/ttyM1",
          "baud_rate": 115200,
-        "sensor_id": "PT_3010",
+        "sensor_id": "PT_3026",
         "sensor_scaling_factor": 1,
         "sensor_data_type": "float",
         "modbus_slave_id": 1,
