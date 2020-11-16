@@ -18,7 +18,7 @@ CommDataBuffer::CommDataBuffer(){
             std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();;
 	length = 0;
-	bufferId = bufferCount++;
+    bufferId = (bufferCount++)%65535; //bufferId is sent as 16-bit number is ack message
 	sensorId = "";
 	expiryTime = 0;
 }
