@@ -65,7 +65,7 @@ void EdgeDevice::initializeConfigMap() {
     configMap["NPW_SAMPLE_BEFORE"] = NPW_SAMPLE_BEFORE;
     configMap["NPW_SAMPLE_AFTER"] = NPW_SAMPLE_AFTER;
     configMap["TEST_FLAG"] = TEST_FLAG;
-    configMap["REBOOT_TIME"] = REBOOT_TIME;
+    configMap["REBOOT_DEVICE"] = REBOOT_DEVICE;
     configMap["HEARTBEAT_INTERVAL"] = HEARTBEAT_INTERVAL;
     configMap["ACK_NPW_BUFF"] = ACK_NPW_BUFF;
     configMap["NPW_THR_PT1"] = NPW_THR_PT1;
@@ -238,11 +238,14 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         LOG(WARNING) << "Uninitialized command received.";
         delete incomingCommand;
         break;
-    case REBOOT_TIME:
+    case REBOOT_DEVICE:
         //just exit the application.
         //In production, the application would run as a systemd service, and it
         //would restart automatically after shutdown.
-        keepRunning = false;
+        if (deviceId == incomingCommand->getData()) {
+            LOG(INFO) << "Received reboot command for device: " << deviceId;
+            keepRunning = false;
+        }
         delete incomingCommand;
         break;
     case HEARTBEAT_INTERVAL:
@@ -432,7 +435,7 @@ void EdgeDevice::initializeRegisterMap() {
     registerMap[NPW_SAMPLE_BEFORE] = kDcNpwSampleBefore.def;
     registerMap[NPW_SAMPLE_AFTER] = kDcNpwSampleAfter.def;
     registerMap[TEST_FLAG] = kDcTestFlag.def;
-    registerMap[REBOOT_TIME] = kDcRebootTime.def;
+    registerMap[REBOOT_DEVICE] = kDcRebootTime.def;
     registerMap[HEARTBEAT_INTERVAL] = kDcHeartbeatInterval.def;
     registerMap[SCALING_FACTOR_PT] = kDcNPWScaingFactor.def;
     registerMap[SCALING_OFFSET_PT] = kDcNPWScaingOffset.def;

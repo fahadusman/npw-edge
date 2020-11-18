@@ -30,7 +30,7 @@ enum CommandRegister {
     NPW_SAMPLE_BEFORE = 13,  //  Number of sample to buffer before NPW detection
     NPW_SAMPLE_AFTER = 14,   //  Number of sample to buffer after NPW detection
     TEST_FLAG = 15, //  When value changes from False to True, a dummy NPW packet will be sent
-    REBOOT_TIME = 16, //  For non-negative values, the edge device will be rebooted after this many seconds.
+    REBOOT_DEVICE = 16, //  Reboot the device if the device ID is matched.
     HEARTBEAT_INTERVAL = 17,   //  Interval for Edge device Heartbeat
     ACK_NPW_BUFF = 18,   // Acknowledgment of successfully receiving an NPW buffer with bufferId so that sender removes it from transmission queue.
     NPW_THR_PT1 = 19,  //  negative pressure drop threshold for detecting NPW for PT1
