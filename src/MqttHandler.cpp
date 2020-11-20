@@ -46,20 +46,27 @@ MqttCommunicator::MqttCommunicator(EdgeDevice *d,
         LOG(FATAL) << "Got exception while parsing config,json file: "
                 << e.what();
     }
-    asyncClientPtr = new mqtt::async_client(serverAddress, clientID);
-    asyncClientPtr->set_callback(cb);
+    try {
+        asyncClientPtr = new mqtt::async_client(serverAddress, clientID);
+        asyncClientPtr->set_callback(cb);
+
+    } catch (const mqtt::exception &mqttE) {
+        LOG(FATAL) << "Got exception while creating mqtt client: "
+                << mqttE.what();
+    }
     sendMessagesThreadPtr = new std::thread(&MqttCommunicator::sendQueuedMessagesThread, this);
 }
 
 void MqttCommunicator::connect() {
-//    static bool initialConnection = true;
     while (not isConnected()) {
         LOG(INFO) << "connecting to broker";
         try {
             asyncClientPtr->connect(conopts)->wait();
             LOG(INFO) << "MQTT Client Connected: " << clientID;
         } catch (const mqtt::exception& exc) {
-            LOG(ERROR) << "MQTT Exception: " << exc.what();
+            LOG(ERROR) << "MQTT Exception upon connecting: " << exc.what();
+        } catch (const std::exception & e) {
+            LOG(ERROR) << "Generic Exception upon connecting MQTT client: " << e.what();
         }
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
@@ -78,6 +85,7 @@ void MqttCommunicator::sendMessage(const char * message,
                 cleanSession)->wait_for(timeout);
     } catch (const mqtt::exception &exc) {
         LOG(ERROR) << "MQTT Exception: " << exc.what();
+        disconnect();
     }
 }
 
@@ -90,6 +98,7 @@ void MqttCommunicator::disconnect() {
             LOG(ERROR) << "MQTT Exception: " << exc.what();
         }
         LOG(INFO) << "successfully disconnected.: " << this->clientID;
+        cb.clearConnectedFlag();
     } else {
         LOG(WARNING) << "disconnect called for: " << clientID
                 << ", isConnected is already false.";
@@ -213,6 +222,21 @@ void user_callback::connected(const std::string& cause) {
     LOG(INFO) << "MQTT subscribe done";
 }
 
+void user_callback::connection_lost(const std::string& cause) {
+    connected_ = false;
+
+    commPtr->disconnect();
+    LOG(WARNING) << "\nConnection lost" << std::endl;
+    if (!cause.empty())
+        LOG(WARNING) << "\tcause: " << cause << std::endl;
+}
+
 void user_callback::setCommunicator(communicator* c) {
     commPtr = c;
+}
+
+void user_callback::delivery_complete(mqtt::delivery_token_ptr tok) {
+    LOG_EVERY_N (INFO, 100) << "\n\t[Delivery complete for token: "
+            << (tok ? tok->get_message_id() : -1) << "]" << std::endl;
+//        TODO: remove from transmit queue if it was inserted there
 }

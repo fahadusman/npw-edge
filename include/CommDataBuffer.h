@@ -26,7 +26,7 @@ protected:
     static uint32_t bufferCount;
     unsigned int length;
     uint64_t timeStamp;
-    uint32_t bufferId;
+    uint32_t bufferId;  //TODO: this should be uint16_t
     std::string sensorId;
     uint64_t expiryTime;
 public:

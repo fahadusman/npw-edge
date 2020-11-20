@@ -40,26 +40,16 @@ class user_callback: public virtual mqtt::callback {
     bool connected_;
     communicator * commPtr;
 
-    void connection_lost(const std::string& cause) override {
-        connected_ = false;
-
-        commPtr->disconnect();
-        LOG(WARNING) << "\nConnection lost" << std::endl;
-        if (!cause.empty())
-            LOG(WARNING) << "\tcause: " << cause << std::endl;
-    }
-
-    void delivery_complete(mqtt::delivery_token_ptr tok) override {
-        LOG_EVERY_N (INFO, 100) << "\n\t[Delivery complete for token: "
-                << (tok ? tok->get_message_id() : -1) << "]" << std::endl;
-//        TODO: remove from transmit queue if it was inserted there
-    }
+    void connection_lost(const std::string& cause) override;
+    void delivery_complete(mqtt::delivery_token_ptr tok) override;
     void connected(const std::string& cause) override;
-
 	void message_arrived(mqtt::const_message_ptr msg) override;
 
-
 public:
+    void clearConnectedFlag() {
+        connected_ = false;
+    }
+
     bool isConnected() {
         return connected_;
     }
