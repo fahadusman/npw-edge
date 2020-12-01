@@ -229,6 +229,11 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         {
             LOG(ERROR) << "Failed to enqueue slave command.";
         }
+
+        if (HEARTBEAT_INTERVAL == incomingCommand->getCommand()) {
+            setHeartbeatInterval(incomingCommand);
+        }
+
         return;
     }
 
@@ -301,7 +306,7 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
 
 void EdgeDevice::setHeartbeatInterval(CommandMsg * cmd) {
     int32_t hb = cmd->getData();
-    if (hb > kDcHeartbeatInterval.min and hb < kDcHeartbeatInterval.max) {
+    if (hb >= kDcHeartbeatInterval.min and hb <= kDcHeartbeatInterval.max) {
         heartbeatInterval = hb; //seconds
         updateRegisterValue(cmd);
 

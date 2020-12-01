@@ -107,8 +107,8 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 	return newNpwBufferPtr;
 }
 
-std::vector<double> simulatedValues;
 double PressureSensor::readSensorValueDummy(){
+    static std::vector<double> simulatedValues;
 	static int i = 0;
 	currentStatus = 1;
 	if (simulatedValues.size() == 0) {
@@ -172,7 +172,8 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
     firstAverage = -100.0;
     secondAverage = -100.0;
 
-	npwDetectionthreshold = edgeDevicePtr->getRegisterValue(CommandRegister(NPW_THR_PT1+sensorCount));
+    npwThrCmdRegNo = CommandRegister(NPW_THR_PT1+sensorCount);
+	npwDetectionthreshold = edgeDevicePtr->getRegisterValue(npwThrCmdRegNo);
 	currentNpwState = noDropDetected;
 	totalNPWsDetected = 0;
 
@@ -185,11 +186,11 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
 
     LOG(INFO) << "Going to add new config to map, Key: " << "NPW_THR_"
             << pressureSensorObj["sensor_id"].GetString()
-            << "\tValue: " << (CommandRegister)((int)NPW_THR_PT1 + sensorCount);
+            << "\tValue: " << npwThrCmdRegNo;
     edgeDevicePtr->addConfigToConfigMqp(
         std::string("NPW_THR_")
                 + pressureSensorObj["sensor_id"].GetString(),
-        edgeDevicePtr->getDeviceId(), (CommandRegister)((int)NPW_THR_PT1 + sensorCount));
+        edgeDevicePtr->getDeviceId(), npwThrCmdRegNo);
     sensorCount++;
     LOG_IF(FATAL, sensorCount > 4) << "More than four PTs are not supported";
 
@@ -241,8 +242,10 @@ void PressureSensor::updateNPWState(){
 
     bool isThresholdExceeded = fabs(firstAverage - secondAverage)
             > (npwDetectionthreshold + npwScalingOffset) / npwScalingFactor;
-//	LOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
-//			"\tisThresholdExceeded: " << isThresholdExceeded << "\tDeltaP: " << firstAverage - secondAverage;
+//  DLOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
+//			"\tisThresholdExceeded: " << isThresholdExceeded;
+//    DLOG(INFO) << "\tDeltaP: " << firstAverage - secondAverage << " Limit: "
+//            << (npwDetectionthreshold + npwScalingOffset) / npwScalingFactor;
 	if ((not wasThresholdExceeded) and isThresholdExceeded){
 		LOG(INFO) << "pressure drop detected, DeltaP: " << firstAverage - secondAverage << "\tNPW State: " << currentNpwState;
 		switch (currentNpwState) {
@@ -476,9 +479,13 @@ void PressureSensor::processIncomingCommand() {
             case NPW_THR_PT2:
             case NPW_THR_PT3:
             case NPW_THR_PT4:
-                npwDetectionthreshold = applyCommand(c, npwDetectionthreshold,
-                        kDcNpwPtThsh, true);
-                //TODO: check pt id first
+                if (c->getCommand() == npwThrCmdRegNo) {
+                    npwDetectionthreshold = applyCommand(c,
+                            npwDetectionthreshold, kDcNpwPtThsh, true);
+                } else {
+                    LOG(INFO) << "Command not for this pt, npwThrCmdRegNo: "
+                            << npwThrCmdRegNo;
+                }
                 break;
             case NPW_SAMPLE_AFTER:
                 samplesCountAfterDetection = applyCommand(c,

@@ -53,6 +53,7 @@ private:
                                 // obtained from PT to compensate for negative values
                                 // as they have to be transmitted as unsigned integers.
     bool suppressNPWBuffer;
+    CommandRegister npwThrCmdRegNo;
 
 	double readSensorValueDummy();
 
