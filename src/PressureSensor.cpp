@@ -108,7 +108,6 @@ NpwBuffer* PressureSensor::createNpwBuffer(){
 }
 
 double PressureSensor::readSensorValueDummy(){
-    static std::vector<double> simulatedValues;
 	static int i = 0;
 	currentStatus = 1;
 	if (simulatedValues.size() == 0) {
@@ -200,6 +199,7 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
     samplesCountPeriodicAverage = edgeDevicePtr->getRegisterValue(NUM_SAMPLES_PT_PERIODIC);
     currentStatus = -1;
 	startNpwThread();
+	wasThresholdExceeded = false;
 }
 
 /*
@@ -231,7 +231,6 @@ void PressureSensor::createNPWBuffer() {
 }
 
 void PressureSensor::updateNPWState(){
-	static bool wasThresholdExceeded = false;
 	if (circularBufferLength > sensorReadingCircularBuffer.size()) {
 //	    LOG_EVERY_N(INFO, 50) << "Not enough values in Circular buffer yet, size: " << sensorReadingCircularBuffer.size();
 	    currentNpwState = noDropDetected;
