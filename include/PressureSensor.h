@@ -67,6 +67,8 @@ private:
     void updateBufferLengths();
     static int sensorCount;
     unsigned int samplesCountPeriodicAverage;
+    bool wasThresholdExceeded;
+    std::vector<double> simulatedValues;
 
 public:
 	void npwThread();
