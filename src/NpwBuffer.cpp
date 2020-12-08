@@ -82,7 +82,7 @@ unsigned char * NpwBuffer::createByteArray() {
     byteArray[4] = decToBcd(npwTime->tm_min);
     byteArray[5] = decToBcd(npwTime->tm_sec);
     byteArray[6] = decToBcd((timeStamp % 1000) / 10); //First two digits of the millisecond (00..99)
-    byteArray[7] = decToBcd((timeStamp % 10) * 10 + npwTime->tm_wday + 1);
+    byteArray[7] = decToBcd((timeStamp % 10) * 0x10 + npwTime->tm_wday + 1);
 
     for (unsigned int i = 0; i < readingListLength; i++) {
         int currentVal = round(readingList[i]);
