@@ -473,6 +473,7 @@ void PressureSensor::processIncomingCommand() {
                         secondAverageStart, kDcStartSample2ndAvg, true);
                 secondAverageEnd = secondAverageStart
                         + secondAverageSampleCount;
+                updateBufferLengths();
                 break;
             case NPW_THR_PT1:
             case NPW_THR_PT2:
