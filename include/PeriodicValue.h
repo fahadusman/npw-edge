@@ -17,10 +17,10 @@ private:
     double sensorValue;
     int sensorStatus;
 public:
-    PeriodicValue(double v, uint64_t t, std::string id, int s){
+    PeriodicValue(double v, uint64_t t, const char * id, int s){
         sensorValue = v;
         timeStamp = t;
-        sensorId = id;
+        strncpy(sensorId, id, sensorIdLen);
         sensorStatus = s;
     }
     std::string serializeJson() override;

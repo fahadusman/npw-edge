@@ -27,7 +27,7 @@ public:
     virtual double readSensorValue();
     virtual void initializeSensor();
     void disconnectSensor();
-    Sensor(communicator * cptr, EdgeDevice * ePtr, std::string sensorId);
+    Sensor(communicator * cptr, EdgeDevice * ePtr, const char * sensorId);
     virtual void enqueueCommand (CommandMsg *);
     CommandMsg * dequeueCommand();
     virtual PeriodicValue * getCurrentValue();
@@ -48,7 +48,7 @@ protected:
     double periodicValChangeThreshold;
     unsigned int periodicValMinInterval;
     unsigned int periodicValMaxInterval;
-    std::string id;
+    char id[sensorIdLen];
     communicator * commPtr;
     std::queue <CommandMsg *> incomingCommandQueue;
     std::mutex commandQueueMutex;

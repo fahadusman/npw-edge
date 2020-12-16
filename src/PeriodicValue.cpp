@@ -14,11 +14,11 @@ std::string PeriodicValue::serializeJson() {
     rapidjson::Writer<rapidjson::StringBuffer> writer(s);
 
     writer.StartObject();
-    writer.Key(sensorId.c_str());
+    writer.Key(sensorId);
     writer.Double(sensorValue);
-    writer.Key(("t_" + sensorId).c_str());
+    writer.Key((std::string("t_") + sensorId).c_str());
     writer.Uint64(timeStamp);
-    writer.Key(("q_" + sensorId).c_str());
+    writer.Key((std::string("q_") + sensorId).c_str());
     writer.Int(sensorStatus);
     writer.EndObject();
 
@@ -30,12 +30,19 @@ std::string PeriodicValue::serializeJson() {
  * Returns a dynamically allocated buffer with serialized object,
  * and sets the reference of length.
  * In case of failure returns nullptr and sets length to 0.
+ *
+ * Byte 0: Buffer Type
+ * Byte 1-4 (4b): BufferId //TODO: It should actually be 2b
+ * Byte 5-12 (8b): Sensor value
+ * 13-20 (8b): Timestamp
+ * 4b: Status
+ * variable length: Sensor Id
  */
 unsigned char * PeriodicValue::serialize(int & length) {
     unsigned char * serialBuffer = nullptr;
     try {
         length = 1/*buffer type*/+ sizeof(bufferId) + sizeof(sensorValue)
-                + sizeof(timeStamp) + sizeof(sensorStatus) + sensorId.length() + 1/*null char for sensorId*/;
+                + sizeof(timeStamp) + sizeof(sensorStatus) + sensorIdLen;
 
         serialBuffer = new (std::nothrow) unsigned char [length];
         if (serialBuffer == nullptr) {
@@ -59,8 +66,7 @@ unsigned char * PeriodicValue::serialize(int & length) {
         std::memcpy(serialBuffer+i, &(sensorStatus), sizeof(sensorStatus));
         i+= sizeof(sensorStatus);
 
-        std::memcpy(serialBuffer+i, sensorId.c_str(), sensorId.length());
-        serialBuffer[i+sensorId.length()] = '\0';
+        std::memcpy(serialBuffer+i, sensorId, sensorIdLen);
 
         return serialBuffer;
     }
@@ -82,7 +88,7 @@ unsigned char * PeriodicValue::serialize(int & length) {
  */
 bool PeriodicValue::deserialize(const unsigned char * serialBuff, const int & len) {
     unsigned int expectedLength = 1/*buffer type*/+ sizeof(bufferId) + sizeof(sensorValue)
-                        + sizeof(timeStamp) + sizeof(sensorStatus) + sensorId.length() + 1/*null char for sensorId*/;
+                        + sizeof(timeStamp) + sizeof(sensorStatus) + sensorIdLen;
     if ((unsigned int) len < expectedLength) {
         LOG(WARNING) << "Length of serialized buffer for periodic value is too short: " << len;
         return false;
@@ -101,7 +107,6 @@ bool PeriodicValue::deserialize(const unsigned char * serialBuff, const int & le
     std::memcpy(&(sensorStatus), serialBuff+i, sizeof(sensorStatus));
     i += sizeof(sensorStatus);
 
-    sensorId.clear();
-    sensorId.append((char *)(&serialBuff[i]), len-i);
+    std::memcpy(sensorId, serialBuff+i, sensorIdLen);
     return true;
 }

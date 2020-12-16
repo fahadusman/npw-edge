@@ -15,6 +15,8 @@
 #include <cstdint>
 #include <string>
 
+const size_t sensorIdLen = 10;
+
 enum BufferType {
     buffTypePeriodicValue,
     buffTypeNpwBuffer,
@@ -26,8 +28,8 @@ protected:
     static uint32_t bufferCount;
     unsigned int length;
     uint64_t timeStamp;
-    std::string sensorId;
     uint16_t bufferId;
+    char sensorId[sensorIdLen];
     uint64_t expiryTime;
 public:
     virtual std::string serializeJson() = 0;
