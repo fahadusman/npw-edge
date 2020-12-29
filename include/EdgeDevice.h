@@ -44,9 +44,12 @@ public:
     void addSensor(Sensor * sensorPtr);
     void setCommunicator(communicator * cPtr);
     void setModbusMaster(RadioCommunicator * modbusMasterPtr);
-    int sendMessage(CommDataBuffer * d);
+    bool sendMessage(CommDataBuffer * d);
     std::list<PeriodicValue*> getCurrentValues();
     PeriodicValue* getPeriodicSensorValue();
+    size_t getSensorCount() {
+        return sensorsList.size();
+    }
     Role getRole() {
         return edgeDeviceRole;
     }

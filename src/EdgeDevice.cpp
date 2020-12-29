@@ -349,7 +349,7 @@ void EdgeDevice::setModbusMaster(RadioCommunicator * modbusMasterPtr) {
     modbusMaster = modbusMasterPtr;
 }
 
-int EdgeDevice::sendMessage(CommDataBuffer * d) {
+bool EdgeDevice::sendMessage(CommDataBuffer * d) {
     if (commPtr == nullptr) {
         LOG(ERROR) << "commPtr not set for Edge Device. Cannot send message.";
         return 0;

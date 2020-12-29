@@ -93,6 +93,9 @@ protected:
             std::chrono::time_point<std::chrono::high_resolution_clock> expTime);
     std::string binaryToModbusAsciiMessage(int serializedMsgLen,
             unsigned char* asciiMessage);
+    void appendToCombinedBuffer(unsigned char combinedBuffer[3000],
+            CommDataBuffer *periodicDataPtr, uint16_t &combinedBuffIndex);
+    unsigned char * createMultipleBuffer(uint16_t & combinedDataLength);
 
     uint8_t modbusSlaveAddress; // used as modbus slave address in slave mode,
                                 // and current slave that was being polled when in Master mode
@@ -104,6 +107,9 @@ protected:
     bool sendQueuedCommand();
     void initializeVariables(ModbusModes mode,
             const std::string &radioPort, const int &slaveAddress);
+    int processSingleCommBuffer(const unsigned char *dataBuff,
+            const uint16_t &dataLen, unsigned char slaveAddress,
+            CommDataBuffer *receivedData);
 
     bool slaveThreadDone;
     bool masterThreadDone;

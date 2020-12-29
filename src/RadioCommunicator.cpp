@@ -419,45 +419,75 @@ std::string RadioCommunicator::binaryToModbusAsciiMessage(int serializedMsgLen,
     return modbusResponse;
 }
 
-// send one message from transmit queue.
-void RadioCommunicator::transmitMessage() {
-    CommDataBuffer* commPtr = getQueuedMessage();
-    unsigned char * serializedMessage = nullptr;
+void RadioCommunicator::appendToCombinedBuffer(
+        unsigned char combinedBuffer[3000], CommDataBuffer *periodicDataPtr,
+        uint16_t &combinedBuffIndex) {
 
-    if (commPtr == nullptr) {
-        commPtr = edgeDevicePtr->getHeartBeat();
+    int currentBufferLength = 0;
+    unsigned char *binaryData = periodicDataPtr->serialize(currentBufferLength);
+    std::memcpy(combinedBuffer + combinedBuffIndex, binaryData,
+            currentBufferLength);
+    delete binaryData;
+    binaryData = nullptr;
+    combinedBuffIndex += currentBufferLength;
+}
+
+unsigned char* RadioCommunicator::createMultipleBuffer(
+        uint16_t &combinedDataLength) {
+
+    size_t sensorCount = edgeDevicePtr->getSensorCount();
+    CommDataBuffer* periodicDataPtr = nullptr;
+    size_t combinedBuffMaxSize = 3000;
+    unsigned char * combinedBuffer =
+            new (std::nothrow) unsigned char [combinedBuffMaxSize];
+    if (combinedBuffer == nullptr) {
+        LOG(ERROR) << "Unable to allocate memory for combinedBuffer";
+        return combinedBuffer;
     }
 
+    combinedBuffer[0] = buffTypeMultiple;
+
+    combinedDataLength = 3; // [0]: buffType, [1-2]: size
+    for (unsigned int x = 0; x < sensorCount; x++) {
+        periodicDataPtr = edgeDevicePtr->getPeriodicSensorValue();
+        appendToCombinedBuffer(combinedBuffer, periodicDataPtr,
+                combinedDataLength);
+    }
+    CommDataBuffer *commPtr = edgeDevicePtr->getHeartBeat();
+
     if (commPtr == nullptr) {
-        commPtr = edgeDevicePtr->getPeriodicSensorValue();
+        commPtr = getQueuedMessage();
     }
 
     if (commPtr != nullptr) {
-        uint64_t currentTime = std::chrono::duration_cast<
-                std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
-        if (0 != commPtr->getExpiryTime()
-                && currentTime > commPtr->getExpiryTime()) {
-            LOG(WARNING) << "Discarding expired message, id: "
-                    << commPtr->getBufferId() << "\tt: "
-                    << commPtr->getTimestamp() << "\tExp time: "
-                    << commPtr->getExpiryTime();
-            this->removeMessageFromQueue(commPtr->getBufferId());
-        } else {
-            LOG(INFO) << "Sending Message with t: "
-                    << commPtr->getTimestamp();
-            int serializedMsgLen = 0;
-            serializedMessage = commPtr->serialize(serializedMsgLen);
-            if (serializedMessage != nullptr && serializedMsgLen > 0) {
-                std::string modbusResponse = binaryToModbusAsciiMessage(
-                        serializedMsgLen, serializedMessage);
-
-                sendMessage(modbusResponse.c_str(),
-                        modbusResponse.length());
-                delete serializedMessage;
-            }
-        }
+        appendToCombinedBuffer(combinedBuffer, commPtr, combinedDataLength);
     }
+
+    std::memcpy(combinedBuffer+1, &combinedDataLength, 2);
+
+    LOG(INFO) << "Created combined buffer of length: " << combinedDataLength;
+
+    return combinedBuffer;
+}
+
+// send one message from transmit queue.
+void RadioCommunicator::transmitMessage() {
+
+    uint16_t combinedDataLen = 0;
+
+    unsigned char * combinedBuff =
+            createMultipleBuffer(combinedDataLen);
+
+    if (combinedBuff != nullptr && combinedDataLen > 0) {
+        std::string modbusResponse = binaryToModbusAsciiMessage(
+                combinedDataLen, combinedBuff);
+
+        sendMessage(modbusResponse.c_str(),
+                modbusResponse.length());
+        delete combinedBuff;
+        combinedBuff = nullptr;
+    }
+    return;
 }
 
 bool RadioCommunicator::parseModbusCommand(ModbusMessage & modbusMsg,
@@ -616,6 +646,36 @@ bool RadioCommunicator::parseModbusResponse(ModbusMessage & modbusMsg,
     return true;
 }
 
+int RadioCommunicator::processSingleCommBuffer(const unsigned char *dataBuff,
+        const uint16_t &dataLen, unsigned char slaveAddress,
+        CommDataBuffer *receivedData) {
+    int ret = 0;
+    int bytesConsumed = receivedData->deserialize(dataBuff, int(dataLen));
+    ret = bytesConsumed;
+    if (bytesConsumed > 0) {
+        LOG(INFO) << "Received Buffer successfully deserailzed, timestamp: "
+                << receivedData->getTimestamp() << " Len: " << dataLen;
+        if (edgeDevicePtr->sendMessage(receivedData) == 1) {
+            if (dataBuff[0] == (unsigned char) (buffTypeNpwBuffer)) {
+                //Send acknowledgment.
+                sendModbusCommand(slaveAddress, ACK_NPW_BUFF,
+                        receivedData->getBufferId());
+            }
+            ret = bytesConsumed;
+        } else {
+            delete receivedData;
+            ret = 0;
+            LOG(WARNING) << "sendMessage failed, discarding received data";
+        }
+    } else {
+        LOG(ERROR) << "Failed to deserialize received buffer";
+        delete receivedData;
+        receivedData = nullptr;
+        ret = 0;
+    }
+    return ret;
+}
+
 bool RadioCommunicator::processIncomingMessage(const char * message,
         const int & length) {
     LOG_FIRST_N(INFO, 10) << "radio::processIncomingMessage: " << message << "len: "
@@ -627,7 +687,7 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
     }
 
     ModbusMessage modbusMsg = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-    bool ret = false;
+    int bytesConsumed = 0;
 
     if (modbusMode == modbusModeMaster) {
         CommDataBuffer * receivedData = nullptr;
@@ -642,12 +702,32 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
                 return false;
             }
 
-            if ((BufferType)modbusMsg.data[0] == buffTypeNpwBuffer) {
-                receivedData = new NpwBuffer();
-            } else if ((BufferType)modbusMsg.data[0] == buffTypePeriodicValue) {
-                receivedData = new PeriodicValue(0, 0, "", 0);
-            } else if ((BufferType)modbusMsg.data[0] == buffTypeHeartBeat) {
-                receivedData = new HeartbeatBuffer();
+            if ((BufferType)modbusMsg.data[0] == buffTypeMultiple) {
+                uint16_t multiBuffLen = 0;
+                std::memcpy(&multiBuffLen, modbusMsg.data+1, sizeof(multiBuffLen));
+                unsigned int currentIndex = 3;
+                do {
+                    BufferType bType = (BufferType)modbusMsg.data[currentIndex];
+                    LOG(INFO) << "Creating new buffer, type: " << bType << " currentIndex: " << currentIndex;
+                    if ( bType == buffTypeNpwBuffer) {
+                        receivedData = new NpwBuffer();
+                    } else if (bType  == buffTypePeriodicValue) {
+                        receivedData = new PeriodicValue(0, 0, "", 0);
+                    } else if (bType  == buffTypeHeartBeat) {
+                        receivedData = new HeartbeatBuffer();
+                    } else {
+                        LOG(ERROR) << "Unknown buffer type, processIncomingMessage. "
+                                << int(bType);
+                        return false;
+                    }
+
+                    int remainingData = length -  currentIndex;
+                    bytesConsumed = processSingleCommBuffer(modbusMsg.data+currentIndex,
+                            remainingData, modbusMsg.slaveAddress, receivedData);
+                    currentIndex += bytesConsumed;
+
+                } while (currentIndex < multiBuffLen and bytesConsumed > 0);
+
             } else {
                 LOG(ERROR) << "Unknown buffer type, processIncomingMessage. "
                         << int(modbusMsg.data[0]);
@@ -658,33 +738,11 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
             return false;
         }
 
-        if (receivedData->deserialize(modbusMsg.data, modbusMsg.byteCount)) {
-            LOG(INFO)
-                    << "Received Buffer successfully deserailzed, timestamp: "
-                    << receivedData->getTimestamp();
-            if (edgeDevicePtr->sendMessage(receivedData) == 1) {
-                if (modbusMsg.data[0] == (unsigned char) buffTypeNpwBuffer) {
-                    //Send acknowledgment.
-                    sendModbusCommand(modbusMsg.slaveAddress, ACK_NPW_BUFF,
-                            receivedData->getBufferId());
-                }
-                ret = true;
-            } else {
-                delete receivedData;
-                LOG(WARNING) << "sendMessage failed, discarding received data";
-            }
-        } else {
-            LOG(ERROR) << "Failed to deserialize received buffer";
-            delete receivedData;
-            receivedData = nullptr;
-            ret = false;
-        }
-
     } else { /* for modbusSlave */
-        ret = parseModbusCommand(modbusMsg, message, length);
-        if (not ret) {
+        bytesConsumed = parseModbusCommand(modbusMsg, message, length);
+        if (not bytesConsumed) {
             LOG(WARNING) << "parseModbusCommand failed.";
-            return ret;
+            return bytesConsumed;
         }
         CommandMsg * cmd = nullptr;
 
@@ -710,7 +768,7 @@ bool RadioCommunicator::processIncomingMessage(const char * message,
         }
     }
 
-    return ret;
+    return bytesConsumed;
 }
 
 void RadioCommunicator::sendQueuedMessagesThread() {
