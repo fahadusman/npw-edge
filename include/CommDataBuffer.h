@@ -20,7 +20,8 @@ const size_t sensorIdLen = 10;
 enum BufferType {
     buffTypePeriodicValue,
     buffTypeNpwBuffer,
-    buffTypeHeartBeat
+    buffTypeHeartBeat,
+    buffTypeMultiple
 };
 
 class CommDataBuffer {
