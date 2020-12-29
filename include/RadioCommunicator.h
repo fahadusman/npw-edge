@@ -59,6 +59,11 @@ struct ModbusMessage {
             << "\nwriteData: " << writeData
             << "\nerrorCheck: " << (int)errorCheck;
     }
+    ~ModbusMessage(){
+        if (data != nullptr) {
+            delete data;
+        }
+    }
 };
 
 struct ModbusSlave {
