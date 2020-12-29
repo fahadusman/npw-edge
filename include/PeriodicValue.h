@@ -25,6 +25,7 @@ public:
     }
     std::string serializeJson() override;
     unsigned char * serialize(int & length) override;
-    bool deserialize(const unsigned char * serialBuff, const int & len);
+    int deserialize(const unsigned char * serialBuff, const int & len);
+    size_t getSerializedBuffLen() override;
 };
 #endif /* INCLUDE_PERIODICVALUE_H_ */

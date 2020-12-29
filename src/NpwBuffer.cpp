@@ -111,11 +111,19 @@ std::string NpwBuffer::serializeJson() {
     return s.GetString();
 }
 
+size_t NpwBuffer::getSerializedBuffLen() {
+    LOG(INFO) << "serialized NPW Buffer Len: "
+            << (1 + sizeof(bufferId) + sizeof(byteArrayLength) + byteArrayLength
+                    + sizeof(timeStamp) + sizeof(expiryTime) + sensorIdLen);
+
+    return (1 + sizeof(bufferId) + sizeof(byteArrayLength) + byteArrayLength
+            + sizeof(timeStamp) + sizeof(expiryTime) + sensorIdLen);
+}
+
 unsigned char * NpwBuffer::serialize(int & length) {
     unsigned char * serialBuffer = nullptr;
     try {
-        length = 1/*buffer type*/+ sizeof(bufferId) + sizeof(byteArrayLength) + byteArrayLength
-                + sizeof(timeStamp) + sizeof(expiryTime) + sensorIdLen;
+        length = getSerializedBuffLen();
 
         serialBuffer = new (std::nothrow) unsigned char [length];
         if (serialBuffer == nullptr) {
@@ -160,11 +168,14 @@ unsigned char * NpwBuffer::serialize(int & length) {
 
 }
 
-bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
-//    TODO: Determine length of byte array
-    if ((unsigned int) len < (byteArrayLength + sizeof(timeStamp) + sizeof(expiryTime))) {
-        LOG(WARNING) << "Length of serialized buffer for NPW buffer value is too short: " << len;
-        return false;
+int NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
+    int expectedLength = getSerializedBuffLen();
+    LOG_FIRST_N(INFO, 10) << "NpwBuffer::deserialize, expected len: " << expectedLength;
+    if (len < expectedLength) {
+        LOG(WARNING)
+                << "Length of serialized buffer for NPW buffer value is too short: "
+                << len;
+        return 0;
     }
     unsigned int i = 1; //first (0th) byte is buffer-type, we don't need that here
 
@@ -173,6 +184,14 @@ bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
 
     std::memcpy(&(byteArrayLength), serialBuff+i, sizeof(byteArrayLength));
     i+= sizeof(byteArrayLength);
+
+    expectedLength += byteArrayLength;
+    if (len < expectedLength) {
+        LOG(WARNING)
+                << "Length of serialized buffer for NPW buffer value is too short: "
+                << len << ", Expected: " << expectedLength;
+        return 0;
+    }
 
     readingListLength = (byteArrayLength-kHdrLen)/2;
     readingList = new (std::nothrow) readingType[readingListLength];
@@ -199,7 +218,9 @@ bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
     i+= sizeof(expiryTime);
 
     memcpy(sensorId, serialBuff+i, sensorIdLen);
-    return true;
+    i += sensorIdLen;
+
+    return i;
 }
 
 NpwBuffer::~NpwBuffer() {

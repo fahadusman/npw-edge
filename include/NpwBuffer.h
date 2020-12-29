@@ -33,8 +33,9 @@ public:
 
     std::string serializeJson() override;
     unsigned char * serialize(int & length) override;
-    bool deserialize(const unsigned char *, const int & length) override;
+    int deserialize(const unsigned char *, const int & length) override;
     ~NpwBuffer();
+    size_t getSerializedBuffLen() override;
 };
 
 #endif /* INCLUDE_NPWBUFFER_H_ */

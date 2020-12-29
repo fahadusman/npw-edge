@@ -35,7 +35,7 @@ protected:
 public:
     virtual std::string serializeJson() = 0;
     virtual unsigned char * serialize(int & length) = 0;
-    virtual bool deserialize(const unsigned char *, const int & length) = 0;
+    virtual int deserialize(const unsigned char *, const int & length) = 0;
     CommDataBuffer();
     uint64_t getTimestamp() {
         return timeStamp;
@@ -45,6 +45,7 @@ public:
     }
     void setExpiryTime(uint64_t et);
     uint64_t getExpiryTime();
+    virtual size_t getSerializedBuffLen() = 0;
     virtual ~CommDataBuffer() {
     }
 };
