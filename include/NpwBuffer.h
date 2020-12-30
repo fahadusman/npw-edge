@@ -27,14 +27,15 @@ public:
         return timeStamp;
     }
     NpwBuffer();
-    NpwBuffer(uint64_t ts, unsigned int readingListLen, std::string sId);
+    NpwBuffer(const uint64_t ts, const unsigned int readingListLen, const char * sId);
     unsigned char * createByteArray();
     void insertAt(const unsigned int position, readingType value);
 
     std::string serializeJson() override;
     unsigned char * serialize(int & length) override;
-    bool deserialize(const unsigned char *, const int & length) override;
+    int deserialize(const unsigned char *, const int & length) override;
     ~NpwBuffer();
+    size_t getSerializedBuffLen() override;
 };
 
 #endif /* INCLUDE_NPWBUFFER_H_ */

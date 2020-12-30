@@ -54,6 +54,10 @@ private:
                                 // as they have to be transmitted as unsigned integers.
     bool suppressNPWBuffer;
     CommandRegister npwThrCmdRegNo;
+    bool breachOnPressureDropOnly;
+    // 1 =  only pressure drop events would trigger NPW buffer creation
+    // 0 =  pressure difference (rise or fall) will be considered as breach
+    //      event when it is greater than currently configured threshold value.
 
 	double readSensorValueDummy();
 

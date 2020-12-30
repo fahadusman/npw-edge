@@ -15,10 +15,13 @@
 #include <cstdint>
 #include <string>
 
+const size_t sensorIdLen = 10;
+
 enum BufferType {
     buffTypePeriodicValue,
     buffTypeNpwBuffer,
-    buffTypeHeartBeat
+    buffTypeHeartBeat,
+    buffTypeMultiple
 };
 
 class CommDataBuffer {
@@ -26,13 +29,13 @@ protected:
     static uint32_t bufferCount;
     unsigned int length;
     uint64_t timeStamp;
-    uint32_t bufferId;  //TODO: this should be uint16_t
-    std::string sensorId;
+    uint16_t bufferId;
+    char sensorId[sensorIdLen];
     uint64_t expiryTime;
 public:
     virtual std::string serializeJson() = 0;
     virtual unsigned char * serialize(int & length) = 0;
-    virtual bool deserialize(const unsigned char *, const int & length) = 0;
+    virtual int deserialize(const unsigned char *, const int & length) = 0;
     CommDataBuffer();
     uint64_t getTimestamp() {
         return timeStamp;
@@ -42,6 +45,7 @@ public:
     }
     void setExpiryTime(uint64_t et);
     uint64_t getExpiryTime();
+    virtual size_t getSerializedBuffLen() = 0;
     virtual ~CommDataBuffer() {
     }
 };

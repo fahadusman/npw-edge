@@ -34,6 +34,7 @@ const DevConfig kDcNpwNumPack       { 1, 50, 25 },
         kDcNPWScaingOffset     {-100, 100, 0},
         kDcFlagNPWSuppress     { 0, 1, 0 },
         kDcNumSamplesPeriodicAvg {1, 200, 3},
-        kDcTimezoneOffset {-43200, 43200, 0};
+        kDcTimezoneOffset   { -43200, 43200, 0 },
+        kDcBreachOnlyOnDrop { 0, 1, 1 };
 
 #endif /* INCLUDE_DEVCONFIG_H_ */

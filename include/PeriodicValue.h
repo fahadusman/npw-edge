@@ -17,14 +17,15 @@ private:
     double sensorValue;
     int sensorStatus;
 public:
-    PeriodicValue(double v, uint64_t t, std::string id, int s){
+    PeriodicValue(double v, uint64_t t, const char * id, int s){
         sensorValue = v;
         timeStamp = t;
-        sensorId = id;
+        strncpy(sensorId, id, sensorIdLen);
         sensorStatus = s;
     }
     std::string serializeJson() override;
     unsigned char * serialize(int & length) override;
-    bool deserialize(const unsigned char * serialBuff, const int & len);
+    int deserialize(const unsigned char * serialBuff, const int & len);
+    size_t getSerializedBuffLen() override;
 };
 #endif /* INCLUDE_PERIODICVALUE_H_ */

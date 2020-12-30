@@ -19,9 +19,9 @@ NpwBuffer::NpwBuffer() {
     byteArrayLength = 0;
 }
 
-NpwBuffer::NpwBuffer(uint64_t ts, unsigned int readingListLen, std::string sId) {
+NpwBuffer::NpwBuffer(const uint64_t ts, const unsigned int readingListLen, const char * sId) {
     readingListLength = readingListLen;
-    sensorId = sId;
+    strncpy(sensorId, sId, sensorIdLen);
     readingList = new (std::nothrow) readingType[readingListLen];
     LOG_IF(FATAL, readingList == nullptr) << "Unable to allocate memory for readingList";
     timeStamp = ts;
@@ -100,7 +100,7 @@ std::string NpwBuffer::serializeJson() {
     rapidjson::StringBuffer s;
     rapidjson::Writer<rapidjson::StringBuffer> writer(s);
     writer.StartObject();
-    writer.Key(("NPW_array_" + sensorId).c_str());
+    writer.Key((std::string("NPW_array_") + sensorId).c_str());
     writer.StartArray();
     for (unsigned int i = 0; i < byteArrayLength; i++)
         writer.Uint(byteArray[i]);
@@ -111,11 +111,19 @@ std::string NpwBuffer::serializeJson() {
     return s.GetString();
 }
 
+size_t NpwBuffer::getSerializedBuffLen() {
+    LOG(INFO) << "serialized NPW Buffer Len: "
+            << (1 + sizeof(bufferId) + sizeof(byteArrayLength) + byteArrayLength
+                    + sizeof(timeStamp) + sizeof(expiryTime) + sensorIdLen);
+
+    return (1 + sizeof(bufferId) + sizeof(byteArrayLength) + byteArrayLength
+            + sizeof(timeStamp) + sizeof(expiryTime) + sensorIdLen);
+}
+
 unsigned char * NpwBuffer::serialize(int & length) {
     unsigned char * serialBuffer = nullptr;
     try {
-        length = 1/*buffer type*/+ sizeof(bufferId) + sizeof(byteArrayLength) + byteArrayLength
-                + sizeof(timeStamp) + sizeof(expiryTime) + sensorId.length() + 1/*null char for sensorId*/;
+        length = getSerializedBuffLen();
 
         serialBuffer = new (std::nothrow) unsigned char [length];
         if (serialBuffer == nullptr) {
@@ -144,8 +152,8 @@ unsigned char * NpwBuffer::serialize(int & length) {
         std::memcpy(serialBuffer+i, &(expiryTime), sizeof(expiryTime));
         i+= sizeof(expiryTime);
 
-        std::memcpy(serialBuffer+i, sensorId.c_str(), sensorId.length());
-        serialBuffer[i+sensorId.length()] = '\0';
+        std::memcpy(serialBuffer+i, sensorId, sensorIdLen);
+        serialBuffer[i+sensorIdLen-1] = '\0';
         return serialBuffer;
     }
     catch (const std::exception & e) {
@@ -160,11 +168,14 @@ unsigned char * NpwBuffer::serialize(int & length) {
 
 }
 
-bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
-//    TODO: Determine length of byte array
-    if ((unsigned int) len < (byteArrayLength + sizeof(timeStamp) + sizeof(expiryTime))) {
-        LOG(WARNING) << "Length of serialized buffer for NPW buffer value is too short: " << len;
-        return false;
+int NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
+    int expectedLength = getSerializedBuffLen();
+    LOG_FIRST_N(INFO, 10) << "NpwBuffer::deserialize, expected len: " << expectedLength;
+    if (len < expectedLength) {
+        LOG(WARNING)
+                << "Length of serialized buffer for NPW buffer value is too short: "
+                << len;
+        return 0;
     }
     unsigned int i = 1; //first (0th) byte is buffer-type, we don't need that here
 
@@ -173,6 +184,14 @@ bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
 
     std::memcpy(&(byteArrayLength), serialBuff+i, sizeof(byteArrayLength));
     i+= sizeof(byteArrayLength);
+
+    expectedLength += byteArrayLength;
+    if (len < expectedLength) {
+        LOG(WARNING)
+                << "Length of serialized buffer for NPW buffer value is too short: "
+                << len << ", Expected: " << expectedLength;
+        return 0;
+    }
 
     readingListLength = (byteArrayLength-kHdrLen)/2;
     readingList = new (std::nothrow) readingType[readingListLength];
@@ -198,9 +217,10 @@ bool NpwBuffer::deserialize(const unsigned char * serialBuff, const int & len) {
     std::memcpy(&(expiryTime), serialBuff+i, sizeof(expiryTime));
     i+= sizeof(expiryTime);
 
-    sensorId.clear();
-    sensorId.append((char *)(&serialBuff[i]), len-i);
-    return true;
+    memcpy(sensorId, serialBuff+i, sensorIdLen);
+    i += sensorIdLen;
+
+    return i;
 }
 
 NpwBuffer::~NpwBuffer() {

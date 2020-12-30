@@ -11,17 +11,23 @@
 #include <exception>
 #include <glog/logging.h>
 #include <math.h>
+#include <string.h>
 
 #include "DevConfig.h"
 
-Sensor::Sensor(communicator *cptr, EdgeDevice *eptr, std::string sensorId) :
+Sensor::Sensor(communicator *cptr, EdgeDevice *eptr, const char * sensorId) :
         commPtr(cptr), edgeDevicePtr(eptr) {
     currentValue = 0;
     currentTime = 0;
     periodicValChangeThreshold = 0;
     periodicValMinInterval = kDcMinTimePeriodic.def;
     periodicValMaxInterval = kDcMaxTimePeriodic.def;
-    id = (sensorId == "")?"defaultId":sensorId;
+    if (sensorId == nullptr or strlen(sensorId) == 0) {
+        strncpy(id, "defaultId", sensorIdLen);
+        LOG(FATAL) << "Invalid SensorId";
+    } else {
+        strncpy(id, sensorId, sensorIdLen);
+    }
     enablePeriodicValues = false;
     currentStatus = 0;
     sensorModbusCtx = nullptr;
@@ -107,7 +113,8 @@ uint64_t Sensor::sendPeriodicValue(uint64_t currentTime,
 void Sensor::parseSensorJsonObj(const rapidjson::Value & sensorObj) {
     try {
         sensorPort = sensorObj["port"].GetString();
-        id = sensorObj["sensor_id"].GetString();
+        strncpy(id, sensorObj["sensor_id"].GetString(), sensorIdLen);
+        id[sensorIdLen-1] = '\0';
         sensorBaudRate = sensorObj["baud_rate"].GetInt64();
         sensorScalingFactor = sensorObj["sensor_scaling_factor"].GetFloat();
         std::string dataTypeStr = sensorObj["sensor_data_type"].GetString();

@@ -74,22 +74,27 @@ unsigned char * HeartbeatBuffer::serialize(int & length) {
     length = 0;
     return serialBuffer;}
 
-bool HeartbeatBuffer::deserialize(const unsigned char * hbBuffer,
+size_t HeartbeatBuffer::getSerializedBuffLen() {
+    return 1/*buffer type*/+ sizeof(bufferId) + sizeof(deviceId)
+                    + sizeof(timeStamp) + sizeof(registerMap);
+}
+
+int HeartbeatBuffer::deserialize(const unsigned char * hbBuffer,
         const int & length) {
-    if ((unsigned int) length
-            != 1/*buffer type*/+ sizeof(bufferId) + sizeof(deviceId)
-                    + sizeof(timeStamp) + sizeof(registerMap)) {
+    int expectedLength = getSerializedBuffLen();
+
+    if (length < expectedLength) {
         LOG(WARNING)
                 << "Length of serialized heartbeat buffer is not correct: "
-                << length;
-        return false;
+                << length << "< Expected: " << expectedLength;
+        return 0;
     }
 
     if (buffTypeHeartBeat != (BufferType)(hbBuffer[0])){
         LOG(WARNING)
                 << "HeartbeatBuffer::deserialize(), incorrect buffer type"
                 << (unsigned int) hbBuffer[0];
-        return false;
+        return 0;
     }
 
     unsigned int i = 1; //first (0th) byte is buffer-type
@@ -114,7 +119,7 @@ bool HeartbeatBuffer::deserialize(const unsigned char * hbBuffer,
         deviceName = "InvalidDeviceName";
     }
 
-    return true;
+    return i;
 }
 
 HeartbeatBuffer::HeartbeatBuffer(uint32_t devId,
