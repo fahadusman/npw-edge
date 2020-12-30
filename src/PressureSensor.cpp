@@ -197,6 +197,7 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
     npwScalingOffset = edgeDevicePtr->getRegisterValue(SCALING_OFFSET_PT);
     suppressNPWBuffer = edgeDevicePtr->getRegisterValue(FLAG_NPW_SUPPRESS);
     samplesCountPeriodicAverage = edgeDevicePtr->getRegisterValue(NUM_SAMPLES_PT_PERIODIC);
+	breachOnPressureDropOnly = edgeDevicePtr->getRegisterValue(BREACH_ONLY_ON_DROP);
     currentStatus = -1;
 	startNpwThread();
 	wasThresholdExceeded = false;
@@ -238,9 +239,14 @@ void PressureSensor::updateNPWState(){
 	}
 
 	updateMovingAverages();
-
-    bool isThresholdExceeded = fabs(firstAverage - secondAverage)
-            > (npwDetectionthreshold + npwScalingOffset) / npwScalingFactor;
+	bool isThresholdExceeded;
+	if (breachOnPressureDropOnly) {
+        isThresholdExceeded = (firstAverage - secondAverage)
+             > (npwDetectionthreshold + npwScalingOffset) / npwScalingFactor;
+	} else {
+	    isThresholdExceeded = fabs(firstAverage - secondAverage)
+             > (npwDetectionthreshold + npwScalingOffset) / npwScalingFactor;
+	}
 //  DLOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
 //			"\tisThresholdExceeded: " << isThresholdExceeded;
 //    DLOG(INFO) << "\tDeltaP: " << firstAverage - secondAverage << " Limit: "
@@ -515,6 +521,9 @@ void PressureSensor::processIncomingCommand() {
                 break;
             case NUM_SAMPLES_PT_PERIODIC:
                 samplesCountPeriodicAverage = applyCommand(c, samplesCountPeriodicAverage, kDcNumSamplesPeriodicAvg, false);
+                break;
+            case BREACH_ONLY_ON_DROP:
+                breachOnPressureDropOnly = applyCommand(c, breachOnPressureDropOnly, kDcBreachOnlyOnDrop, false);
                 break;
 
             default:

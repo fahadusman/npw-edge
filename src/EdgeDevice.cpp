@@ -77,6 +77,7 @@ void EdgeDevice::initializeConfigMap() {
     configMap["FLAG_NPW_SUPPRESS"] = FLAG_NPW_SUPPRESS;
     configMap["NUM_SAMPLES_PT_PERIODIC"] = NUM_SAMPLES_PT_PERIODIC;
     configMap["TIMEZONE_OFFSET"] = TIMEZONE_OFFSET;
+    configMap["BREACH_ONLY_ON_DROP"] = BREACH_ONLY_ON_DROP;
 }
 
 EdgeDevice::EdgeDevice(const char *confFilePath) {
@@ -288,6 +289,7 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
     case NUM_SAMPLES_PT_PERIODIC:
     case NPW_SAMPLE_BEFORE:
     case NPW_SAMPLE_AFTER:
+    case BREACH_ONLY_ON_DROP:
         for (Sensor * sensorPtr : sensorsList) {
             sensorPtr->enqueueCommand(incomingCommand);
         }
@@ -447,6 +449,7 @@ void EdgeDevice::initializeRegisterMap() {
     registerMap[FLAG_NPW_SUPPRESS] = kDcFlagNPWSuppress.def;
     registerMap[NUM_SAMPLES_PT_PERIODIC] = kDcNumSamplesPeriodicAvg.def;
     registerMap[TIMEZONE_OFFSET] = kDcTimezoneOffset.def;
+    registerMap[BREACH_ONLY_ON_DROP] = kDcBreachOnlyOnDrop.def;
 }
 
 bool EdgeDevice::loadRegisterMapFromFile() {
