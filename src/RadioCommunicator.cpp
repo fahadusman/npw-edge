@@ -653,17 +653,25 @@ int RadioCommunicator::processSingleCommBuffer(const unsigned char *dataBuff,
     int bytesConsumed = receivedData->deserialize(dataBuff, int(dataLen));
     ret = bytesConsumed;
     if (bytesConsumed > 0) {
-        LOG(INFO) << "Received Buffer successfully deserailzed, timestamp: "
+        DLOG(INFO) << "Received Buffer successfully deserailzed, timestamp: "
                 << receivedData->getTimestamp() << " Len: " << dataLen;
-        if (edgeDevicePtr->sendMessage(receivedData) == 1) {
+        if (receivedData->getBufferId() == latestNpwBufferIdMap[slaveAddress]) {
+            LOG(INFO) << "Buffer was already received, only sending ACK";
+            sendModbusCommand(slaveAddress, ACK_NPW_BUFF,
+                    receivedData->getBufferId());
+            delete receivedData;
+            receivedData = nullptr;
+        }
+        else if (edgeDevicePtr->sendMessage(receivedData) == 1) {
             if (dataBuff[0] == (unsigned char) (buffTypeNpwBuffer)) {
                 //Send acknowledgment.
                 sendModbusCommand(slaveAddress, ACK_NPW_BUFF,
                         receivedData->getBufferId());
+                latestNpwBufferIdMap[slaveAddress] = receivedData->getBufferId();
             }
-            ret = bytesConsumed;
         } else {
             delete receivedData;
+            receivedData = nullptr;
             ret = 0;
             LOG(WARNING) << "sendMessage failed, discarding received data";
         }
