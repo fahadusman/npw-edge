@@ -40,7 +40,7 @@ public:
     uint64_t getTimestamp() {
         return timeStamp;
     }
-    uint32_t getBufferId() {
+    uint16_t getBufferId() {
         return bufferId;
     }
     void setExpiryTime(uint64_t et);
