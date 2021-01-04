@@ -122,6 +122,7 @@ protected:
 
     std::string radioSerialPort;
     int commandMessageRetryLimit;
+    std::map <unsigned char, uint16_t> latestNpwBufferIdMap;
 public:
     void transmitMessage();
     RadioCommunicator(EdgeDevice*, ModbusModes mode,
