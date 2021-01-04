@@ -259,7 +259,7 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         delete incomingCommand;
         break;
     case NPW_NUM_PACK:
-        if (commPtr->setNpwPacketsToBuffer(incomingCommand->getData())) {
+        if (commPtr->setNumPacketsToBuffer(incomingCommand->getData())) {
             updateRegisterValue(incomingCommand);
         }
         delete incomingCommand;

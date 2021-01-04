@@ -11,14 +11,14 @@ communicator::communicator(EdgeDevice *d, bool bufferPersistence) :
     sendMessagesThreadPtr = NULL;
     sendMessagesThreadLoopInterval = std::chrono::milliseconds(100);
     edgeDevicePtr = d;
-    npwPacketsToBuffer = d->getRegisterValue(NPW_NUM_PACK);
+    packetsToBuffer = d->getRegisterValue(NPW_NUM_PACK);
 
     transferCount = 0;
     failedTransferCount = 0;
     communicationTime = std::chrono::milliseconds(0);
-    queuedNpwBuffersDirPath = "queued_npw_buffers";
+    queuedBuffersDirPath = "queued_npw_buffers";
     if (enableBufferPersistence) {
-        loadStoredNpwBuffers();
+        loadStoredBuffers();
     }
 }
 
@@ -27,23 +27,23 @@ bool communicator::saveBufferToFile(CommDataBuffer *buff) {
         LOG_EVERY_N(INFO, 100) << "enableBufferPersistence is false, not storing buffer to disk";
         return false;
     }
-    fs::path filePath = queuedNpwBuffersDirPath
+    fs::path filePath = queuedBuffersDirPath
             / std::to_string(buff->getExpiryTime());
-    std::ofstream npwBuffFile;
+    std::ofstream commDataFile;
     bool ret = false;
     try {
-        npwBuffFile.open(filePath, std::fstream::binary | std::fstream::trunc);
-        if (!npwBuffFile.is_open()) {
-            std::ios_base::iostate rds = npwBuffFile.rdstate();
+        commDataFile.open(filePath, std::fstream::binary | std::fstream::trunc);
+        if (!commDataFile.is_open()) {
+            std::ios_base::iostate rds = commDataFile.rdstate();
             LOG(ERROR) << "Cannot open new NPW buffer file: " << rds;
             //                return false;
-        } else if (npwBuffFile.good()) {
+        } else if (commDataFile.good()) {
             //                    and (npwBuffFile.rdstate() & std::ifstream::failbit) != 0) {
             int serialBuffLen = 0;
             unsigned char *serialBuff = buff->serialize(serialBuffLen);
             if (serialBuff != nullptr) {
-                npwBuffFile.write((char*) (serialBuff), serialBuffLen);
-                if (npwBuffFile.good()) {
+                commDataFile.write((char*) (serialBuff), serialBuffLen);
+                if (commDataFile.good()) {
                     LOG(INFO) << "comm buff saved to file ";
                     ret = true;
                 } else {
@@ -60,8 +60,8 @@ bool communicator::saveBufferToFile(CommDataBuffer *buff) {
         LOG(ERROR) << " Exception in saveRegisterMapToFile: " << e.what();
         ret = false;
     }
-    npwBuffFile.flush();
-    npwBuffFile.close();
+    commDataFile.flush();
+    commDataFile.close();
     return ret;
 }
 
@@ -72,7 +72,7 @@ bool communicator::enqueueMessage(CommDataBuffer * buff){
 
     bool ret = false;
     try {
-        while(transmitQueue.size() >= npwPacketsToBuffer) {
+        while(transmitQueue.size() >= packetsToBuffer) {
             LOG(INFO) << "Queue size limit reached, removing packet from queue";
             removeMessageFromQueue(transmitQueue.begin()->second->getBufferId());
         }
@@ -88,9 +88,9 @@ bool communicator::enqueueMessage(CommDataBuffer * buff){
     return ret;
 }
 
-bool communicator::setNpwPacketsToBuffer(int32_t v) {
+bool communicator::setNumPacketsToBuffer(int32_t v) {
     if (v > kDcNpwNumPack.min and v < kDcNpwNumPack.max) {
-        npwPacketsToBuffer = v;
+        packetsToBuffer = v;
         return true;
     } else {
         LOG(WARNING) << "NPW_EXP_TIME value out of range";
@@ -105,12 +105,12 @@ void communicator::removeBufferFromDisk(uint64_t expTime) {
     }
 
     // Also remove the buffer from disk
-    if (fs::remove(queuedNpwBuffersDirPath / std::to_string(expTime))) {
+    if (fs::remove(queuedBuffersDirPath / std::to_string(expTime))) {
         LOG(INFO) << "Successfully removed file"
-                << (queuedNpwBuffersDirPath / std::to_string(expTime));
+                << (queuedBuffersDirPath / std::to_string(expTime));
     } else {
         LOG(WARNING) << "Failed to remove file"
-                << (queuedNpwBuffersDirPath / std::to_string(expTime));
+                << (queuedBuffersDirPath / std::to_string(expTime));
     }
 }
 
@@ -194,64 +194,64 @@ void communicator::getCommunicationStats(int &failureCount, int &successCount,
     communicationTime = std::chrono::milliseconds(0);
 }
 
-bool communicator::loadStoredNpwBuffers(){
+bool communicator::loadStoredBuffers(){
     if (not enableBufferPersistence) {
         LOG(WARNING) << "enableBufferPersistence is disabled, "
                 << "not trying to load stored buffers from disk";
         return false;
     }
 
-    LOG(INFO) << "Going to load NPW buffers from directory: " << queuedNpwBuffersDirPath;
+    LOG(INFO) << "Going to load buffers from directory: " << queuedBuffersDirPath;
     try {
-        if (fs::exists(queuedNpwBuffersDirPath)
-                && fs::is_directory(queuedNpwBuffersDirPath)) {
-            fs::directory_iterator npwDirIterator(queuedNpwBuffersDirPath);
+        if (fs::exists(queuedBuffersDirPath)
+                && fs::is_directory(queuedBuffersDirPath)) {
+            fs::directory_iterator bufferDirIterator(queuedBuffersDirPath);
             uint64_t bufferExpTime = 0;
             uint64_t currentTimeMS =
                     std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::system_clock::now().time_since_epoch()).count();
 
-            for(auto npwFile:npwDirIterator) {
-                LOG(INFO) << "got: " << npwFile.path().filename();
+            for(auto dataBufferFile:bufferDirIterator) {
+                LOG(INFO) << "got: " << dataBufferFile.path().filename();
                 try {
-                    bufferExpTime = std::stoull(npwFile.path().filename());
+                    bufferExpTime = std::stoull(dataBufferFile.path().filename());
                     if (bufferExpTime < currentTimeMS) {
-                        LOG(INFO) << "buffer in file: " << npwFile.path() << "is expired, discarding it";
-                        if (not fs::remove(npwFile)) {
+                        LOG(INFO) << "buffer in file: " << dataBufferFile.path() << "is expired, discarding it";
+                        if (not fs::remove(dataBufferFile)) {
                             LOG(ERROR) << "Error removing file";
                         }
                         continue;
                     }
 
                     std::streampos begin, end;
-                    std::ifstream npwBuffFile(npwFile.path().c_str(), std::ios::binary);
-                    if (npwBuffFile.is_open()) {
-                        begin = npwBuffFile.tellg();
-                        npwBuffFile.seekg(0, npwBuffFile.end);
-                        end = npwBuffFile.tellg();
+                    std::ifstream dataBuffFile(dataBufferFile.path().c_str(), std::ios::binary);
+                    if (dataBuffFile.is_open()) {
+                        begin = dataBuffFile.tellg();
+                        dataBuffFile.seekg(0, dataBuffFile.end);
+                        end = dataBuffFile.tellg();
                         if (end - begin < 100) {
-                            LOG(WARNING) << "File size of npw buffer file is too small: "
+                            LOG(WARNING) << "File size of saved buffer file is too small: "
                                     << end - begin;
-                            npwBuffFile.close();
-                            if (not fs::remove(npwFile)) {
-                                LOG(ERROR) << "Error removing file: " << npwFile;
+                            dataBuffFile.close();
+                            if (not fs::remove(dataBufferFile)) {
+                                LOG(ERROR) << "Error removing file: " << dataBufferFile;
                             }
 
                         } else {
-                            npwBuffFile.seekg(0, npwBuffFile.beg);
+                            dataBuffFile.seekg(0, dataBuffFile.beg);
                             char * readBuffer = new char[end-begin];
 
-                            npwBuffFile.read(readBuffer, end-begin);
+                            dataBuffFile.read(readBuffer, end-begin);
 
-                            if (npwBuffFile) {
-                                LOG(INFO) << "Successfully read NPW Buffer from file.";
+                            if (dataBuffFile) {
+                                LOG(INFO) << "Successfully read data Buffer from file.";
                             } else {
                                 LOG(INFO)
                                         << "Unable to read complete data, bytes count: "
-                                        << npwBuffFile.gcount();
+                                        << dataBuffFile.gcount();
                                 delete readBuffer;
                                 readBuffer = nullptr;
-                                npwBuffFile.close();
+                                dataBuffFile.close();
                                 continue;
                             }
 
@@ -259,8 +259,8 @@ bool communicator::loadStoredNpwBuffers(){
                                 LOG(ERROR) << "invalid buffer type, discarding file";
                                 delete readBuffer;
                                 readBuffer = nullptr;
-                                npwBuffFile.close();
-                                if (not fs::remove(npwFile)) {
+                                dataBuffFile.close();
+                                if (not fs::remove(dataBufferFile)) {
                                     LOG(ERROR) << "Error removing file";
                                 }
                                 continue;
@@ -271,8 +271,8 @@ bool communicator::loadStoredNpwBuffers(){
                                 LOG(ERROR) << "cannot deserialize NPW Buffer";
                                 delete readBuffer;
                                 readBuffer = nullptr;
-                                npwBuffFile.close();
-                                if (not fs::remove(npwFile)) {
+                                dataBuffFile.close();
+                                if (not fs::remove(dataBufferFile)) {
                                     LOG(ERROR) << "Error removing file";
                                 }
                                 delete npwBuffPtr;
@@ -285,22 +285,22 @@ bool communicator::loadStoredNpwBuffers(){
                     } else {
                         LOG(WARNING) << "Unable to open stored NPW buffer file.";
                     }
-                    npwBuffFile.close();
+                    dataBuffFile.close();
 
                 } catch (const std::invalid_argument &e) {
                     LOG(ERROR) << "stoi, invalid argument: "
-                            << npwFile.path().filename() << "\tException: "
+                            << dataBufferFile.path().filename() << "\tException: "
                             << e.what();
                 } catch (const std::out_of_range &e) {
                     LOG(ERROR) << "stoi, out of range: "
-                            << npwFile.path().filename() << "\tException: "
+                            << dataBufferFile.path().filename() << "\tException: "
                             << e.what();
                 }
             }
         } else {
             LOG(INFO) << "Queued NPW Buffers directory not found, creating: "
-                    << queuedNpwBuffersDirPath;
-            if (fs::create_directories(queuedNpwBuffersDirPath)) {
+                    << queuedBuffersDirPath;
+            if (fs::create_directories(queuedBuffersDirPath)) {
                 LOG(INFO) << "Directory created successfully";
             } else {
                 LOG(ERROR) << "Directory not created";
