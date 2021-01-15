@@ -54,6 +54,7 @@ TARGET_LINK_LIBRARIES(
 	serial
     stdc++fs
     modbus
+    sqlite3
 )
 
 ######## Install targets ########
