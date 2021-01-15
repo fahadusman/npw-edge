@@ -14,7 +14,6 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
-
 #include "DevConfig.h"
 #include "CommDataBuffer.h"
 #include "TemperatureSensor.h"
@@ -86,6 +85,7 @@ EdgeDevice::EdgeDevice(const char *confFilePath) {
     modbusMaster = nullptr;
 
     keepRunning = true;
+    enableRawValueDump = true;
     nextHBTimePoint = std::chrono::high_resolution_clock::now();
     applicationStartTime = std::chrono::high_resolution_clock::now();
     initializeRegisterMap();
@@ -94,6 +94,8 @@ EdgeDevice::EdgeDevice(const char *confFilePath) {
             std::chrono::duration_cast<std::chrono::seconds>(
                     applicationStartTime.time_since_epoch()).count();
     NpwBuffer::npwTimezoneOffset = registerMap[TIMEZONE_OFFSET];
+    rawDumpDurationMs = uint64_t(30)/*days*/ *24*60*60*1000; //TODO: Should be configurable or something
+
     saveRegisterMapToFile();
 
     initializeConfigMap();
@@ -328,6 +330,7 @@ void EdgeDevice::runForever() {
             CommDataBuffer * hb = getHeartBeat();
             commPtr->enqueueMessage(hb);
         }
+        dumpQueuedRawBuffers();
     }
     LOG(WARNING) << "keepRunning loop terminated";
 }
@@ -533,4 +536,44 @@ bool EdgeDevice::addConfigToConfigMqp(const std::string registerName,
         return false;
     }
     return true;
+}
+
+//Temporarily store raw value buffer in a queue so that sensor thread doesn't
+//have to wait for disc IO.
+void EdgeDevice::enqueueRawValues(RawValuesBuffer &b) {
+    LOG(INFO) << "Dump raw values, sensorId: " << b.sensorId
+            << "timestamp: " << b.timeStamp << "values count: "
+            << b.valuesList.size();
+    try {
+        std::lock_guard<std::mutex> rbqLock(rawBufferQueueMutex);
+        rawBufferQueue.push(b);
+        //TODO: Also check current size of queue to limit it
+    } catch (const std::exception &e) {
+        LOG(ERROR) << " Exception in adding rawBuffer to Queue: "
+                << e.what();
+    }
+}
+
+void EdgeDevice::dumpQueuedRawBuffers() {
+    try {
+        while (not rawBufferQueue.empty()) {
+            RawValuesBuffer rwBuff;
+            {
+                std::lock_guard<std::mutex> rbqLock(rawBufferQueueMutex);
+                rwBuff = rawBufferQueue.front();
+            }
+            if (rwBuff.timeStamp > 0) {
+                rwBuff.storeInDatabase(rawDumpDurationMs);
+                {
+                    std::lock_guard<std::mutex> rbqLock(rawBufferQueueMutex);
+                    rawBufferQueue.pop();
+                }
+            } else {
+                LOG(FATAL) << "Raw Value Buffer with time stamp = 0.";
+            }
+        }
+    } catch (const std::exception &e) {
+        LOG(ERROR) << " Exception in storing rawBuffer: "
+                << e.what();
+    }
 }
