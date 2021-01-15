@@ -17,6 +17,7 @@
 #include "NpwBuffer.h"
 #include "DevConfig.h"
 #include "SerialComPort.h"
+#include "RawValuesBuffer.h"
 
 enum NpwState {noDropDetected, firstDropDetected, secondDropDetected};
 
@@ -69,6 +70,10 @@ private:
     int applyCommand(CommandMsg * cmd, int oldValue, const DevConfig & dc,
             bool resetNpwThread);
     void updateBufferLengths();
+    void dumpRawValues();
+
+    int remainingRawValues;
+    bool enableRawValueDump;
     static int sensorCount;
     unsigned int samplesCountPeriodicAverage;
     bool wasThresholdExceeded;
