@@ -20,11 +20,11 @@ class RadioCommunicator;
 /*
  *  An Edge device can have one of the three roles;
  *  * Block Valve site edge device that would communicate over
- *    serial radio link as a modbus slve
+ *    serial radio link as a modbus slave
  *  * Station Edge device that would be installed at MW stations
  *    and send data to MQTT broker via MW link
  *  * Gateway edge device that would act as modbus master for
- *    station BV edevices to receive periodic and NPW data and
+ *    station BV edge devices to receive periodic and NPW data and
  *    then publish it on MQTT.
  */
 enum Role {
@@ -62,6 +62,7 @@ public:
     int getDeviceId() {
         return deviceId;
     }
+    void enqueueRawValues(RawValuesBuffer &b);
 protected:
     std::string deviceName;
     int deviceId;
@@ -82,7 +83,13 @@ protected:
     void updateTimezoneOffset(CommandMsg *incomingCommand);
 
     std::map <std::string, CommandMsg> configMap;
+    std::queue<RawValuesBuffer> rawBufferQueue;
+    std::mutex rawBufferQueueMutex;
 
+    void dumpQueuedRawBuffers();
+    bool enableRawValueDump;
+    uint64_t rawDumpDurationMs; //Duration in ms for storing previous raw
+    //values in DB. Typically this would be a few days or a month
 };
 
 #endif /* INCLUDE_EDGEDEVICE_H_ */

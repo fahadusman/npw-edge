@@ -180,6 +180,7 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
 	samplesCountAfterDetection = edgeDevicePtr->getRegisterValue(NPW_SAMPLE_AFTER);
     remainingSamples = 0;
     updateBufferLengths();
+    remainingRawValues = circularBufferLength;
 
 	npwBufferExpiryTime = edgeDevicePtr->getRegisterValue(NPW_EXP_TIME) * 60000; //min to ms
 
@@ -199,7 +200,8 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
     samplesCountPeriodicAverage = edgeDevicePtr->getRegisterValue(NUM_SAMPLES_PT_PERIODIC);
 	breachOnPressureDropOnly = edgeDevicePtr->getRegisterValue(BREACH_ONLY_ON_DROP);
     currentStatus = -1;
-	startNpwThread();
+    enableRawValueDump = true;
+    startNpwThread();
 	wasThresholdExceeded = false;
 }
 
@@ -286,6 +288,11 @@ void PressureSensor::npwThread(){
 
 		currentValue = readSensorValue();
 //		currentValue = readSensorValueDummy();
+
+		if (enableRawValueDump) {
+		    dumpRawValues();
+		}
+
 		LOG_EVERY_N(INFO, 1000) << "PressureSensor - id: " << id
                 << ", v: " << currentValue << ", q: " << currentStatus
                 << ", t: " << currentTime;
@@ -583,4 +590,20 @@ PeriodicValue* PressureSensor::getCurrentValue() {
     p = new PeriodicValue(tempSum / samplesCountPeriodicAverage, currentTime,
             id, currentStatus);
     return p;
+}
+
+void PressureSensor::dumpRawValues(){
+    if (remainingRawValues <= 0) {
+        uint64_t rawBufferTimestamp = sensorReadingCircularBuffer.front()->timestampMS;
+
+        std::vector<double> valuesVector;
+        for (auto reading:sensorReadingCircularBuffer){
+            valuesVector.push_back(reading->value);
+        }
+
+        remainingRawValues = circularBufferLength; //TODO: Maybe there should be a max limit to it that's less than curcularBufferLength
+        RawValuesBuffer b(rawBufferTimestamp, id, readingIntervalMs,  valuesVector);
+        edgeDevicePtr->enqueueRawValues(b);
+    }
+    remainingRawValues--;
 }

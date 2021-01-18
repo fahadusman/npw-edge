@@ -29,17 +29,17 @@ protected:
     std::chrono::duration<int,std::milli> sendMessagesThreadLoopInterval;
     EdgeDevice * edgeDevicePtr;
 
-    uint32_t npwPacketsToBuffer;
+    uint32_t packetsToBuffer;
 
     std::chrono::duration<long int, std::ratio<1, 1000000000>> communicationTime;
     int transferCount;
     int failedTransferCount;
 
-    fs::path queuedNpwBuffersDirPath;
+    fs::path queuedBuffersDirPath;
     void addCommunicationTime(
             std::chrono::duration<long int, std::ratio<1, 1000000000>> t);
     void incFailedTransferCount();
-    bool loadStoredNpwBuffers();
+    bool loadStoredBuffers();
     bool saveBufferToFile(CommDataBuffer *buff);
     void removeBufferFromDisk(uint64_t expTime);
 
@@ -55,7 +55,7 @@ public:
 	virtual void disconnect() = 0;
 	virtual void sendQueuedMessagesThread() = 0;
 	virtual void subscribe() = 0;
-    bool setNpwPacketsToBuffer(int32_t v);
+    bool setNumPacketsToBuffer(int32_t v);
     virtual bool removeMessageFromQueue(int32_t messageId);
     CommDataBuffer * getQueuedMessage();
     void getCommunicationStats(int &failureCount, int &successCount,
