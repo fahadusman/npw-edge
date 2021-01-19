@@ -26,7 +26,8 @@ RawValuesBuffer::RawValuesBuffer(const uint64_t &t, const std::string &sId,
 RawValuesBuffer::~RawValuesBuffer() {
 }
 
-void RawValuesBuffer::storeInDatabase(uint64_t maxDurationMs) {
+void RawValuesBuffer::storeInDatabase(uint64_t maxDurationHr) {
+    uint64_t maxDurationMs = maxDurationHr*60*60*1000;
     try {
         sqlite::database rawDumpDb("./" + sensorId + ".db");
 

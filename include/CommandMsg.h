@@ -43,6 +43,7 @@ enum CommandRegister {
     NUM_SAMPLES_PT_PERIODIC = 26, //Periodic values would be averaged over the most recent N samples
     TIMEZONE_OFFSET = 27,   // Timezone offset (in seconds) for time-stamp of NPW buffers, wrt GMT.
     BREACH_ONLY_ON_DROP = 28, //NPW buffer creation only triggered on pressure drop events
+    RAW_DUMP_DURATION = 29,   //Duration (in hours) of historical high frequency sensor value dump
 
     EDGE_START_TIME = 31,   //Epoch time of start-up in seconds
     EDGE_RAM = 32,   // Percentage of total RAM
