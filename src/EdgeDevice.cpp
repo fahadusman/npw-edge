@@ -77,6 +77,7 @@ void EdgeDevice::initializeConfigMap() {
     configMap["NUM_SAMPLES_PT_PERIODIC"] = NUM_SAMPLES_PT_PERIODIC;
     configMap["TIMEZONE_OFFSET"] = TIMEZONE_OFFSET;
     configMap["BREACH_ONLY_ON_DROP"] = BREACH_ONLY_ON_DROP;
+    configMap["RAW_DUMP_DURATION"] = RAW_DUMP_DURATION;
 }
 
 EdgeDevice::EdgeDevice(const char *confFilePath) {
@@ -94,7 +95,7 @@ EdgeDevice::EdgeDevice(const char *confFilePath) {
             std::chrono::duration_cast<std::chrono::seconds>(
                     applicationStartTime.time_since_epoch()).count();
     NpwBuffer::npwTimezoneOffset = registerMap[TIMEZONE_OFFSET];
-    rawDumpDurationMs = uint64_t(30)/*days*/ *24*60*60*1000; //TODO: Should be configurable or something
+    rawDumpDurationHr = registerMap[RAW_DUMP_DURATION];
 
     saveRegisterMapToFile();
 
@@ -222,6 +223,16 @@ void EdgeDevice::updateTimezoneOffset(CommandMsg *incomingCommand) {
     }
 }
 
+bool EdgeDevice::applyCommand(const DevConfig &conf,
+        CommandMsg *cmd, int32_t & oldValue) {
+    if (cmd->getData() >= conf.min and cmd->getData() <= conf.max) {
+        updateRegisterValue(cmd);
+        oldValue = cmd->getData();
+        return true;
+    }
+    return false;
+}
+
 void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
     if (edgeDeviceRole == gatewayEdgeDevice
             and deviceId != incomingCommand->getDeviceId()) {
@@ -268,6 +279,10 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         break;
     case TIMEZONE_OFFSET:
         updateTimezoneOffset(incomingCommand);
+        delete incomingCommand;
+        break;
+    case RAW_DUMP_DURATION:
+        applyCommand(kDcRawDumpDuration, incomingCommand, rawDumpDurationHr);
         delete incomingCommand;
         break;
     case MAX_TIME_PERIODIC:
@@ -453,6 +468,7 @@ void EdgeDevice::initializeRegisterMap() {
     registerMap[NUM_SAMPLES_PT_PERIODIC] = kDcNumSamplesPeriodicAvg.def;
     registerMap[TIMEZONE_OFFSET] = kDcTimezoneOffset.def;
     registerMap[BREACH_ONLY_ON_DROP] = kDcBreachOnlyOnDrop.def;
+    registerMap[RAW_DUMP_DURATION] = kDcRawDumpDuration.def;
 }
 
 bool EdgeDevice::loadRegisterMapFromFile() {
@@ -563,7 +579,7 @@ void EdgeDevice::dumpQueuedRawBuffers() {
                 rwBuff = rawBufferQueue.front();
             }
             if (rwBuff.timeStamp > 0) {
-                rwBuff.storeInDatabase(rawDumpDurationMs);
+                rwBuff.storeInDatabase(rawDumpDurationHr);
                 {
                     std::lock_guard<std::mutex> rbqLock(rawBufferQueueMutex);
                     rawBufferQueue.pop();
