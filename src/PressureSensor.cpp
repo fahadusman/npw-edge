@@ -201,6 +201,7 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
 	breachOnPressureDropOnly = edgeDevicePtr->getRegisterValue(BREACH_ONLY_ON_DROP);
     currentStatus = -1;
     enableRawValueDump = true;
+    overlappingSamples = 0;
     startNpwThread();
 	wasThresholdExceeded = false;
 }
@@ -210,6 +211,10 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
  * time is passed after the initial detection time.
  */
 void PressureSensor::createNPWBuffer() {
+    if (overlappingSamples > 0) {
+        overlappingSamples--;
+    }
+
     if (currentNpwState != noDropDetected) {
         if (remainingSamples <= 0) {
             NpwBuffer* npwBufferPtr = createNpwBuffer();
@@ -222,10 +227,12 @@ void PressureSensor::createNPWBuffer() {
             }
             if (currentNpwState == firstDropDetected) {
                 currentNpwState = noDropDetected;
+                overlappingSamples = samplesCountBeforeDetection;
             } else if (currentNpwState == secondDropDetected) {
                 currentNpwState = firstDropDetected;
                 remainingSamples = samplesCountBeforeDetection
                         + samplesCountAfterDetection;
+                overlappingSamples = 0;
             }
         } else {
             remainingSamples--;
@@ -258,7 +265,8 @@ void PressureSensor::updateNPWState(){
 		switch (currentNpwState) {
 		case noDropDetected:
 			currentNpwState = firstDropDetected;
-			remainingSamples = samplesCountAfterDetection;
+			remainingSamples = samplesCountAfterDetection
+			        + overlappingSamples; // Ensure that buffers don't overlap
 			break;
 		case firstDropDetected:
 			currentNpwState = secondDropDetected;
