@@ -202,6 +202,7 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
     currentStatus = -1;
     enableRawValueDump = true;
     overlappingSamples = 0;
+    npwThresholdHysteresis = 0.001;
     startNpwThread();
 	wasThresholdExceeded = false;
 }
@@ -250,10 +251,13 @@ void PressureSensor::updateNPWState(){
 	updateMovingAverages();
 	bool isThresholdExceeded;
 	if (breachOnPressureDropOnly) {
-        isThresholdExceeded = (firstAverage - secondAverage)
+        isThresholdExceeded = (secondAverage - firstAverage)
+                + npwThresholdHysteresis*int(wasThresholdExceeded)
+        //Hysteresis value would be added only if the threshold is already breached
              > (npwDetectionthreshold + npwScalingOffset) / npwScalingFactor;
 	} else {
-	    isThresholdExceeded = fabs(firstAverage - secondAverage)
+	    isThresholdExceeded = (fabs(firstAverage - secondAverage))
+	            + npwThresholdHysteresis*int(wasThresholdExceeded)
              > (npwDetectionthreshold + npwScalingOffset) / npwScalingFactor;
 	}
 //  DLOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
