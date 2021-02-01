@@ -86,6 +86,11 @@ protected:
     std::map <std::string, CommandMsg> configMap;
     std::queue<RawValuesBuffer> rawBufferQueue;
     std::mutex rawBufferQueueMutex;
+    const size_t rawBuffQueueMaxLen;//this queue is used as a communication buffer
+    //  between PT thread and main thread. Ideally we shouldn't need more than
+    //  a couple of entries in this queue. This is just to prevent potential
+    //  unrestricted growth.
+
 
     void dumpQueuedRawBuffers();
     bool enableRawValueDump;

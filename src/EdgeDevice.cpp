@@ -80,7 +80,8 @@ void EdgeDevice::initializeConfigMap() {
     configMap["RAW_DUMP_DURATION"] = RAW_DUMP_DURATION;
 }
 
-EdgeDevice::EdgeDevice(const char *confFilePath) {
+EdgeDevice::EdgeDevice(const char *confFilePath):
+        rawBuffQueueMaxLen(20) {
     LOG(INFO) << "EdgeDevice constructor, confFilePath: " << confFilePath;
     commPtr = nullptr;
     modbusMaster = nullptr;
@@ -283,6 +284,7 @@ void EdgeDevice::processIncomingCommand(CommandMsg * incomingCommand){
         break;
     case RAW_DUMP_DURATION:
         applyCommand(kDcRawDumpDuration, incomingCommand, rawDumpDurationHr);
+        enableRawValueDump = incomingCommand->getData() != 0;
         delete incomingCommand;
         break;
     case MAX_TIME_PERIODIC:
@@ -563,7 +565,12 @@ void EdgeDevice::enqueueRawValues(RawValuesBuffer &b) {
     try {
         std::lock_guard<std::mutex> rbqLock(rawBufferQueueMutex);
         rawBufferQueue.push(b);
-        //TODO: Also check current size of queue to limit it
+
+        while(rawBufferQueue.size() > rawBuffQueueMaxLen) {
+            LOG(WARNING) << "rawBuffQueueMaxLen reached, discarding buff with t: "
+                    << rawBufferQueue.front().timeStamp;
+            rawBufferQueue.pop();
+        }
     } catch (const std::exception &e) {
         LOG(ERROR) << " Exception in adding rawBuffer to Queue: "
                 << e.what();
