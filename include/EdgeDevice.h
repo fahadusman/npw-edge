@@ -81,14 +81,20 @@ protected:
     char * readConfigFile(const char *confFilePath);
     void initializeConfigMap();
     void updateTimezoneOffset(CommandMsg *incomingCommand);
+    bool applyCommand(const DevConfig & conf, CommandMsg * cmd, int32_t & oldValue);
 
     std::map <std::string, CommandMsg> configMap;
     std::queue<RawValuesBuffer> rawBufferQueue;
     std::mutex rawBufferQueueMutex;
+    const size_t rawBuffQueueMaxLen;//this queue is used as a communication buffer
+    //  between PT thread and main thread. Ideally we shouldn't need more than
+    //  a couple of entries in this queue. This is just to prevent potential
+    //  unrestricted growth.
+
 
     void dumpQueuedRawBuffers();
     bool enableRawValueDump;
-    uint64_t rawDumpDurationMs; //Duration in ms for storing previous raw
+    int32_t rawDumpDurationHr; //Duration in ms for storing previous raw
     //values in DB. Typically this would be a few days or a month
 };
 

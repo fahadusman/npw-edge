@@ -78,6 +78,14 @@ private:
     unsigned int samplesCountPeriodicAverage;
     bool wasThresholdExceeded;
     std::vector<double> simulatedValues;
+    int overlappingSamples; //At the time of creating an NPW buffer, this variable
+                            //would be set to samplesCountBeforeDetection and
+                            //then it would be decremented on each iteration until
+                            //it becomes zero.
+    double npwThresholdHysteresis; //Hysteresis added to prevent threshold exceeded
+                            //state to return too quickly to avoid creation of extra
+                            //subsequent NPW buffers. This value would only be used
+                            //when returning to default state (thresholdNotExceeded)
 
 public:
 	void npwThread();

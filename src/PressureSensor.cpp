@@ -201,6 +201,8 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
 	breachOnPressureDropOnly = edgeDevicePtr->getRegisterValue(BREACH_ONLY_ON_DROP);
     currentStatus = -1;
     enableRawValueDump = true;
+    overlappingSamples = 0;
+    npwThresholdHysteresis = 0.001;
     startNpwThread();
 	wasThresholdExceeded = false;
 }
@@ -210,6 +212,10 @@ PressureSensor::PressureSensor(communicator *cPtr, EdgeDevice *ePtr,
  * time is passed after the initial detection time.
  */
 void PressureSensor::createNPWBuffer() {
+    if (overlappingSamples > 0) {
+        overlappingSamples--;
+    }
+
     if (currentNpwState != noDropDetected) {
         if (remainingSamples <= 0) {
             NpwBuffer* npwBufferPtr = createNpwBuffer();
@@ -222,10 +228,12 @@ void PressureSensor::createNPWBuffer() {
             }
             if (currentNpwState == firstDropDetected) {
                 currentNpwState = noDropDetected;
+                overlappingSamples = samplesCountBeforeDetection;
             } else if (currentNpwState == secondDropDetected) {
                 currentNpwState = firstDropDetected;
                 remainingSamples = samplesCountBeforeDetection
                         + samplesCountAfterDetection;
+                overlappingSamples = 0;
             }
         } else {
             remainingSamples--;
@@ -243,10 +251,13 @@ void PressureSensor::updateNPWState(){
 	updateMovingAverages();
 	bool isThresholdExceeded;
 	if (breachOnPressureDropOnly) {
-        isThresholdExceeded = (firstAverage - secondAverage)
+        isThresholdExceeded = (secondAverage - firstAverage)
+                + npwThresholdHysteresis*int(wasThresholdExceeded)
+        //Hysteresis value would be added only if the threshold is already breached
              > (npwDetectionthreshold + npwScalingOffset) / npwScalingFactor;
 	} else {
-	    isThresholdExceeded = fabs(firstAverage - secondAverage)
+	    isThresholdExceeded = (fabs(firstAverage - secondAverage))
+	            + npwThresholdHysteresis*int(wasThresholdExceeded)
              > (npwDetectionthreshold + npwScalingOffset) / npwScalingFactor;
 	}
 //  DLOG_EVERY_N(INFO, 50) << "wasThresholdExceeded: " << wasThresholdExceeded <<
@@ -258,7 +269,8 @@ void PressureSensor::updateNPWState(){
 		switch (currentNpwState) {
 		case noDropDetected:
 			currentNpwState = firstDropDetected;
-			remainingSamples = samplesCountAfterDetection;
+			remainingSamples = samplesCountAfterDetection
+			        + overlappingSamples; // Ensure that buffers don't overlap
 			break;
 		case firstDropDetected:
 			currentNpwState = secondDropDetected;
