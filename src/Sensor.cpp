@@ -202,3 +202,15 @@ void Sensor::disconnectSensor() {
     modbus_free(sensorModbusCtx);
     sensorModbusCtx = nullptr;
 }
+
+float extractFloat (unsigned char * startAddr) {
+    float result = 0.0;
+    unsigned char * resultPtr= reinterpret_cast<unsigned char*>(&result);
+
+    resultPtr[0] = startAddr[2];
+    resultPtr[1] = startAddr[3];
+    resultPtr[2] = startAddr[0];
+    resultPtr[3] = startAddr[1];
+
+    return result;
+}
