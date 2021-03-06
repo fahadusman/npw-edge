@@ -120,8 +120,10 @@ void Sensor::parseSensorJsonObj(const rapidjson::Value & sensorObj) {
         std::string dataTypeStr = sensorObj["sensor_data_type"].GetString();
         if (dataTypeStr == "int16") {
             dataType = sdtInt16;
-        } else {
+        } else if (dataTypeStr == "float") {
             dataType = sdtFloat;
+        } else {
+            dataType = sdtMultiple;
         }
         sensorModbusSlaveId = sensorObj["modbus_slave_id"].GetInt();
         sensorModbusRegAddr = sensorObj["modbus_reg_addr"].GetInt();
