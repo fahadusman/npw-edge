@@ -59,4 +59,6 @@ protected:
     void parseSensorJsonObj(const rapidjson::Value & sensorObj);
 };
 
+float extractFloat (unsigned char * startAddr);
+
 #endif /* INCLUDE_SENSOR_H_ */
