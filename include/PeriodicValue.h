@@ -13,7 +13,7 @@
 #include <mutex>
 
 class PeriodicValue: public CommDataBuffer {
-private:
+protected:
     double sensorValue;
     int sensorStatus;
 public:
