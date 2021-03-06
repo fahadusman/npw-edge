@@ -19,7 +19,7 @@
 class communicator;
 class EdgeDevice;
 
-enum SensorDataType {sdtInt16 = 0, sdtFloat};
+enum SensorDataType {sdtInt16 = 0, sdtFloat, sdtMultiple};
 
 class Sensor {
 public:
