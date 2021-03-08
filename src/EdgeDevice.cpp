@@ -18,6 +18,7 @@
 #include "CommDataBuffer.h"
 #include "TemperatureSensor.h"
 #include "NpwBuffer.h"
+#include "FlowTransmitter.h"
 
 const char * kRegMapFileName = "reg_map.bin";
 const char * kConfigFileName = "config.json";
@@ -152,6 +153,9 @@ EdgeDevice::EdgeDevice(const char *confFilePath):
                             sensorsArray[i]);
                 } else if (sensorsArray[i]["sensor_type"] == "TT") {
                     sensorPtr = new TemperatureSensor(commPtr, this,
+                            sensorsArray[i]);
+                } else if (sensorsArray[i]["sensor_type"] == "FT") {
+                    sensorPtr = new FlowTransmitter(commPtr, this,
                             sensorsArray[i]);
                 } else {
                     LOG(FATAL) << "Unknown sensor type in JSON config file";
@@ -441,6 +445,8 @@ void EdgeDevice::initializeRegisterMap() {
         LOG(INFO) << "Loaded register map from file";
         return;
     }
+
+    LOG(INFO) << "Initializing register map with default values";
 
     for (unsigned int x = 0; x < registerMap.size(); x++) {
         registerMap[x] = 0;
