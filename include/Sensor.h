@@ -19,7 +19,7 @@
 class communicator;
 class EdgeDevice;
 
-enum SensorDataType {sdtInt16 = 0, sdtFloat};
+enum SensorDataType {sdtInt16 = 0, sdtFloat, sdtMultiple};
 
 class Sensor {
 public:
@@ -58,5 +58,7 @@ protected:
             double & previousPeriodicVal, const double & currentValue);
     void parseSensorJsonObj(const rapidjson::Value & sensorObj);
 };
+
+float extractFloat (unsigned char * startAddr);
 
 #endif /* INCLUDE_SENSOR_H_ */

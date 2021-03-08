@@ -120,8 +120,10 @@ void Sensor::parseSensorJsonObj(const rapidjson::Value & sensorObj) {
         std::string dataTypeStr = sensorObj["sensor_data_type"].GetString();
         if (dataTypeStr == "int16") {
             dataType = sdtInt16;
-        } else {
+        } else if (dataTypeStr == "float") {
             dataType = sdtFloat;
+        } else {
+            dataType = sdtMultiple;
         }
         sensorModbusSlaveId = sensorObj["modbus_slave_id"].GetInt();
         sensorModbusRegAddr = sensorObj["modbus_reg_addr"].GetInt();
@@ -199,4 +201,16 @@ void Sensor::disconnectSensor() {
     modbus_close(sensorModbusCtx);
     modbus_free(sensorModbusCtx);
     sensorModbusCtx = nullptr;
+}
+
+float extractFloat (unsigned char * startAddr) {
+    float result = 0.0;
+    unsigned char * resultPtr= reinterpret_cast<unsigned char*>(&result);
+
+    resultPtr[0] = startAddr[2];
+    resultPtr[1] = startAddr[3];
+    resultPtr[2] = startAddr[0];
+    resultPtr[3] = startAddr[1];
+
+    return result;
 }
