@@ -1,0 +1,50 @@
+{
+  "edge_device": {
+    "device_id": 30,
+    "device_name": "FSD1",
+    "role": "stationEdgeDevice",
+    "communicator": {
+      "type": "mqttCommunicator",
+      "server": "tcp://192.168.23.12:1883",
+      "publish_topic": "FSD1",
+      "client_id":"Edge_FSD1",
+      "qos": 1,
+      "command_topic": "iotgateway"
+    },
+    "sensors": [
+      {
+        "sensor_type": "PT",
+        "port": "/dev/ttyUSB0",
+         "baud_rate": 115200,
+        "sensor_id": "PT_4013",
+        "sensor_scaling_factor": 1,
+        "sensor_data_type": "float",
+        "modbus_slave_id": 1,
+        "modbus_reg_addr": 2,
+        "modbus_nb": 2
+      },
+      {
+        "sensor_type": "PT",
+        "port": "/dev/ttyM0",
+         "baud_rate": 115200,
+        "sensor_id": "PT_4025",
+        "sensor_scaling_factor": 1,
+        "sensor_data_type": "float",
+        "modbus_slave_id": 1,
+        "modbus_reg_addr": 2,
+        "modbus_nb": 2
+      },
+      {
+        "sensor_type": "PT",
+        "port": "/dev/ttyM1",
+         "baud_rate": 115200,
+        "sensor_id": "PT_4026",
+        "sensor_scaling_factor": 1,
+        "sensor_data_type": "float",
+        "modbus_slave_id": 1,
+        "modbus_reg_addr": 2,
+        "modbus_nb": 2
+      }
+    ]
+  }
+}
