@@ -66,10 +66,10 @@ double FlowTransmitter::readSensorValue() {
     }
 
     flowVelociy = extractFloat(reinterpret_cast<unsigned char*>(tabReg));
-    currentValue = volumeFlow =  extractFloat(reinterpret_cast<unsigned char*>(tabReg+4));
-    massFlow = extractFloat(reinterpret_cast<unsigned char*>(tabReg+8));
-    temperature = extractFloat(reinterpret_cast<unsigned char*>(tabReg+12));
-    density = extractFloat(reinterpret_cast<unsigned char*>(tabReg+16));
+    currentValue = volumeFlow =  extractFloat(reinterpret_cast<unsigned char*>(tabReg+2));
+    massFlow = extractFloat(reinterpret_cast<unsigned char*>(tabReg+4));
+    temperature = extractFloat(reinterpret_cast<unsigned char*>(tabReg+6));
+    density = extractFloat(reinterpret_cast<unsigned char*>(tabReg+8));
 
     rc = modbus_read_input_registers(sensorModbusCtx, totalizerAddress,
             totalizerNb, tabReg);
@@ -82,10 +82,10 @@ double FlowTransmitter::readSensorValue() {
     }
 
     totaliser1Value = extractFloat(reinterpret_cast<unsigned char*>(tabReg));
-    totaliser2Value = extractFloat(reinterpret_cast<unsigned char*>(tabReg));
+    totaliser2Value = extractFloat(reinterpret_cast<unsigned char*>(tabReg+2));
 
     rc = modbus_read_registers(sensorModbusCtx, eventGroupsAddress,
-            eventGroupsNb, tabReg);
+            eventGroupsNb, eventGroups);
     if (rc == -1) {
         LOG_EVERY_N(ERROR, 1) << "Failed to read event groups from FT, id:(" << id
                 << ") Error: " << modbus_strerror(errno);
@@ -93,7 +93,7 @@ double FlowTransmitter::readSensorValue() {
         disconnectSensor();
         return currentValue; //return previous current value
     }
-
+    currentStatus = 1;
     return currentValue;
 }
 
