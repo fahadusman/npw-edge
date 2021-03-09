@@ -48,12 +48,7 @@ FlowTransmitter::~FlowTransmitter() {
 }
 
 double FlowTransmitter::readSensorValue() {
-    currentValue = currentValue +1;
-    volumeFlow = currentValue;
-    currentStatus = 1;
-    return currentValue;
-
-    int rc;
+    int rc = 0;
     uint16_t tabReg[16];
     LOG_IF(FATAL, sensorModbusNb > 16) << "Number registers to read is too large";
 
