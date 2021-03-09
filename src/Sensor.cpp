@@ -38,6 +38,9 @@ Sensor::Sensor(communicator *cptr, EdgeDevice *eptr, const char * sensorId) :
     sensorModbusRegAddr = 2;
     sensorModbusNb = 2;
     dataType = sdtFloat;
+    parity = 'N';
+    dataBits = 8;
+    stopBits = 1;
     return;
 }
 void Sensor::enqueueCommand(CommandMsg * cmd){
@@ -137,7 +140,8 @@ void Sensor::parseSensorJsonObj(const rapidjson::Value & sensorObj) {
 
 void Sensor::initializeSensor() {
     while (sensorModbusCtx == nullptr) {
-        sensorModbusCtx = modbus_new_rtu(sensorPort.c_str(), sensorBaudRate, 'N', 8, 1);
+        sensorModbusCtx = modbus_new_rtu(sensorPort.c_str(), sensorBaudRate,
+                parity, dataBits, stopBits);
         if (sensorModbusCtx == nullptr) {
             LOG(ERROR) << "Unable to create the libmodbus context, port: "
                     << sensorPort;

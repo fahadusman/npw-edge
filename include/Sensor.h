@@ -41,6 +41,8 @@ protected:
     int sensorModbusRegAddr;
     int sensorModbusNb;
     SensorDataType dataType;
+    char parity;
+    int dataBits, stopBits;
 
     double currentValue;
     __uint64_t currentTime = 0;
