@@ -58,7 +58,7 @@ double FlowTransmitter::readSensorValue() {
     rc = modbus_read_input_registers(sensorModbusCtx, measurementValueAddress,
             measurementValueNb, tabReg);
     if (rc == -1) {
-        LOG_EVERY_N(ERROR, 2) << "Failed to read from PT, id:(" << id
+        LOG_EVERY_N(ERROR, 1) << "Failed to read from measurements from FT, id:(" << id
                 << ") Error: " << modbus_strerror(errno);
         currentStatus = 0;
         disconnectSensor();
@@ -74,7 +74,7 @@ double FlowTransmitter::readSensorValue() {
     rc = modbus_read_input_registers(sensorModbusCtx, totalizerAddress,
             totalizerNb, tabReg);
     if (rc == -1) {
-        LOG_EVERY_N(ERROR, 2) << "Failed to read from PT, id:(" << id
+        LOG_EVERY_N(ERROR, 1) << "Failed to read from totalizers from FT, id:(" << id
                 << ") Error: " << modbus_strerror(errno);
         currentStatus = 0;
         disconnectSensor();
@@ -87,7 +87,7 @@ double FlowTransmitter::readSensorValue() {
     rc = modbus_read_registers(sensorModbusCtx, eventGroupsAddress,
             eventGroupsNb, tabReg);
     if (rc == -1) {
-        LOG_EVERY_N(ERROR, 2) << "Failed to read from PT, id:(" << id
+        LOG_EVERY_N(ERROR, 1) << "Failed to read event groups from FT, id:(" << id
                 << ") Error: " << modbus_strerror(errno);
         currentStatus = 0;
         disconnectSensor();
