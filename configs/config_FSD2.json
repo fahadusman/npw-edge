@@ -13,17 +13,6 @@
     },
     "sensors": [
       {
-        "sensor_type": "PT",
-        "port": "/dev/ttyUSB0",
-         "baud_rate": 115200,
-        "sensor_id": "PT_4027",
-        "sensor_scaling_factor": 1,
-        "sensor_data_type": "float",
-        "modbus_slave_id": 1,
-        "modbus_reg_addr": 2,
-        "modbus_nb": 2
-      },
-      {
         "sensor_type": "FT",
         "port": "/dev/ttyM0",
          "baud_rate": 115200,
