@@ -37,6 +37,8 @@ FlowTransmitter::FlowTransmitter(communicator *cPtr, EdgeDevice *ePtr,
     eventGroupsNb = 8;
     eventGroups = new uint16_t[eventGroupsNb];
 
+    parity = 'E';
+
     startThread();
 }
 
