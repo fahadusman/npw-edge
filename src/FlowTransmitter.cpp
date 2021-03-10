@@ -71,6 +71,9 @@ double FlowTransmitter::readSensorValue() {
     temperature = extractFloat(reinterpret_cast<unsigned char*>(tabReg+6));
     density = extractFloat(reinterpret_cast<unsigned char*>(tabReg+8));
 
+    // Introduce a little delay before subsequent read call, otherwise read
+    // call would fail
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     rc = modbus_read_input_registers(sensorModbusCtx, totalizerAddress,
             totalizerNb, tabReg);
     if (rc == -1) {
@@ -84,6 +87,7 @@ double FlowTransmitter::readSensorValue() {
     totaliser1Value = extractFloat(reinterpret_cast<unsigned char*>(tabReg));
     totaliser2Value = extractFloat(reinterpret_cast<unsigned char*>(tabReg+2));
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     rc = modbus_read_registers(sensorModbusCtx, eventGroupsAddress,
             eventGroupsNb, eventGroups);
     if (rc == -1) {
