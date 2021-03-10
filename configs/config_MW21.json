@@ -1,0 +1,34 @@
+{
+  "edge_device": {
+    "device_id": 25,
+    "device_name": "MW21",
+    "role": "gatewayEdgeDevice",
+    "communicator": {
+      "type": "mqttCommunicator",
+      "server": "tcp://192.168.23.12:1883",
+      "publish_topic": "MW21",
+      "client_id": "gateway_MW21",
+      "qos": 1,
+      "command_topic": "iotgateway"
+    },
+    "modbus_master": {
+      "port": "/dev/ttyM0",
+      "baud_rate": 38400,
+      "response_timeout": 5000,
+      "poll_interval": 3000,
+      "transmission_timeout": 3000,
+      "slave_list": [
+        {
+          "device_id": 15,
+          "device_name": "BV70A",
+          "sensors": [
+            {
+              "sensor_type": "PT",
+              "sensor_id": "PT_70A"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
