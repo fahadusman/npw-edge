@@ -15,7 +15,7 @@
       {
         "sensor_type": "FT",
         "port": "/dev/ttyM0",
-         "baud_rate": 115200,
+         "baud_rate": 19200,
         "sensor_id": "FT_4012",
         "sensor_scaling_factor": 1,
         "sensor_data_type": "multiple",
@@ -26,7 +26,7 @@
       {
         "sensor_type": "FT",
         "port": "/dev/ttyM1",
-         "baud_rate": 115200,
+         "baud_rate": 19200,
         "sensor_id": "FT_4013",
         "sensor_scaling_factor": 1,
         "sensor_data_type": "multiple",
