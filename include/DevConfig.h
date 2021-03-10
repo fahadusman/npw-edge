@@ -16,10 +16,10 @@ struct DevConfig {
 
 const DevConfig kDcNpwNumPack       { 1, 50, 25 },
         kDcNpwExpiryTime      { 1, 600, 2 },
-        kDcMaxTimePeriodic    { 5, 300, 10 },
+        kDcMaxTimePeriodic    { 1, 300, 10 },
         kDcMinTimePeriodic    { 1, 60, 15 },
         kDcOnChangThshPt     { 0, 2000, 1999 },
-        kDcOnChangThshTt     { 50, 2000, 100 },
+        kDcOnChangThshTt     { 0, 2000, 100 },
         kDcSampleIntervalNpw     { 10, 1000, 20 },
         kDcNumSamples1stAvg    { 1, 10000, 150 },
         kDcNumSamples2ndAvg    { 1, 10000, 1000 },
