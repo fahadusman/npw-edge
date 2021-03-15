@@ -1,0 +1,50 @@
+{
+  "edge_device": {
+    "device_id": 31,
+    "device_name": "MCK",
+    "role": "stationEdgeDevice",
+    "communicator": {
+      "type": "mqttCommunicator",
+      "server": "tcp://192.168.23.12:1883",
+      "publish_topic": "MCK",
+      "client_id":"Edge_MCK",
+      "qos": 1,
+      "command_topic": "iotgateway"
+    },
+    "sensors": [
+      {
+        "sensor_type": "FT",
+        "port": "/dev/ttyM0",
+        "baud_rate": 19200,
+        "sensor_id": "FT_5000",
+        "sensor_scaling_factor": 1,
+        "sensor_data_type": "multiple",
+        "modbus_slave_id": 1,
+        "modbus_reg_addr": 30000,
+        "modbus_nb": 10
+      },
+      {
+        "sensor_type": "PT",
+        "port": "/dev/ttyM1",
+        "baud_rate": 115200,
+        "sensor_id": "PT_5000A",
+        "sensor_scaling_factor": 1,
+        "sensor_data_type": "float",
+        "modbus_slave_id": 1,
+        "modbus_reg_addr": 2,
+        "modbus_nb": 2
+      },
+      {
+        "sensor_type": "PT",
+        "port": "/dev/ttyUSB3",
+        "baud_rate": 115200,
+        "sensor_id": "PT_5013",
+        "sensor_scaling_factor": 0.01,
+        "sensor_data_type": "int16",
+        "modbus_slave_id": 1,
+        "modbus_reg_addr": 4,
+        "modbus_nb": 1
+      }
+    ]
+  }
+}
