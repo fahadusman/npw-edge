@@ -37,6 +37,8 @@ FlowTransmitter::FlowTransmitter(communicator *cPtr, EdgeDevice *ePtr,
     eventGroupsNb = 8;
     eventGroups = new uint16_t[eventGroupsNb];
 
+    parity = 'E';
+
     startThread();
 }
 
@@ -46,12 +48,7 @@ FlowTransmitter::~FlowTransmitter() {
 }
 
 double FlowTransmitter::readSensorValue() {
-    currentValue = currentValue +1;
-    volumeFlow = currentValue;
-    currentStatus = 1;
-    return currentValue;
-
-    int rc;
+    int rc = 0;
     uint16_t tabReg[16];
     LOG_IF(FATAL, sensorModbusNb > 16) << "Number registers to read is too large";
 
@@ -61,7 +58,7 @@ double FlowTransmitter::readSensorValue() {
     rc = modbus_read_input_registers(sensorModbusCtx, measurementValueAddress,
             measurementValueNb, tabReg);
     if (rc == -1) {
-        LOG_EVERY_N(ERROR, 2) << "Failed to read from PT, id:(" << id
+        LOG_EVERY_N(ERROR, 1) << "Failed to read from measurements from FT, id:(" << id
                 << ") Error: " << modbus_strerror(errno);
         currentStatus = 0;
         disconnectSensor();
@@ -69,15 +66,18 @@ double FlowTransmitter::readSensorValue() {
     }
 
     flowVelociy = extractFloat(reinterpret_cast<unsigned char*>(tabReg));
-    currentValue = volumeFlow =  extractFloat(reinterpret_cast<unsigned char*>(tabReg+4));
-    massFlow = extractFloat(reinterpret_cast<unsigned char*>(tabReg+8));
-    temperature = extractFloat(reinterpret_cast<unsigned char*>(tabReg+12));
-    density = extractFloat(reinterpret_cast<unsigned char*>(tabReg+16));
+    currentValue = volumeFlow =  extractFloat(reinterpret_cast<unsigned char*>(tabReg+2));
+    massFlow = extractFloat(reinterpret_cast<unsigned char*>(tabReg+4));
+    temperature = extractFloat(reinterpret_cast<unsigned char*>(tabReg+6));
+    density = extractFloat(reinterpret_cast<unsigned char*>(tabReg+8));
 
+    // Introduce a little delay before subsequent read call, otherwise read
+    // call would fail
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     rc = modbus_read_input_registers(sensorModbusCtx, totalizerAddress,
             totalizerNb, tabReg);
     if (rc == -1) {
-        LOG_EVERY_N(ERROR, 2) << "Failed to read from PT, id:(" << id
+        LOG_EVERY_N(ERROR, 1) << "Failed to read from totalizers from FT, id:(" << id
                 << ") Error: " << modbus_strerror(errno);
         currentStatus = 0;
         disconnectSensor();
@@ -85,18 +85,19 @@ double FlowTransmitter::readSensorValue() {
     }
 
     totaliser1Value = extractFloat(reinterpret_cast<unsigned char*>(tabReg));
-    totaliser2Value = extractFloat(reinterpret_cast<unsigned char*>(tabReg));
+    totaliser2Value = extractFloat(reinterpret_cast<unsigned char*>(tabReg+2));
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     rc = modbus_read_registers(sensorModbusCtx, eventGroupsAddress,
-            eventGroupsNb, tabReg);
+            eventGroupsNb, eventGroups);
     if (rc == -1) {
-        LOG_EVERY_N(ERROR, 2) << "Failed to read from PT, id:(" << id
+        LOG_EVERY_N(ERROR, 1) << "Failed to read event groups from FT, id:(" << id
                 << ") Error: " << modbus_strerror(errno);
         currentStatus = 0;
         disconnectSensor();
         return currentValue; //return previous current value
     }
-
+    currentStatus = 1;
     return currentValue;
 }
 

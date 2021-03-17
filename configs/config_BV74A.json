@@ -1,0 +1,29 @@
+{
+  "edge_device": {
+    "device_id": 21,
+    "device_name": "BV74A",
+    "role": "bvEdgeDevice",
+    "communicator": {
+      "type": "radioCommunicator",
+      "slave_address": 21,
+      "port": "/dev/ttyM0",
+      "baud_rate": 38400,
+      "response_timeout": 3000,
+      "poll_interval": 3000,
+      "transmission_timeout": 3000
+    },
+    "sensors": [
+      {
+        "sensor_type": "PT",
+        "port": "/dev/ttyM1",
+        "baud_rate": 115200,
+        "sensor_id": "PT_74A",
+        "sensor_scaling_factor": 1,
+        "sensor_data_type": "float",
+        "modbus_slave_id": 1,
+        "modbus_reg_addr": 2,
+        "modbus_nb": 2
+      }
+    ]
+  }
+}
