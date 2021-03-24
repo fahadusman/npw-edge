@@ -21,6 +21,7 @@ CommDataBuffer::CommDataBuffer(){
     bufferId = (bufferCount++)%65535; //bufferId is sent as 16-bit number is ack message
 	sensorId[0] = 0;
 	expiryTime = 0;
+	delayFlagNeeded = false;
 }
 
 void CommDataBuffer::setExpiryTime(uint64_t et) {
