@@ -113,6 +113,17 @@ void MqttCommunicator::sendQueuedMessagesThread() {
             connect();
             std::this_thread::sleep_for(std::chrono::seconds(5));
         }
+
+        while (delayFlagQueue.size() > 0) {
+            std::string triggerString = delayFlagQueue.front().isTriggered();
+            if (triggerString == "") {
+                break;
+            }
+            sendMessage(triggerString.c_str(), triggerString.length());
+            delayFlagQueue.pop();
+            LOG(INFO) << "Delay Flag: " << triggerString;
+        }
+
         CommDataBuffer * commPtr = getQueuedMessage();
 
         if (commPtr != nullptr) {
@@ -129,6 +140,15 @@ void MqttCommunicator::sendQueuedMessagesThread() {
             } else {
                 std::string jsonMessage = commPtr->serializeJson();
                 sendMessage(jsonMessage.c_str(), jsonMessage.length());
+
+                //Hack to send delay flag
+                if(commPtr->isDelayFlagNeeded()) {
+                    std::string delayFlag0Message = "{\"" + commPtr->getSensorId() + "_delay\": 0}";
+                    sendMessage(delayFlag0Message.c_str(), delayFlag0Message.length());
+
+                    DelayFlag df(2000, commPtr->getSensorId());
+                    delayFlagQueue.push(df);
+                }
             }
             removeMessageFromQueue(commPtr->getBufferId());
             commPtr = nullptr;
