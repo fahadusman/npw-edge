@@ -20,6 +20,7 @@
 #include "rapidjson/document.h"
 
 #include "communicator.h"
+#include "DelayFlag.h"
 
 const std::string MQTT_DFLT_SERVER_ADDRESS { "tcp://localhost:1883" };
 const std::string MQTT_DFLT_CLIENT_ID { "NPW_APP" };
@@ -61,7 +62,7 @@ public:
 };
 
 class MqttCommunicator: public communicator {
-private:
+protected:
     std::string address, clientID, publishTopic, persistDir, commandTopic, serverAddress;
 
     mqtt::message willmsg;
@@ -76,6 +77,7 @@ private:
     bool cleanSession;
     unsigned int QoS;
     std::chrono::duration<int64_t> timeout;
+    std::queue<DelayFlag> delayFlagQueue;
 public:
     MqttCommunicator(EdgeDevice * e, rapidjson::Value &communicatorObj);
     void connect() override;

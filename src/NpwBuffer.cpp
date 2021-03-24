@@ -26,6 +26,7 @@ NpwBuffer::NpwBuffer(const uint64_t ts, const unsigned int readingListLen, const
     LOG_IF(FATAL, readingList == nullptr) << "Unable to allocate memory for readingList";
     timeStamp = ts;
     byteArrayLength = 2*readingListLength + kHdrLen; //2 bytes value, plus the header
+    delayFlagNeeded = true;
 
     LOG(INFO) << "new NPW Buffer, timeStamp: " << timeStamp << ", id: "
             << bufferId;

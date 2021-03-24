@@ -32,6 +32,7 @@ protected:
     uint16_t bufferId;
     char sensorId[sensorIdLen];
     uint64_t expiryTime;
+    bool delayFlagNeeded;
 public:
     virtual std::string serializeJson() = 0;
     virtual unsigned char * serialize(int & length) = 0;
@@ -47,6 +48,13 @@ public:
     uint64_t getExpiryTime();
     virtual size_t getSerializedBuffLen() = 0;
     virtual ~CommDataBuffer() {
+    }
+    bool isDelayFlagNeeded() {
+        return delayFlagNeeded;
+    }
+    std::string getSensorId() {
+        std::string sId(sensorId);
+        return sId;
     }
 };
 
