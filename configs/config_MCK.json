@@ -5,7 +5,7 @@
     "role": "stationEdgeDevice",
     "communicator": {
       "type": "mqttCommunicator",
-      "server": "tcp://localhost:1883",
+      "server": "tcp://192.168.23.12:1883",
       "publish_topic": "MCK",
       "client_id":"Edge_MCK",
       "qos": 1,
